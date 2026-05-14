@@ -1,0 +1,187 @@
+2026-05-14T17:37:11.962+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Starting Face2hireBackendApplication using Java 24.0.1 with PID 20980 (C:\Users\pmust\Desktop\face2hire-ai-interview-platform\face2hire-backend\target\classes started by pmust in C:\Users\pmust\Desktop\face2hire-ai-interview-platform\Face2Hire-backend)
+2026-05-14T17:37:11.967+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-05-14T17:37:12.042+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-05-14T17:37:12.043+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-05-14T17:37:13.338+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-14T17:37:13.458+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 106 ms. Found 3 JPA repository interfaces.
+2026-05-14T17:37:14.424+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-05-14T17:37:14.448+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-14T17:37:14.448+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-14T17:37:14.533+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2489 ms
+2026-05-14T17:37:14.818+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-14T17:37:14.924+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-05-14T17:37:15.741+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-14T17:37:15.798+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-05-14T17:37:16.495+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@6d25167f
+2026-05-14T17:37:16.499+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-05-14T17:37:16.601+05:30  WARN 20980 --- [face2hire-backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-14T17:37:16.637+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/aiinterview?createDatabaseIfNotExist=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.3
+	Default catalog/schema: aiinterview/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-14T17:37:18.576+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-14T17:37:18.691+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-14T17:37:18.792+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-05-14T17:37:19.325+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-05-14T17:37:19.325+05:30  WARN 20980 --- [face2hire-backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-05-14T17:37:19.367+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OtpService initialized with expiry: 180 seconds, max requests: 3/hour
+2026-05-14T17:37:19.370+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OTP cleanup scheduler started
+2026-05-14T17:37:20.848+05:30  WARN 20980 --- [face2hire-backend] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-14T17:37:21.747+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-05-14T17:37:21.755+05:30  INFO 20980 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Started Face2hireBackendApplication in 10.526 seconds (process running for 12.269)
+2026-05-14T17:37:27.634+05:30  INFO 20980 --- [face2hire-backend] [http-nio-8080-exec-1] o.apache.tomcat.util.http.parser.Cookie  : A cookie header was received [g_state={"i_l":0,"i_ll":1773247672639,"i_b":"nilCcFlZlUnoJUEJxBBPCvpH7IQ2hcuqJKlx6QARph8","i_e":{"enable_itp_optimization":0}};] that contained an invalid cookie. That cookie will be ignored.
+ Note: further occurrences of this error will be logged at DEBUG level.
+2026-05-14T17:37:27.649+05:30  INFO 20980 --- [face2hire-backend] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-14T17:37:27.649+05:30  INFO 20980 --- [face2hire-backend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-14T17:37:27.653+05:30  INFO 20980 --- [face2hire-backend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
+2026-05-14T17:37:51.762+05:30  WARN 20980 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.o.GitHubOAuth2UserAttributeMapper  : GitHub email was null; using noreply address: 106658668+Musthakhdhim@users.noreply.github.com
+2026-05-14T17:37:51.763+05:30  INFO 20980 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.s.CustomOAuth2UserServiceImpl      : OAuth2 login attempt — provider: GITHUB, email: 106658668+Musthakhdhim@users.noreply.github.com
+2026-05-14T17:37:53.297+05:30  INFO 20980 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.s.CustomOAuth2UserServiceImpl      : New OAuth2 user registered: 106658668+Musthakhdhim@users.noreply.github.com via GITHUB
+2026-05-14T17:37:53.312+05:30  WARN 20980 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.o.GitHubOAuth2UserAttributeMapper  : GitHub email was null; using noreply address: 106658668+Musthakhdhim@users.noreply.github.com
+2026-05-14T17:37:53.917+05:30  INFO 20980 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.OAuth2SuccessHandler   : OAuth2 success for 106658668+Musthakhdhim@users.noreply.github.com (role: INTERVIEWEE), redirecting to /interviewee/dashboard
+2026-05-14T17:41:00.261+05:30  WARN 20980 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.o.GitHubOAuth2UserAttributeMapper  : GitHub email was null; using noreply address: 126158427+Musthakh@users.noreply.github.com
+2026-05-14T17:41:00.262+05:30  INFO 20980 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.s.CustomOAuth2UserServiceImpl      : OAuth2 login attempt — provider: GITHUB, email: 126158427+Musthakh@users.noreply.github.com
+2026-05-14T17:41:00.301+05:30  INFO 20980 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.s.CustomOAuth2UserServiceImpl      : New OAuth2 user registered: 126158427+Musthakh@users.noreply.github.com via GITHUB
+2026-05-14T17:41:00.303+05:30  WARN 20980 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.o.GitHubOAuth2UserAttributeMapper  : GitHub email was null; using noreply address: 126158427+Musthakh@users.noreply.github.com
+2026-05-14T17:41:00.327+05:30  INFO 20980 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.serviceimpl.OAuth2SuccessHandler   : OAuth2 success for 126158427+Musthakh@users.noreply.github.com (role: INTERVIEWEE), redirecting to /interviewee/dashboard
+2026-05-14T17:42:59.341+05:30  INFO 20980 --- [face2hire-backend] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-14T17:42:59.351+05:30  INFO 20980 --- [face2hire-backend] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-05-14T17:42:59.359+05:30  INFO 20980 --- [face2hire-backend] [SpringApplicationShutdownHook] c.a.f.serviceimpl.OtpServiceImpl         : Shutting down OtpService...
+2026-05-14T17:42:59.361+05:30  INFO 20980 --- [face2hire-backend] [SpringApplicationShutdownHook] c.a.f.serviceimpl.OtpServiceImpl         : OtpService shutdown complete
+2026-05-14T17:42:59.363+05:30  INFO 20980 --- [face2hire-backend] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-14T17:42:59.370+05:30  INFO 20980 --- [face2hire-backend] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-05-14T17:42:59.380+05:30  INFO 20980 --- [face2hire-backend] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-05-14T17:43:07.554+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Starting Face2hireBackendApplication using Java 24.0.1 with PID 21200 (C:\Users\pmust\Desktop\face2hire-ai-interview-platform\face2hire-backend\target\classes started by pmust in C:\Users\pmust\Desktop\face2hire-ai-interview-platform\Face2Hire-backend)
+2026-05-14T17:43:07.558+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-05-14T17:43:07.627+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-05-14T17:43:07.627+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-05-14T17:43:08.935+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-14T17:43:09.064+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 110 ms. Found 3 JPA repository interfaces.
+2026-05-14T17:43:10.010+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-05-14T17:43:10.032+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-14T17:43:10.033+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-14T17:43:10.137+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2509 ms
+2026-05-14T17:43:10.373+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-14T17:43:10.502+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-05-14T17:43:11.379+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-14T17:43:11.437+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-05-14T17:43:12.069+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@636a58d
+2026-05-14T17:43:12.072+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-05-14T17:43:12.159+05:30  WARN 21200 --- [face2hire-backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-14T17:43:12.190+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/aiinterview?createDatabaseIfNotExist=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.3
+	Default catalog/schema: aiinterview/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-14T17:43:14.094+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-14T17:43:14.216+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-14T17:43:14.317+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-05-14T17:43:14.678+05:30  WARN 21200 --- [face2hire-backend] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Cannot deserialize session attribute [SPRING_SECURITY_CONTEXT] for session [3464FE631775CBCD1ED1200D1F0DA1ED]
+2026-05-14T17:43:14.680+05:30 ERROR 21200 --- [face2hire-backend] [restartedMain] o.a.catalina.session.StandardManager     : Exception loading sessions from persistent storage
+
+java.io.StreamCorruptedException: invalid type code: 00
+	at java.base/java.io.ObjectInputStream.readObject0(ObjectInputStream.java:1684) ~[na:na]
+	at java.base/java.io.ObjectInputStream$FieldValues.<init>(ObjectInputStream.java:2513) ~[na:na]
+	at java.base/java.io.ObjectInputStream.defaultReadObject(ObjectInputStream.java:627) ~[na:na]
+	at java.base/java.lang.Throwable.readObject(Throwable.java:941) ~[na:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at java.base/java.io.ObjectStreamClass.invokeReadObject(ObjectStreamClass.java:976) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readSerialData(ObjectInputStream.java:2335) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readOrdinaryObject(ObjectInputStream.java:2166) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject0(ObjectInputStream.java:1653) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject(ObjectInputStream.java:495) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject(ObjectInputStream.java:453) ~[na:na]
+	at org.apache.catalina.session.StandardSession.doReadObject(StandardSession.java:1120) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.session.StandardSession.readObjectData(StandardSession.java:821) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.session.StandardManager.load(StandardManager.java:146) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.session.StandardManager.startInternal(StandardManager.java:255) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:4443) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328) ~[na:na]
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:148) ~[na:na]
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.StandardHost.startInternal(StandardHost.java:780) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328) ~[na:na]
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:148) ~[na:na]
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.StandardEngine.startInternal(StandardEngine.java:201) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.StandardService.startInternal(StandardService.java:410) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.StandardServer.startInternal(StandardServer.java:864) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.startup.Tomcat.start(Tomcat.java:435) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.springframework.boot.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:131) ~[spring-boot-tomcat-4.0.6.jar:4.0.6]
+	at org.springframework.boot.tomcat.TomcatWebServer.<init>(TomcatWebServer.java:110) ~[spring-boot-tomcat-4.0.6.jar:4.0.6]
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getTomcatWebServer(TomcatServletWebServerFactory.java:408) ~[spring-boot-tomcat-4.0.6.jar:4.0.6]
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getWebServer(TomcatServletWebServerFactory.java:166) ~[spring-boot-tomcat-4.0.6.jar:4.0.6]
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.createWebServer(ServletWebServerApplicationContext.java:190) ~[spring-boot-web-server-4.0.6.jar:4.0.6]
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:164) ~[spring-boot-web-server-4.0.6.jar:4.0.6]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:615) ~[spring-context-7.0.7.jar:7.0.7]
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:143) ~[spring-boot-web-server-4.0.6.jar:4.0.6]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:756) ~[spring-boot-4.0.6.jar:4.0.6]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:445) ~[spring-boot-4.0.6.jar:4.0.6]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:321) ~[spring-boot-4.0.6.jar:4.0.6]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1365) ~[spring-boot-4.0.6.jar:4.0.6]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1354) ~[spring-boot-4.0.6.jar:4.0.6]
+	at com.aiinterview.face2hire_backend.Face2hireBackendApplication.main(Face2hireBackendApplication.java:10) ~[classes/:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:52) ~[spring-boot-devtools-4.0.6.jar:4.0.6]
+
+2026-05-14T17:43:14.955+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-05-14T17:43:14.960+05:30  WARN 21200 --- [face2hire-backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-05-14T17:43:15.014+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OtpService initialized with expiry: 180 seconds, max requests: 3/hour
+2026-05-14T17:43:15.017+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OTP cleanup scheduler started
+2026-05-14T17:43:16.372+05:30  WARN 21200 --- [face2hire-backend] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-14T17:43:17.437+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-05-14T17:43:17.445+05:30  INFO 21200 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Started Face2hireBackendApplication in 10.645 seconds (process running for 12.078)
+2026-05-14T17:43:26.079+05:30  INFO 21200 --- [face2hire-backend] [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-14T17:43:26.080+05:30  INFO 21200 --- [face2hire-backend] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-14T17:43:26.086+05:30  INFO 21200 --- [face2hire-backend] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 5 ms
+2026-05-14T17:43:29.161+05:30  WARN 21200 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.o.GitHubOAuth2UserAttributeMapper  : GitHub email was null; using noreply address: Musthakh@users.noreply.github.com
+2026-05-14T17:43:29.163+05:30  INFO 21200 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.s.CustomOAuth2UserServiceImpl      : OAuth2 login attempt — provider: GITHUB, email: Musthakh@users.noreply.github.com
+2026-05-14T17:43:31.284+05:30  INFO 21200 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.s.CustomOAuth2UserServiceImpl      : New OAuth2 user registered: Musthakh@users.noreply.github.com via GITHUB
+2026-05-14T17:43:31.300+05:30  WARN 21200 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.o.GitHubOAuth2UserAttributeMapper  : GitHub email was null; using noreply address: Musthakh@users.noreply.github.com
+2026-05-14T17:43:31.800+05:30  INFO 21200 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.OAuth2SuccessHandler   : OAuth2 success for Musthakh@users.noreply.github.com (role: INTERVIEWEE), redirecting to /interviewee/dashboard
+2026-05-14T17:43:32.852+05:30  WARN 21200 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.o.GitHubOAuth2UserAttributeMapper  : GitHub email was null; using noreply address: Musthakh@users.noreply.github.com
+2026-05-14T17:43:32.854+05:30  INFO 21200 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.s.CustomOAuth2UserServiceImpl      : OAuth2 login attempt — provider: GITHUB, email: Musthakh@users.noreply.github.com
+2026-05-14T17:43:33.031+05:30  INFO 21200 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.s.CustomOAuth2UserServiceImpl      : Returning OAuth2 user: Musthakh@users.noreply.github.com via GITHUB
+2026-05-14T17:43:33.034+05:30  WARN 21200 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.o.GitHubOAuth2UserAttributeMapper  : GitHub email was null; using noreply address: Musthakh@users.noreply.github.com
+2026-05-14T17:43:33.053+05:30  INFO 21200 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.OAuth2SuccessHandler   : OAuth2 success for Musthakh@users.noreply.github.com (role: INTERVIEWEE), redirecting to /interviewee/dashboard
+2026-05-14T17:44:18.067+05:30  WARN 21200 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.o.GitHubOAuth2UserAttributeMapper  : GitHub email was null; using noreply address: Musthakh@users.noreply.github.com
+2026-05-14T17:44:18.069+05:30  INFO 21200 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.s.CustomOAuth2UserServiceImpl      : OAuth2 login attempt — provider: GITHUB, email: Musthakh@users.noreply.github.com
+2026-05-14T17:44:18.116+05:30  INFO 21200 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.s.CustomOAuth2UserServiceImpl      : Returning OAuth2 user: Musthakh@users.noreply.github.com via GITHUB
+2026-05-14T17:44:18.117+05:30  WARN 21200 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.o.GitHubOAuth2UserAttributeMapper  : GitHub email was null; using noreply address: Musthakh@users.noreply.github.com
+2026-05-14T17:44:18.147+05:30  INFO 21200 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.OAuth2SuccessHandler   : OAuth2 success for Musthakh@users.noreply.github.com (role: INTERVIEWEE), redirecting to /interviewee/dashboard
+2026-05-14T17:52:05.423+05:30  INFO 21200 --- [face2hire-backend] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-14T17:52:05.433+05:30  INFO 21200 --- [face2hire-backend] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-05-14T17:52:05.443+05:30  INFO 21200 --- [face2hire-backend] [SpringApplicationShutdownHook] c.a.f.serviceimpl.OtpServiceImpl         : Shutting down OtpService...
+2026-05-14T17:52:05.445+05:30  INFO 21200 --- [face2hire-backend] [SpringApplicationShutdownHook] c.a.f.serviceimpl.OtpServiceImpl         : OtpService shutdown complete
+2026-05-14T17:52:05.448+05:30  INFO 21200 --- [face2hire-backend] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-14T17:52:05.456+05:30  INFO 21200 --- [face2hire-backend] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-05-14T17:52:05.467+05:30  INFO 21200 --- [face2hire-backend] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

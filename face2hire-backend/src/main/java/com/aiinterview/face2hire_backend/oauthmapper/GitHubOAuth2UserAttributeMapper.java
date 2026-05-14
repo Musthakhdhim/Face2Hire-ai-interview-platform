@@ -23,7 +23,7 @@ public class GitHubOAuth2UserAttributeMapper implements OAuth2UserAttributeMappe
             String login = user.getAttribute("login");
             Object id = user.getAttribute("id");
             if (login != null && id != null) {
-                email = id + "+" + login + "@users.noreply.github.com";
+                email =  login + "@users.noreply.github.com";
                 log.warn("GitHub email was null; using noreply address: {}", email);
             }
         }
