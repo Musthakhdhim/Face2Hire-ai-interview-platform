@@ -1,0 +1,40 @@
+# ====================
+# IDE and system files
+# ====================
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+.DS_Store
+Thumbs.db
+
+# ====================
+# Backend (interviewai)
+# ====================
+Face2Hire-backend/target/
+Face2Hire-backend/.mvn/
+Face2Hire-backend/mvnw
+Face2Hire-backend/mvnw.cmd
+Face2Hire-backend/*.log
+Face2Hire-backend/.env.properties          
+Face2Hire-backend/src/main/resources/application-local.properties
+Face2Hire-backend/src/main/resources/application.properties.template
+
+# ====================
+# Frontend (interview-ai)
+# ====================
+Face2Hire-frontend/node_modules/
+Face2Hire-frontend/dist/
+Face2Hire-frontend/build/
+Face2Hire-frontend/.env                    
+Face2Hire-frontend/.env.local
+Face2Hire-frontend/.env.*.local
+Face2Hire-frontend/*.log
+
+# ====================
+# Root level secrets
+# ====================
+.env
+*.properties.local
