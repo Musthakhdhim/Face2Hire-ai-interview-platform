@@ -108,6 +108,10 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
+        if(!user.isActive()){
+            throw new AccountLockedException("your account has been disabled by the admin, please contact admin");
+        }
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getEmail(),
