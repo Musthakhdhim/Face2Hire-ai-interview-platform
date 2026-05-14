@@ -78,7 +78,7 @@ export default function DashboardLayout(): JSX.Element | null {
     } else if (role === 'admin') {
       return [
         { icon: Home, label: 'Dashboard', path: '/admin' },
-        { icon: Users, label: 'Users', path: '#' },
+        { icon: Users, label: 'Users', path: '/admin/users' },
         { icon: Activity, label: 'Interviews', path: '#' },
         { icon: FileBarChart, label: 'Reports', path: '#' },
         { icon: Settings, label: 'Settings', path: settingsPath },

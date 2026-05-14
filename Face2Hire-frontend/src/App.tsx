@@ -16,6 +16,7 @@ import AdminDashboard from './pages/admin/Dashboard';
 import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import OAuth2RedirectPage from './pages/OAuth2RedirectPage';
 import type { JSX } from 'react';
+import AdminUsersPage from './pages/admin/UsersPage';
 
 function App(): JSX.Element {
   return (
@@ -50,6 +51,7 @@ function App(): JSX.Element {
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route path="/admin" element={<DashboardLayout />}>
               <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUsersPage />} />
               <Route path="settings" element={<ProfileSettingsPage />} />
             </Route>
           </Route>
