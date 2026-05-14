@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { verifyOtp, resendOtp, clearPendingSignup } from '../store/slices/authSlice';
 import { Brain, Mail, ShieldCheck } from 'lucide-react';
 import { Button } from '../components/ui/button';

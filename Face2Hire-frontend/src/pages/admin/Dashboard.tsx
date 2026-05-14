@@ -1,9 +1,9 @@
-import { useSelector } from 'react-redux';
+// import { useSelector } from 'react-redux';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Users, Activity, TrendingUp } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import type { RootState } from '../../store/store';
+// import type { RootState } from '../../store/store';
 import type { JSX } from 'react';
 
 interface StatItem {
@@ -25,7 +25,7 @@ interface InterviewVolumeDataPoint {
 }
 
 export default function AdminDashboard(): JSX.Element {
-  const { user } = useSelector((state: RootState) => state.auth);
+  // const { user } = useSelector((state: RootState) => state.auth);
 
   const stats: StatItem[] = [
     { title: 'Total Users', value: '0', change: '+0%', icon: Users, color: 'bg-blue-100 text-blue-600' },
