@@ -21,6 +21,66 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 
+// ---------- Cache Helpers ----------
+const PROFILE_CACHE_KEY = 'profileSettingsCache';
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+interface CachedData {
+  timestamp: number;
+  profile: {
+    fullName: string;
+    userName: string;
+    email: string;
+    phoneNumber: string;
+    profileImageUrl: string;
+  };
+  preferences: {
+    defaultInterviewType: string;
+    avatarStyle: string;
+    language: string;
+  };
+  notifications: {
+    emailUpdates: boolean;
+    interviewReminders: boolean;
+    marketingEmails: boolean;
+  };
+}
+
+const saveToCache = (
+  profile: CachedData['profile'],
+  preferences: CachedData['preferences'],
+  notifications: CachedData['notifications']
+) => {
+  const cache: CachedData = {
+    timestamp: Date.now(),
+    profile,
+    preferences,
+    notifications,
+  };
+  sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(cache));
+};
+
+const loadFromCache = (): CachedData | null => {
+  const cached = sessionStorage.getItem(PROFILE_CACHE_KEY);
+  if (!cached) return null;
+  try {
+    const data = JSON.parse(cached) as CachedData;
+    if (Date.now() - data.timestamp < CACHE_TTL) {
+      return data;
+    } else {
+      sessionStorage.removeItem(PROFILE_CACHE_KEY);
+      return null;
+    }
+  } catch {
+    return null;
+  }
+};
+
+const clearCache = () => {
+  sessionStorage.removeItem(PROFILE_CACHE_KEY);
+};
+
+// ---------- Type Definitions ----------
 interface UserProfileData {
   fullName: string;
   userName: string;
@@ -50,14 +110,14 @@ export default function ProfileSettingsPage(): JSX.Element {
   const navigate = useNavigate();
   const { user: reduxUser, token } = useSelector((state: RootState) => state.auth);
   const [loading, setLoading] = useState<boolean>(true);
-  
+
   const [profileSaving, setProfileSaving] = useState<boolean>(false);
   const [emailSending, setEmailSending] = useState<boolean>(false);
   const [emailVerifying, setEmailVerifying] = useState<boolean>(false);
   const [prefSaving, setPrefSaving] = useState<boolean>(false);
   const [notifSaving, setNotifSaving] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<boolean>(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Profile state
@@ -97,10 +157,29 @@ export default function ProfileSettingsPage(): JSX.Element {
     return tabs;
   }, [showPreferences]);
 
-  // Fetch profile data
-  const fetchProfileData = useCallback(async (): Promise<void> => {
+  // ---------- Data Fetching with Caching ----------
+  const fetchProfileData = useCallback(async (forceRefresh = false): Promise<void> => {
+    if (!forceRefresh) {
+      const cached = loadFromCache();
+      if (cached) {
+        setFullName(cached.profile.fullName);
+        setUserName(cached.profile.userName);
+        setEmail(cached.profile.email);
+        setPhoneNumber(cached.profile.phoneNumber);
+        setProfileImageUrl(cached.profile.profileImageUrl);
+        setDefaultInterviewType(cached.preferences.defaultInterviewType);
+        setAvatarStyle(cached.preferences.avatarStyle);
+        setLanguage(cached.preferences.language);
+        setEmailUpdates(cached.notifications.emailUpdates);
+        setInterviewReminders(cached.notifications.interviewReminders);
+        setMarketingEmails(cached.notifications.marketingEmails);
+        setLoading(false);
+        return;
+      }
+    }
+
+    setLoading(true);
     try {
-      setLoading(true);
       const profileRes = await axiosClient.get<{ data: UserProfileData }>('/profile');
       const userData = profileRes.data.data;
       setFullName(userData.fullName || '');
@@ -108,22 +187,23 @@ export default function ProfileSettingsPage(): JSX.Element {
       setEmail(userData.email || '');
       setPhoneNumber(userData.phoneNumber || '');
       setProfileImageUrl(userData.profileImageUrl || '');
-      
+
+      let prefsData: PreferencesData = { defaultInterviewType: 'technical', avatarStyle: 'professional', language: 'english' };
       try {
         const prefsRes = await axiosClient.get<{ data: PreferencesData }>('/profile/preferences');
-        const prefs = prefsRes.data.data;
-        setDefaultInterviewType(prefs.defaultInterviewType || 'technical');
-        setAvatarStyle(prefs.avatarStyle || 'professional');
-        setLanguage(prefs.language || 'english');
-      } catch {
-        // ignore – preferences may not exist for all users
-      }
+        prefsData = prefsRes.data.data;
+        setDefaultInterviewType(prefsData.defaultInterviewType);
+        setAvatarStyle(prefsData.avatarStyle);
+        setLanguage(prefsData.language);
+      } catch { /* ignore */ }
 
       const notifRes = await axiosClient.get<{ data: NotificationsData }>('/profile/notifications');
-      const notif = notifRes.data.data;
-      setEmailUpdates(notif.emailUpdates);
-      setInterviewReminders(notif.interviewReminders);
-      setMarketingEmails(notif.marketingEmails);
+      const notifData = notifRes.data.data;
+      setEmailUpdates(notifData.emailUpdates);
+      setInterviewReminders(notifData.interviewReminders);
+      setMarketingEmails(notifData.marketingEmails);
+
+      saveToCache(userData, prefsData, notifData);
     } catch (err) {
       const error = err as AxiosError<ErrorResponseData>;
       toast.error(error.response?.data?.message || 'Failed to load profile');
@@ -133,14 +213,15 @@ export default function ProfileSettingsPage(): JSX.Element {
   }, []);
 
   useEffect(() => {
-  if (!token) {
-    navigate('/login');
-    return;
-  }
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  fetchProfileData();
-}, [token, navigate, fetchProfileData]);
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchProfileData();
+  }, [token, navigate, fetchProfileData]);
 
+  // ---------- Optimized Handlers (No extra GET after update) ----------
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -152,14 +233,41 @@ export default function ProfileSettingsPage(): JSX.Element {
     formData.append('file', file);
     setUploadProgress(true);
     try {
-      const res = await axiosClient.post<{ data: string }>('/profile/upload-photo', formData, {
+      const uploadRes = await axiosClient.post<{ data: string }>('/profile/upload-photo', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      const imageUrl = res.data.data;
+      const imageUrl = uploadRes.data.data;
       setProfileImageUrl(imageUrl);
       toast.success('Profile photo uploaded');
-      await axiosClient.put('/profile/update-profile', { fullName, phoneNumber, profileImageUrl: imageUrl });
-      dispatch(updateUser({ profileImageUrl: imageUrl }));
+
+      const updateRes = await axiosClient.put<{ data: UserProfileData }>('/profile/update-profile', {
+        fullName,
+        phoneNumber,
+        profileImageUrl: imageUrl
+      });
+      const updatedProfile = updateRes.data.data;
+      setFullName(updatedProfile.fullName);
+      setUserName(updatedProfile.userName);
+      setEmail(updatedProfile.email);
+      setPhoneNumber(updatedProfile.phoneNumber);
+      setProfileImageUrl(updatedProfile.profileImageUrl);
+      dispatch(updateUser({ profileImageUrl: imageUrl, name: updatedProfile.fullName, phone: updatedProfile.phoneNumber }));
+
+      clearCache();
+      // Re‑fetch preferences/notifications to ensure cache consistency (they are unchanged, but we need to update the cached profile)
+      const prefsRes = await axiosClient.get<{ data: PreferencesData }>('/profile/preferences');
+      const notifRes = await axiosClient.get<{ data: NotificationsData }>('/profile/notifications');
+      saveToCache(
+        {
+          fullName: updatedProfile.fullName,
+          userName: updatedProfile.userName,
+          email: updatedProfile.email,
+          phoneNumber: updatedProfile.phoneNumber,
+          profileImageUrl: updatedProfile.profileImageUrl
+        },
+        prefsRes.data.data,
+        notifRes.data.data
+      );
       toast.success('Profile updated with new photo');
     } catch (err) {
       const error = err as AxiosError<ErrorResponseData>;
@@ -172,8 +280,34 @@ export default function ProfileSettingsPage(): JSX.Element {
   const handleSaveProfile = async (): Promise<void> => {
     setProfileSaving(true);
     try {
-      await axiosClient.put('/profile/update-profile', { fullName, phoneNumber, profileImageUrl });
-      dispatch(updateUser({ name: fullName, phone: phoneNumber }));
+      const response = await axiosClient.put<{ data: UserProfileData }>('/profile/update-profile', {
+        fullName,
+        phoneNumber,
+        profileImageUrl
+      });
+      const updatedProfile = response.data.data;
+      setFullName(updatedProfile.fullName);
+      setUserName(updatedProfile.userName);
+      setEmail(updatedProfile.email);
+      setPhoneNumber(updatedProfile.phoneNumber);
+      setProfileImageUrl(updatedProfile.profileImageUrl);
+      dispatch(updateUser({ name: updatedProfile.fullName, phone: updatedProfile.phoneNumber }));
+
+      clearCache();
+      // Refresh cache with new profile data (preferences/notifications unchanged)
+      const prefsRes = await axiosClient.get<{ data: PreferencesData }>('/profile/preferences');
+      const notifRes = await axiosClient.get<{ data: NotificationsData }>('/profile/notifications');
+      saveToCache(
+        {
+          fullName: updatedProfile.fullName,
+          userName: updatedProfile.userName,
+          email: updatedProfile.email,
+          phoneNumber: updatedProfile.phoneNumber,
+          profileImageUrl: updatedProfile.profileImageUrl
+        },
+        prefsRes.data.data,
+        notifRes.data.data
+      );
       toast.success('Profile updated');
     } catch (err) {
       const error = err as AxiosError<ErrorResponseData>;
@@ -183,6 +317,77 @@ export default function ProfileSettingsPage(): JSX.Element {
     }
   };
 
+  const handleSavePreferences = async (): Promise<void> => {
+    setPrefSaving(true);
+    const startTime = Date.now();
+    try {
+      const response = await axiosClient.put<{ data: PreferencesData }>('/profile/preferences', {
+        defaultInterviewType,
+        avatarStyle,
+        language
+      });
+      const newPrefs = response.data.data;
+      setDefaultInterviewType(newPrefs.defaultInterviewType);
+      setAvatarStyle(newPrefs.avatarStyle);
+      setLanguage(newPrefs.language);
+
+      // Update cache directly (only preferences part)
+      const cached = loadFromCache();
+      if (cached) {
+        const updatedCache = {
+          ...cached,
+          preferences: newPrefs,
+          timestamp: Date.now()
+        };
+        sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(updatedCache));
+      }
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 1000) await new Promise(resolve => setTimeout(resolve, 1000 - elapsed));
+      toast.success('Preferences saved');
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponseData>;
+      toast.error(error.response?.data?.message || 'Failed to save preferences');
+    } finally {
+      setPrefSaving(false);
+    }
+  };
+
+  const handleSaveNotifications = async (): Promise<void> => {
+    setNotifSaving(true);
+    const startTime = Date.now();
+    try {
+      const response = await axiosClient.put<{ data: NotificationsData }>('/profile/notifications', {
+        emailUpdates,
+        interviewReminders,
+        marketingEmails
+      });
+      const newNotifs = response.data.data;
+      setEmailUpdates(newNotifs.emailUpdates);
+      setInterviewReminders(newNotifs.interviewReminders);
+      setMarketingEmails(newNotifs.marketingEmails);
+
+      // Update cache directly (only notifications part)
+      const cached = loadFromCache();
+      if (cached) {
+        const updatedCache = {
+          ...cached,
+          notifications: newNotifs,
+          timestamp: Date.now()
+        };
+        sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(updatedCache));
+      }
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 1000) await new Promise(resolve => setTimeout(resolve, 1000 - elapsed));
+      toast.success('Notification settings saved');
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponseData>;
+      toast.error(error.response?.data?.message || 'Failed to save notification settings');
+    } finally {
+      setNotifSaving(false);
+    }
+  };
+
+  // Password change does not affect cached profile data
   const handleChangePassword = async (): Promise<void> => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast.error('Please fill all fields');
@@ -214,6 +419,7 @@ export default function ProfileSettingsPage(): JSX.Element {
     }
   };
 
+  // Email OTP flow (unchanged)
   const handleSendEmailOtp = async (): Promise<void> => {
     if (!newEmail || newEmail === email) {
       toast.error('Please enter a different valid email');
@@ -245,6 +451,7 @@ export default function ProfileSettingsPage(): JSX.Element {
         newEmail
       });
       toast.success('Email updated successfully! Please log in again with your new email.');
+      clearCache();
       setTimeout(() => {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
@@ -262,46 +469,6 @@ export default function ProfileSettingsPage(): JSX.Element {
     setNewEmail('');
     setOldEmailOtp('');
     setNewEmailOtp('');
-  };
-
-  const handleSavePreferences = async (): Promise<void> => {
-    setPrefSaving(true);
-    const startTime = Date.now();
-    try {
-      await axiosClient.put('/profile/preferences', {
-        defaultInterviewType,
-        avatarStyle,
-        language
-      });
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 1000) await new Promise(resolve => setTimeout(resolve, 1000 - elapsed));
-      toast.success('Preferences saved');
-    } catch (err) {
-      const error = err as AxiosError<ErrorResponseData>;
-      toast.error(error.response?.data?.message || 'Failed to save preferences');
-    } finally {
-      setPrefSaving(false);
-    }
-  };
-
-  const handleSaveNotifications = async (): Promise<void> => {
-    setNotifSaving(true);
-    const startTime = Date.now();
-    try {
-      await axiosClient.put('/profile/notifications', {
-        emailUpdates,
-        interviewReminders,
-        marketingEmails
-      });
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 1000) await new Promise(resolve => setTimeout(resolve, 1000 - elapsed));
-      toast.success('Notification settings saved');
-    } catch (err) {
-      const error = err as AxiosError<ErrorResponseData>;
-      toast.error(error.response?.data?.message || 'Failed to save notification settings');
-    } finally {
-      setNotifSaving(false);
-    }
   };
 
   if (loading) {

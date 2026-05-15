@@ -9280,3 +9280,441 @@ Caused by: java.lang.ClassNotFoundException: com.aiinterview.face2hire_backend.s
 2026-05-15T18:58:18.718+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
 2026-05-15T18:58:18.735+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Started Face2hireBackendApplication in 3.461 seconds (process running for 523.587)
 2026-05-15T18:58:18.740+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+2026-05-15T19:25:18.600+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat-6].[localhost].[/]     : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-15T19:25:18.602+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-15T19:25:18.622+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 15 ms
+2026-05-15T19:25:19.539+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.controller.AuthController          : Forgot password request for email: john@gmail.com
+2026-05-15T19:25:19.542+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.AuthServiceImpl        : Forgot password request for email: john@gmail.com
+2026-05-15T19:25:20.271+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.EmailServiceImpl       : Sending forgot password OTP to john@gmail.com
+2026-05-15T19:25:20.289+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.OtpServiceImpl         : OTP generated for john@gmail.com (FORGOT_PASSWORD): 264775
+2026-05-15T19:25:20.291+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.EmailServiceImpl       : otp for forgot password is:264775
+2026-05-15T19:25:25.531+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.AuthServiceImpl        : Password reset OTP sent to email: john@gmail.com
+2026-05-15T19:25:25.659+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.controller.AuthController          : Password reset OTP sent to email: john@gmail.com
+2026-05-15T19:25:39.390+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.controller.AuthController          : Forgot password OTP verification for email: john@gmail.com
+2026-05-15T19:25:39.391+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.AuthServiceImpl        : Forgot password OTP verification for email: john@gmail.com
+2026-05-15T19:25:39.402+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.OtpServiceImpl         : OTP validated successfully for john@gmail.com (FORGOT_PASSWORD)
+2026-05-15T19:25:39.403+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.OtpServiceImpl         : OTP marked as verified for john@gmail.com (FORGOT_PASSWORD)
+2026-05-15T19:25:39.404+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.AuthServiceImpl        : Forgot password OTP verified for email: john@gmail.com
+2026-05-15T19:25:39.405+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.controller.AuthController          : Forgot password OTP verified for email: john@gmail.com
+2026-05-15T19:25:51.735+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.controller.AuthController          : Password reset request for email: john@gmail.com
+2026-05-15T19:25:51.736+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.AuthServiceImpl        : Password reset attempt for email: john@gmail.com
+2026-05-15T19:25:52.427+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.OtpServiceImpl         : OTP invalidated for john@gmail.com (FORGOT_PASSWORD)
+2026-05-15T19:25:52.428+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.AuthServiceImpl        : Password reset successful for email: john@gmail.com
+2026-05-15T19:25:52.429+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.controller.AuthController          : Password reset successful for email: john@gmail.com
+2026-05-15T19:26:00.504+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-7] o.apache.tomcat.util.http.parser.Cookie  : A cookie header was received [g_state={"i_l":0,"i_ll":1773247672639,"i_b":"nilCcFlZlUnoJUEJxBBPCvpH7IQ2hcuqJKlx6QARph8","i_e":{"enable_itp_optimization":0}};] that contained an invalid cookie. That cookie will be ignored.
+ Note: further occurrences of this error will be logged at DEBUG level.
+2026-05-15T19:26:07.940+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.s.CustomOAuth2UserServiceImpl      : OAuth2 login attempt — provider: GOOGLE, email: 202217b3123@wilp.bits-pilani.ac.in
+2026-05-15T19:26:08.236+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.s.CustomOAuth2UserServiceImpl      : Returning OAuth2 user: 202217b3123@wilp.bits-pilani.ac.in via GOOGLE
+2026-05-15T19:26:08.679+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.serviceimpl.OAuth2SuccessHandler   : OAuth2 success for 202217b3123@wilp.bits-pilani.ac.in (role: INTERVIEWEE), redirecting to /interviewee/dashboard
+2026-05-15T19:26:09.908+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:26:09.911+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:26:10.063+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: 202217b3123@wilp.bits-pilani.ac.in
+2026-05-15T19:26:10.064+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:26:10.109+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:26:10.109+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:26:10.111+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: 202217b3123@wilp.bits-pilani.ac.in
+2026-05-15T19:26:10.115+05:30  INFO 17100 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:38:27.888+05:30  INFO 17100 --- [face2hire-backend] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 1 class path change (0 additions, 1 deletion, 0 modifications)
+2026-05-15T19:38:27.897+05:30  INFO 17100 --- [face2hire-backend] [Thread-62] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-15T19:38:27.918+05:30  INFO 17100 --- [face2hire-backend] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-05-15T19:38:27.929+05:30  INFO 17100 --- [face2hire-backend] [Thread-62] c.a.f.serviceimpl.OtpServiceImpl         : Shutting down OtpService...
+2026-05-15T19:38:32.934+05:30  INFO 17100 --- [face2hire-backend] [Thread-62] c.a.f.serviceimpl.OtpServiceImpl         : OtpService shutdown complete
+2026-05-15T19:38:32.938+05:30  INFO 17100 --- [face2hire-backend] [Thread-62] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-15T19:38:32.941+05:30  INFO 17100 --- [face2hire-backend] [Thread-62] com.zaxxer.hikari.HikariDataSource       : HikariPool-17 - Shutdown initiated...
+2026-05-15T19:38:32.955+05:30  INFO 17100 --- [face2hire-backend] [Thread-62] com.zaxxer.hikari.HikariDataSource       : HikariPool-17 - Shutdown completed.
+2026-05-15T19:38:33.619+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Starting Face2hireBackendApplication using Java 24.0.1 with PID 17100 (C:\Users\pmust\Desktop\face2hire-ai-interview-platform\face2hire-backend\target\classes started by pmust in C:\Users\pmust\Desktop\face2hire-ai-interview-platform\Face2Hire-backend)
+2026-05-15T19:38:33.621+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-05-15T19:38:35.616+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-15T19:38:35.708+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 85 ms. Found 3 JPA repository interfaces.
+2026-05-15T19:38:36.622+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-05-15T19:38:36.628+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-15T19:38:36.630+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-15T19:38:36.832+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 3179 ms
+2026-05-15T19:38:37.058+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-15T19:38:37.390+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-15T19:38:37.395+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-18 - Starting...
+2026-05-15T19:38:37.604+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-18 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1e1f06c0
+2026-05-15T19:38:37.605+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-18 - Start completed.
+2026-05-15T19:38:37.614+05:30  WARN 17100 --- [face2hire-backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-15T19:38:37.618+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/aiinterview?createDatabaseIfNotExist=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.3
+	Default catalog/schema: aiinterview/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-15T19:38:38.258+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-15T19:38:38.441+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-15T19:38:38.892+05:30  WARN 17100 --- [face2hire-backend] [restartedMain] o.a.c.c.C.[Tomcat-6].[localhost].[/]     : Cannot deserialize session attribute [SPRING_SECURITY_CONTEXT] for session [4BCE47A8D519195906F64C8FAC32063E]
+2026-05-15T19:38:38.898+05:30 ERROR 17100 --- [face2hire-backend] [restartedMain] o.a.catalina.session.StandardManager     : Exception loading sessions from persistent storage
+
+java.io.StreamCorruptedException: invalid type code: 00
+	at java.base/java.io.ObjectInputStream.readObject0(ObjectInputStream.java:1684) ~[na:na]
+	at java.base/java.io.ObjectInputStream$FieldValues.<init>(ObjectInputStream.java:2513) ~[na:na]
+	at java.base/java.io.ObjectInputStream.defaultReadObject(ObjectInputStream.java:627) ~[na:na]
+	at java.base/java.lang.Throwable.readObject(Throwable.java:941) ~[na:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at java.base/java.io.ObjectStreamClass.invokeReadObject(ObjectStreamClass.java:976) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readSerialData(ObjectInputStream.java:2335) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readOrdinaryObject(ObjectInputStream.java:2166) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject0(ObjectInputStream.java:1653) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject(ObjectInputStream.java:495) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject(ObjectInputStream.java:453) ~[na:na]
+	at org.apache.catalina.session.StandardSession.doReadObject(StandardSession.java:1120) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.session.StandardSession.readObjectData(StandardSession.java:821) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.session.StandardManager.load(StandardManager.java:146) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.session.StandardManager.startInternal(StandardManager.java:255) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:4443) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328) ~[na:na]
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:148) ~[na:na]
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.StandardHost.startInternal(StandardHost.java:780) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328) ~[na:na]
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:148) ~[na:na]
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.StandardEngine.startInternal(StandardEngine.java:201) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.StandardService.startInternal(StandardService.java:410) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.core.StandardServer.startInternal(StandardServer.java:864) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.apache.catalina.startup.Tomcat.start(Tomcat.java:435) ~[tomcat-embed-core-11.0.21.jar:11.0.21]
+	at org.springframework.boot.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:131) ~[spring-boot-tomcat-4.0.6.jar:4.0.6]
+	at org.springframework.boot.tomcat.TomcatWebServer.<init>(TomcatWebServer.java:110) ~[spring-boot-tomcat-4.0.6.jar:4.0.6]
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getTomcatWebServer(TomcatServletWebServerFactory.java:408) ~[spring-boot-tomcat-4.0.6.jar:4.0.6]
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getWebServer(TomcatServletWebServerFactory.java:166) ~[spring-boot-tomcat-4.0.6.jar:4.0.6]
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.createWebServer(ServletWebServerApplicationContext.java:190) ~[spring-boot-web-server-4.0.6.jar:4.0.6]
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:164) ~[spring-boot-web-server-4.0.6.jar:4.0.6]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:615) ~[spring-context-7.0.7.jar:7.0.7]
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:143) ~[spring-boot-web-server-4.0.6.jar:4.0.6]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:756) ~[spring-boot-4.0.6.jar:4.0.6]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:445) ~[spring-boot-4.0.6.jar:4.0.6]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:321) ~[spring-boot-4.0.6.jar:4.0.6]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1365) ~[spring-boot-4.0.6.jar:4.0.6]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1354) ~[spring-boot-4.0.6.jar:4.0.6]
+	at com.aiinterview.face2hire_backend.Face2hireBackendApplication.main(Face2hireBackendApplication.java:10) ~[classes/:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:52) ~[spring-boot-devtools-4.0.6.jar:4.0.6]
+
+2026-05-15T19:38:39.082+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-05-15T19:38:39.084+05:30  WARN 17100 --- [face2hire-backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-05-15T19:38:39.093+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OtpService initialized with expiry: 180 seconds, max requests: 3/hour
+2026-05-15T19:38:39.098+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OTP cleanup scheduler started
+2026-05-15T19:38:39.482+05:30  WARN 17100 --- [face2hire-backend] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-15T19:38:40.314+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-05-15T19:38:40.327+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Started Face2hireBackendApplication in 7.13 seconds (process running for 2945.178)
+2026-05-15T19:38:40.331+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+2026-05-15T19:38:43.054+05:30  INFO 17100 --- [face2hire-backend] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 1 class path change (1 addition, 0 deletions, 0 modifications)
+2026-05-15T19:38:43.058+05:30  INFO 17100 --- [face2hire-backend] [Thread-69] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-15T19:38:43.076+05:30  INFO 17100 --- [face2hire-backend] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-05-15T19:38:43.082+05:30  INFO 17100 --- [face2hire-backend] [Thread-69] c.a.f.serviceimpl.OtpServiceImpl         : Shutting down OtpService...
+2026-05-15T19:38:43.082+05:30  INFO 17100 --- [face2hire-backend] [Thread-69] c.a.f.serviceimpl.OtpServiceImpl         : OtpService shutdown complete
+2026-05-15T19:38:43.084+05:30  INFO 17100 --- [face2hire-backend] [Thread-69] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-15T19:38:43.086+05:30  INFO 17100 --- [face2hire-backend] [Thread-69] com.zaxxer.hikari.HikariDataSource       : HikariPool-18 - Shutdown initiated...
+2026-05-15T19:38:43.101+05:30  INFO 17100 --- [face2hire-backend] [Thread-69] com.zaxxer.hikari.HikariDataSource       : HikariPool-18 - Shutdown completed.
+2026-05-15T19:38:43.440+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Starting Face2hireBackendApplication using Java 24.0.1 with PID 17100 (C:\Users\pmust\Desktop\face2hire-ai-interview-platform\face2hire-backend\target\classes started by pmust in C:\Users\pmust\Desktop\face2hire-ai-interview-platform\Face2Hire-backend)
+2026-05-15T19:38:43.441+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-05-15T19:38:44.251+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-15T19:38:44.282+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 30 ms. Found 3 JPA repository interfaces.
+2026-05-15T19:38:44.467+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-05-15T19:38:44.468+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-15T19:38:44.468+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-15T19:38:44.522+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1070 ms
+2026-05-15T19:38:44.565+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-15T19:38:44.699+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-15T19:38:44.707+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-19 - Starting...
+2026-05-15T19:38:44.768+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-19 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3411230f
+2026-05-15T19:38:44.768+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-19 - Start completed.
+2026-05-15T19:38:44.772+05:30  WARN 17100 --- [face2hire-backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-15T19:38:44.775+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/aiinterview?createDatabaseIfNotExist=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.3
+	Default catalog/schema: aiinterview/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-15T19:38:45.347+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-15T19:38:45.388+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-15T19:38:45.894+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-05-15T19:38:45.895+05:30  WARN 17100 --- [face2hire-backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-05-15T19:38:45.906+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OtpService initialized with expiry: 180 seconds, max requests: 3/hour
+2026-05-15T19:38:45.909+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OTP cleanup scheduler started
+2026-05-15T19:38:46.261+05:30  WARN 17100 --- [face2hire-backend] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-15T19:38:46.994+05:30  WARN 17100 --- [face2hire-backend] [restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'org.springframework.cache.CacheManager' available: no CacheResolver specified - register a CacheManager bean or remove the @EnableCaching annotation from your configuration.
+2026-05-15T19:38:46.997+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : Shutting down OtpService...
+2026-05-15T19:38:46.998+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OtpService shutdown complete
+2026-05-15T19:38:46.999+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-15T19:38:47.001+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-19 - Shutdown initiated...
+2026-05-15T19:38:47.011+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-19 - Shutdown completed.
+2026-05-15T19:38:47.013+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2026-05-15T19:38:47.024+05:30  INFO 17100 --- [face2hire-backend] [restartedMain] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-05-15T19:38:47.038+05:30 ERROR 17100 --- [face2hire-backend] [restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+A component required a bean of type 'org.springframework.cache.CacheManager' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'org.springframework.cache.CacheManager' in your configuration.
+
+2026-05-15T19:45:27.568+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Starting Face2hireBackendApplication using Java 24.0.1 with PID 18028 (C:\Users\pmust\Desktop\face2hire-ai-interview-platform\face2hire-backend\target\classes started by pmust in C:\Users\pmust\Desktop\face2hire-ai-interview-platform\Face2Hire-backend)
+2026-05-15T19:45:27.574+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-05-15T19:45:27.659+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-05-15T19:45:27.660+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-05-15T19:45:28.764+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-15T19:45:28.846+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 70 ms. Found 3 JPA repository interfaces.
+2026-05-15T19:45:30.789+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-05-15T19:45:30.804+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-15T19:45:30.804+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-15T19:45:30.855+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 3195 ms
+2026-05-15T19:45:31.055+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-15T19:45:31.153+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-05-15T19:45:31.726+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-15T19:45:31.765+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-05-15T19:45:32.260+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3625eeb1
+2026-05-15T19:45:32.263+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-05-15T19:45:32.326+05:30  WARN 18028 --- [face2hire-backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-15T19:45:32.354+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/aiinterview?createDatabaseIfNotExist=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.3
+	Default catalog/schema: aiinterview/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-15T19:45:33.587+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-15T19:45:33.726+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-15T19:45:33.813+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-05-15T19:45:34.965+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-05-15T19:45:34.966+05:30  WARN 18028 --- [face2hire-backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-05-15T19:45:34.991+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OtpService initialized with expiry: 180 seconds, max requests: 3/hour
+2026-05-15T19:45:34.992+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OTP cleanup scheduler started
+2026-05-15T19:45:35.888+05:30  WARN 18028 --- [face2hire-backend] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-15T19:45:36.785+05:30  WARN 18028 --- [face2hire-backend] [restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'org.springframework.cache.CacheManager' available: no CacheResolver specified - register a CacheManager bean or remove the @EnableCaching annotation from your configuration.
+2026-05-15T19:45:36.800+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : Shutting down OtpService...
+2026-05-15T19:45:36.805+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OtpService shutdown complete
+2026-05-15T19:45:36.811+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-15T19:45:36.836+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-05-15T19:45:36.879+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-05-15T19:45:36.891+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2026-05-15T19:45:36.934+05:30  INFO 18028 --- [face2hire-backend] [restartedMain] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-05-15T19:45:37.052+05:30 ERROR 18028 --- [face2hire-backend] [restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+A component required a bean of type 'org.springframework.cache.CacheManager' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'org.springframework.cache.CacheManager' in your configuration.
+
+2026-05-15T19:46:34.790+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Starting Face2hireBackendApplication using Java 24.0.1 with PID 19788 (C:\Users\pmust\Desktop\face2hire-ai-interview-platform\face2hire-backend\target\classes started by pmust in C:\Users\pmust\Desktop\face2hire-ai-interview-platform\Face2Hire-backend)
+2026-05-15T19:46:34.792+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-05-15T19:46:34.833+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-05-15T19:46:34.833+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-05-15T19:46:35.630+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-15T19:46:35.695+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 55 ms. Found 3 JPA repository interfaces.
+2026-05-15T19:46:36.276+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-05-15T19:46:36.297+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-15T19:46:36.299+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-15T19:46:36.360+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1526 ms
+2026-05-15T19:46:36.485+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-15T19:46:36.544+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-05-15T19:46:37.020+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-15T19:46:37.053+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-05-15T19:46:37.411+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@623f577e
+2026-05-15T19:46:37.414+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-05-15T19:46:37.475+05:30  WARN 19788 --- [face2hire-backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-15T19:46:37.493+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/aiinterview?createDatabaseIfNotExist=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.3
+	Default catalog/schema: aiinterview/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-15T19:46:38.529+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-15T19:46:38.602+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-15T19:46:38.668+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-05-15T19:46:39.703+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-05-15T19:46:39.703+05:30  WARN 19788 --- [face2hire-backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-05-15T19:46:39.730+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OtpService initialized with expiry: 180 seconds, max requests: 3/hour
+2026-05-15T19:46:39.731+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OTP cleanup scheduler started
+2026-05-15T19:46:40.410+05:30  WARN 19788 --- [face2hire-backend] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-15T19:46:40.971+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-05-15T19:46:40.981+05:30  INFO 19788 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Started Face2hireBackendApplication in 6.62 seconds (process running for 7.373)
+2026-05-15T19:46:53.821+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-15T19:46:53.822+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-15T19:46:53.824+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2026-05-15T19:46:54.417+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.controller.AuthController          : Login request for email: john@gmail.com
+2026-05-15T19:46:54.417+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.AuthServiceImpl        : Login attempt for email: john@gmail.com
+2026-05-15T19:46:55.355+05:30  WARN 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.AuthServiceImpl        : Login failed – invalid credentials for email: john@gmail.com
+2026-05-15T19:46:55.452+05:30  WARN 19788 --- [face2hire-backend] [http-nio-8080-exec-4] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [com.aiinterview.face2hire_backend.exception.InvalidCredentialsException: Invalid email or password]
+2026-05-15T19:46:59.553+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.controller.AuthController          : Login request for email: john@gmail.com
+2026-05-15T19:46:59.553+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.serviceimpl.AuthServiceImpl        : Login attempt for email: john@gmail.com
+2026-05-15T19:47:00.158+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.serviceimpl.AuthServiceImpl        : Login successful for email: john@gmail.com, role: INTERVIEWEE
+2026-05-15T19:47:00.162+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.controller.AuthController          : Login successful for email: john@gmail.com
+2026-05-15T19:47:00.651+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-5] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:47:00.653+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-5] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:47:00.773+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-5] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: john@gmail.com
+2026-05-15T19:47:00.773+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-5] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:47:00.843+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:47:00.845+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:47:00.846+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: john@gmail.com
+2026-05-15T19:47:00.847+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:47:19.640+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:47:19.642+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:47:19.643+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: john@gmail.com
+2026-05-15T19:47:19.644+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:47:19.695+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:47:19.697+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:47:19.700+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: john@gmail.com
+2026-05-15T19:47:19.701+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:47:19.725+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-9] c.a.f.controller.ProfileController       : Received request to get user preferences
+2026-05-15T19:47:19.725+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-9] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching preferences for current user
+2026-05-15T19:47:19.728+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-9] c.a.f.serviceimpl.ProfileServiceImpl     : Preferences retrieved for user: john@gmail.com
+2026-05-15T19:47:19.730+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-9] c.a.f.controller.ProfileController       : Preferences retrieved successfully
+2026-05-15T19:47:19.774+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-10] c.a.f.controller.ProfileController       : Received request to get user preferences
+2026-05-15T19:47:19.775+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-10] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching preferences for current user
+2026-05-15T19:47:19.776+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-10] c.a.f.serviceimpl.ProfileServiceImpl     : Preferences retrieved for user: john@gmail.com
+2026-05-15T19:47:19.777+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-10] c.a.f.controller.ProfileController       : Preferences retrieved successfully
+2026-05-15T19:47:19.795+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.controller.ProfileController       : Received request to get notification settings
+2026-05-15T19:47:19.797+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching notification settings for current user
+2026-05-15T19:47:19.799+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.ProfileServiceImpl     : Notification settings retrieved for user: john@gmail.com
+2026-05-15T19:47:19.800+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.controller.ProfileController       : Notification settings retrieved successfully
+2026-05-15T19:47:19.836+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.controller.ProfileController       : Received request to get notification settings
+2026-05-15T19:47:19.837+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching notification settings for current user
+2026-05-15T19:47:19.838+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.serviceimpl.ProfileServiceImpl     : Notification settings retrieved for user: john@gmail.com
+2026-05-15T19:47:19.839+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.controller.ProfileController       : Notification settings retrieved successfully
+2026-05-15T19:48:01.773+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.controller.ProfileController       : Received request to update profile: fullName=john, phoneNumber=987654327
+2026-05-15T19:48:01.774+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.ProfileServiceImpl     : Updating profile for current user – fullName: john, phoneNumber: 987654327
+2026-05-15T19:48:02.009+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.ProfileServiceImpl     : Profile updated successfully for user: john@gmail.com
+2026-05-15T19:48:02.010+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.controller.ProfileController       : Profile updated successfully
+2026-05-15T19:48:02.090+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:48:02.090+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:48:02.094+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: john@gmail.com
+2026-05-15T19:48:02.095+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:48:02.128+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-7] c.a.f.controller.ProfileController       : Received request to get user preferences
+2026-05-15T19:48:02.128+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-7] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching preferences for current user
+2026-05-15T19:48:02.130+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-7] c.a.f.serviceimpl.ProfileServiceImpl     : Preferences retrieved for user: john@gmail.com
+2026-05-15T19:48:02.130+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-7] c.a.f.controller.ProfileController       : Preferences retrieved successfully
+2026-05-15T19:48:02.166+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.controller.ProfileController       : Received request to get notification settings
+2026-05-15T19:48:02.167+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching notification settings for current user
+2026-05-15T19:48:02.167+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.serviceimpl.ProfileServiceImpl     : Notification settings retrieved for user: john@gmail.com
+2026-05-15T19:48:02.167+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.controller.ProfileController       : Notification settings retrieved successfully
+2026-05-15T19:53:53.122+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-10] c.a.f.controller.AuthController          : Login request for email: john@gmail.com
+2026-05-15T19:53:53.122+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-10] c.a.f.serviceimpl.AuthServiceImpl        : Login attempt for email: john@gmail.com
+2026-05-15T19:53:53.349+05:30  WARN 19788 --- [face2hire-backend] [http-nio-8080-exec-10] c.a.f.serviceimpl.AuthServiceImpl        : Login failed – invalid credentials for email: john@gmail.com
+2026-05-15T19:53:53.354+05:30  WARN 19788 --- [face2hire-backend] [http-nio-8080-exec-10] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [com.aiinterview.face2hire_backend.exception.InvalidCredentialsException: Invalid email or password]
+2026-05-15T19:53:55.772+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.controller.AuthController          : Login request for email: john@gmail.com
+2026-05-15T19:53:55.774+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.AuthServiceImpl        : Login attempt for email: john@gmail.com
+2026-05-15T19:53:56.001+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.AuthServiceImpl        : Login successful for email: john@gmail.com, role: INTERVIEWEE
+2026-05-15T19:53:56.001+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.controller.AuthController          : Login successful for email: john@gmail.com
+2026-05-15T19:53:56.178+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:53:56.179+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:53:56.180+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: john@gmail.com
+2026-05-15T19:53:56.180+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:53:56.206+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-5] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:53:56.208+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-5] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:53:56.210+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-5] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: john@gmail.com
+2026-05-15T19:53:56.211+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-5] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:54:03.190+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:54:03.192+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:54:03.194+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: john@gmail.com
+2026-05-15T19:54:03.194+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-2] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:54:03.223+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:54:03.226+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:54:03.228+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: john@gmail.com
+2026-05-15T19:54:03.229+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:54:03.259+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-7] c.a.f.controller.ProfileController       : Received request to get user preferences
+2026-05-15T19:54:03.260+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-7] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching preferences for current user
+2026-05-15T19:54:03.260+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-7] c.a.f.serviceimpl.ProfileServiceImpl     : Preferences retrieved for user: john@gmail.com
+2026-05-15T19:54:03.260+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-7] c.a.f.controller.ProfileController       : Preferences retrieved successfully
+2026-05-15T19:54:03.291+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.controller.ProfileController       : Received request to get user preferences
+2026-05-15T19:54:03.291+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching preferences for current user
+2026-05-15T19:54:03.293+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.serviceimpl.ProfileServiceImpl     : Preferences retrieved for user: john@gmail.com
+2026-05-15T19:54:03.293+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.controller.ProfileController       : Preferences retrieved successfully
+2026-05-15T19:54:03.294+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-9] c.a.f.controller.ProfileController       : Received request to get notification settings
+2026-05-15T19:54:03.295+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-9] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching notification settings for current user
+2026-05-15T19:54:03.295+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-9] c.a.f.serviceimpl.ProfileServiceImpl     : Notification settings retrieved for user: john@gmail.com
+2026-05-15T19:54:03.295+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-9] c.a.f.controller.ProfileController       : Notification settings retrieved successfully
+2026-05-15T19:54:03.324+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.controller.ProfileController       : Received request to get notification settings
+2026-05-15T19:54:03.324+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching notification settings for current user
+2026-05-15T19:54:03.325+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.serviceimpl.ProfileServiceImpl     : Notification settings retrieved for user: john@gmail.com
+2026-05-15T19:54:03.325+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.controller.ProfileController       : Notification settings retrieved successfully
+2026-05-15T19:54:55.624+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-10] c.a.f.controller.ProfileController       : Received request to update profile: fullName=johnp, phoneNumber=987654327
+2026-05-15T19:54:55.625+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-10] c.a.f.serviceimpl.ProfileServiceImpl     : Updating profile for current user – fullName: johnp, phoneNumber: 987654327
+2026-05-15T19:54:55.646+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-10] c.a.f.serviceimpl.ProfileServiceImpl     : Profile updated successfully for user: john@gmail.com
+2026-05-15T19:54:55.647+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-10] c.a.f.controller.ProfileController       : Profile updated successfully
+2026-05-15T19:54:55.720+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:54:55.721+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:54:55.724+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: john@gmail.com
+2026-05-15T19:54:55.724+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-4] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:54:55.779+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.controller.ProfileController       : Received request to get user preferences
+2026-05-15T19:54:55.780+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching preferences for current user
+2026-05-15T19:54:55.780+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.serviceimpl.ProfileServiceImpl     : Preferences retrieved for user: john@gmail.com
+2026-05-15T19:54:55.780+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.controller.ProfileController       : Preferences retrieved successfully
+2026-05-15T19:54:55.834+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-5] c.a.f.controller.ProfileController       : Received request to get notification settings
+2026-05-15T19:54:55.836+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-5] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching notification settings for current user
+2026-05-15T19:54:55.837+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-5] c.a.f.serviceimpl.ProfileServiceImpl     : Notification settings retrieved for user: john@gmail.com
+2026-05-15T19:54:55.837+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-5] c.a.f.controller.ProfileController       : Notification settings retrieved successfully
+2026-05-15T19:55:23.514+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.controller.AuthController          : Login request for email: john@gmail.com
+2026-05-15T19:55:23.514+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.AuthServiceImpl        : Login attempt for email: john@gmail.com
+2026-05-15T19:55:23.732+05:30  WARN 19788 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.AuthServiceImpl        : Login failed – invalid credentials for email: john@gmail.com
+2026-05-15T19:55:23.737+05:30  WARN 19788 --- [face2hire-backend] [http-nio-8080-exec-6] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [com.aiinterview.face2hire_backend.exception.InvalidCredentialsException: Invalid email or password]
+2026-05-15T19:55:25.617+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-7] c.a.f.controller.AuthController          : Login request for email: john@gmail.com
+2026-05-15T19:55:25.618+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-7] c.a.f.serviceimpl.AuthServiceImpl        : Login attempt for email: john@gmail.com
+2026-05-15T19:55:25.843+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-7] c.a.f.serviceimpl.AuthServiceImpl        : Login successful for email: john@gmail.com, role: INTERVIEWEE
+2026-05-15T19:55:25.845+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-7] c.a.f.controller.AuthController          : Login successful for email: john@gmail.com
+2026-05-15T19:55:25.999+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:55:25.999+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:55:26.000+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: john@gmail.com
+2026-05-15T19:55:26.001+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-8] c.a.f.controller.ProfileController       : Profile retrieved successfully
+2026-05-15T19:55:26.028+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-9] c.a.f.controller.ProfileController       : Received request to get user profile
+2026-05-15T19:55:26.029+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-9] c.a.f.serviceimpl.ProfileServiceImpl     : Fetching profile for current user
+2026-05-15T19:55:26.029+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-9] c.a.f.serviceimpl.ProfileServiceImpl     : Profile retrieved for user: john@gmail.com
+2026-05-15T19:55:26.029+05:30  INFO 19788 --- [face2hire-backend] [http-nio-8080-exec-9] c.a.f.controller.ProfileController       : Profile retrieved successfully
