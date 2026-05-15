@@ -3,14 +3,16 @@ package com.aiinterview.face2hire_backend.serviceimpl;
 import com.aiinterview.face2hire_backend.entity.AuthProvider;
 import com.aiinterview.face2hire_backend.entity.Role;
 import com.aiinterview.face2hire_backend.entity.User;
+import com.aiinterview.face2hire_backend.logging.AppLogger;
+import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.UserRepository;
 import com.aiinterview.face2hire_backend.service.DashboardPathResolver;
 import com.aiinterview.face2hire_backend.service.JwtService;
 import com.aiinterview.face2hire_backend.service.OAuth2UserAttributeMapper;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -25,13 +27,14 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final Map<AuthProvider, OAuth2UserAttributeMapper> attributeMappers;
     private final Map<Role, DashboardPathResolver> dashboardResolvers;
+    private final AppLoggerFactory loggerFactory;
+    private AppLogger log;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -100,5 +103,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 email, user.getRole(), dashboardPath);
 
         response.sendRedirect(redirectUrl);
+    }
+
+    @PostConstruct
+    public void init() {
+        this.log = loggerFactory.getLogger(getClass());
     }
 }

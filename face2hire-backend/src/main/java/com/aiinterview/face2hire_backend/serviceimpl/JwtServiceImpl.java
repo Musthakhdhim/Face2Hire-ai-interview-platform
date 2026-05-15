@@ -1,6 +1,8 @@
 package com.aiinterview.face2hire_backend.serviceimpl;
 
 import com.aiinterview.face2hire_backend.entity.User;
+import com.aiinterview.face2hire_backend.logging.AppLogger;
+import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.UserRepository;
 import com.aiinterview.face2hire_backend.security.CustomUserDetails;
 import com.aiinterview.face2hire_backend.service.JwtService;
@@ -8,8 +10,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,7 +29,6 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class JwtServiceImpl implements JwtService {
 
@@ -41,6 +42,8 @@ public class JwtServiceImpl implements JwtService {
     private long refreshExpirationMs;
 
     private final UserRepository userRepository;
+    private final AppLoggerFactory loggerFactory;
+    private AppLogger log;
 
     @Override
     public String generateAccessToken(User user) {
@@ -168,6 +171,11 @@ public class JwtServiceImpl implements JwtService {
             }
         }
         return null;
+    }
+
+    @PostConstruct
+    public void init() {
+        this.log = loggerFactory.getLogger(getClass());
     }
 
 }

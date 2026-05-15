@@ -1,13 +1,15 @@
 package com.aiinterview.face2hire_backend.filter;
 
+import com.aiinterview.face2hire_backend.logging.AppLogger;
+import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.service.JwtService;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,11 +22,12 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final AppLoggerFactory loggerFactory;
+    private AppLogger log;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -98,5 +101,10 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         return null;
+    }
+
+    @PostConstruct
+    public void init() {
+        this.log = loggerFactory.getLogger(getClass());
     }
 }

@@ -1,7 +1,9 @@
 package com.aiinterview.face2hire_backend.serviceimpl;
 
+import com.aiinterview.face2hire_backend.logging.AppLogger;
+import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.service.S3FileUploadService;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,7 +15,6 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Service
-@Slf4j
 public class S3FileUploadServiceImpl implements S3FileUploadService {
 
     @Value("${aws.s3.bucket}")
@@ -23,9 +24,12 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
     private String region;
 
     private final S3Client s3Client;
+    private final AppLoggerFactory loggerFactory;
+    private AppLogger log;
 
-    public S3FileUploadServiceImpl(S3Client s3Client) {
+    public S3FileUploadServiceImpl(S3Client s3Client, AppLoggerFactory loggerFactory) {
         this.s3Client = s3Client;
+        this.loggerFactory = loggerFactory;
     }
 
     @Override
@@ -52,5 +56,10 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
 
         return String.format("https://%s.s3.%s.amazonaws.com/%s",
                 bucketName, region, key);
+    }
+
+    @PostConstruct
+    public void init() {
+        this.log = loggerFactory.getLogger(getClass());
     }
 }
