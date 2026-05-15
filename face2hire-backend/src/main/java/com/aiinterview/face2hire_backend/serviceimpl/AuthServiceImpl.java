@@ -15,9 +15,11 @@ import com.aiinterview.face2hire_backend.entity.User;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.UserRepository;
+import com.aiinterview.face2hire_backend.security.CustomUserDetails;
 import com.aiinterview.face2hire_backend.service.AuthService;
 import com.aiinterview.face2hire_backend.service.EmailService;
 import com.aiinterview.face2hire_backend.service.JwtService;
+import com.aiinterview.face2hire_backend.service.OtpService;
 import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
@@ -51,7 +53,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final ModelMapper modelMapper;
     private final AuthenticationManager authenticationManager;
-    private final OtpServiceImpl otpServiceImpl;
+    private final OtpService otpServiceImpl;
     private final EmailService emailService;
 
     private final AppLoggerFactory loggerFactory;
@@ -150,6 +152,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
         log.info("Login successful for email: {}, role: {}", user.getEmail(), user.getRole());
 
         LoginResponse response = LoginResponse.builder()
@@ -158,6 +161,7 @@ public class AuthServiceImpl implements AuthService {
                 .role(user.getRole())
                 .userName(user.getUserName())
                 .jwt(accessToken)
+                .refreshToken(refreshToken)
                 .build();
 
         return ApiResponse.<LoginResponse>builder()
@@ -447,6 +451,31 @@ public class AuthServiceImpl implements AuthService {
                 .statusCode(HttpStatus.OK.value())
                 .time(LocalDateTime.now())
                 .build();
+    }
+
+    @Override
+    public Map<String, String> refreshAccessToken(String refreshToken) {
+        log.info("Refresh token received: {}", refreshToken);
+        try {
+            String email = jwtService.extractUsername(refreshToken);
+            log.info("Extracted email from refresh token: {}", email);
+            User user = userRepository.findByEmail(email);
+            if (user == null) {
+                log.warn("User not found for refresh token email: {}", email);
+                throw new InvalidCredentialsException("Invalid refresh token");
+            }
+            if (!jwtService.isTokenValid(refreshToken, new CustomUserDetails(user))) {
+                log.warn("Refresh token is invalid or expired for user: {}", email);
+                throw new InvalidCredentialsException("Refresh token expired or invalid");
+            }
+            String newAccessToken = jwtService.generateAccessToken(user);
+            String newRefreshToken = jwtService.generateRefreshToken(user);
+            log.info("New tokens generated for user: {}", email);
+            return Map.of("accessToken", newAccessToken, "refreshToken", newRefreshToken);
+        } catch (Exception e) {
+            log.error("Refresh token error", e);
+            throw new InvalidCredentialsException("Invalid refresh token");
+        }
     }
 
     @PostConstruct

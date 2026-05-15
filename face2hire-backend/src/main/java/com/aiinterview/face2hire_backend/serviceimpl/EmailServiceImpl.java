@@ -6,6 +6,7 @@ import com.aiinterview.face2hire_backend.entity.User;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.service.EmailService;
+import com.aiinterview.face2hire_backend.service.OtpService;
 import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
-    private final OtpServiceImpl otpServiceImpl;
+    private final OtpService otpServiceImpl;
 
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;

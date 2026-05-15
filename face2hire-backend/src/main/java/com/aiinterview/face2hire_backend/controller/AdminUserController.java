@@ -5,7 +5,7 @@ import com.aiinterview.face2hire_backend.dto.UserFilterRequest;
 import com.aiinterview.face2hire_backend.dto.UserListResponseDto;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
-import com.aiinterview.face2hire_backend.serviceimpl.AdminUserServiceImpl;
+import com.aiinterview.face2hire_backend.service.AdminUserService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/v1/admin/users")
 public class AdminUserController {
 
-    private final AdminUserServiceImpl adminService;
+    private final AdminUserService adminService;
     private final ModelMapper modelMapper;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
