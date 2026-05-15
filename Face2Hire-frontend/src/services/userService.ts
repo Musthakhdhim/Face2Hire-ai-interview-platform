@@ -24,11 +24,8 @@ export interface UserGrowthDataPoint {
 }
 
 export const userService = {
-    // Get filtered and paginated users
     getUsers: async (filter: UserFilterRequest): Promise<PaginatedResponse<UserListResponseDto>> => {
         const response = await axiosClient.post('/admin/users', filter);
-        // The backend returns ApiResponse<Page<UserListResponseDto>>
-        // Page is serialized as { content, totalElements, totalPages, size, number, ... }
         return response.data.data;
     },
 

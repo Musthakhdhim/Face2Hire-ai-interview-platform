@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef, useMemo, type JSX } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, type JSX } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axiosClient from '../services/axiosClient';
 import { updateUser } from '../store/slices/authSlice';
 import type { RootState, AppDispatch } from '../store/store';
+import type { AxiosError } from 'axios';
 import {
-  User, Mail, Phone, Lock,  ShieldCheck,
+  User, Mail, Phone, Lock, ShieldCheck,
   Camera, Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
@@ -20,7 +21,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 
-// --- Type definitions ---
 interface UserProfileData {
   fullName: string;
   userName: string;
@@ -39,6 +39,10 @@ interface NotificationsData {
   emailUpdates: boolean;
   interviewReminders: boolean;
   marketingEmails: boolean;
+}
+
+interface ErrorResponseData {
+  message?: string;
 }
 
 export default function ProfileSettingsPage(): JSX.Element {
@@ -93,16 +97,8 @@ export default function ProfileSettingsPage(): JSX.Element {
     return tabs;
   }, [showPreferences]);
 
-  // Fetch profile on mount
-  useEffect(() => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    fetchProfileData();
-  }, [token]);
-
-  const fetchProfileData = async (): Promise<void> => {
+  // Fetch profile data
+  const fetchProfileData = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       const profileRes = await axiosClient.get<{ data: UserProfileData }>('/profile');
@@ -113,29 +109,38 @@ export default function ProfileSettingsPage(): JSX.Element {
       setPhoneNumber(userData.phoneNumber || '');
       setProfileImageUrl(userData.profileImageUrl || '');
       
-      console.log(userData.profileImageUrl);
-      
       try {
         const prefsRes = await axiosClient.get<{ data: PreferencesData }>('/profile/preferences');
         const prefs = prefsRes.data.data;
         setDefaultInterviewType(prefs.defaultInterviewType || 'technical');
         setAvatarStyle(prefs.avatarStyle || 'professional');
         setLanguage(prefs.language || 'english');
-      } catch (err) { /* ignore */ }
+      } catch {
+        // ignore – preferences may not exist for all users
+      }
 
       const notifRes = await axiosClient.get<{ data: NotificationsData }>('/profile/notifications');
       const notif = notifRes.data.data;
       setEmailUpdates(notif.emailUpdates);
       setInterviewReminders(notif.interviewReminders);
       setMarketingEmails(notif.marketingEmails);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponseData>;
       toast.error(error.response?.data?.message || 'Failed to load profile');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // Upload profile photo
+  useEffect(() => {
+  if (!token) {
+    navigate('/login');
+    return;
+  }
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  fetchProfileData();
+}, [token, navigate, fetchProfileData]);
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -156,28 +161,28 @@ export default function ProfileSettingsPage(): JSX.Element {
       await axiosClient.put('/profile/update-profile', { fullName, phoneNumber, profileImageUrl: imageUrl });
       dispatch(updateUser({ profileImageUrl: imageUrl }));
       toast.success('Profile updated with new photo');
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponseData>;
       toast.error(error.response?.data?.message || 'Upload failed');
     } finally {
       setUploadProgress(false);
     }
   };
 
-  // Save profile (full name, phone number)
   const handleSaveProfile = async (): Promise<void> => {
     setProfileSaving(true);
     try {
       await axiosClient.put('/profile/update-profile', { fullName, phoneNumber, profileImageUrl });
       dispatch(updateUser({ name: fullName, phone: phoneNumber }));
       toast.success('Profile updated');
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponseData>;
       toast.error(error.response?.data?.message || 'Update failed');
     } finally {
       setProfileSaving(false);
     }
   };
 
-  // Change password
   const handleChangePassword = async (): Promise<void> => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast.error('Please fill all fields');
@@ -201,14 +206,14 @@ export default function ProfileSettingsPage(): JSX.Element {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponseData>;
       toast.error(error.response?.data?.message || 'Password change failed');
     } finally {
       setProfileSaving(false);
     }
   };
 
-  // Email update – send OTP
   const handleSendEmailOtp = async (): Promise<void> => {
     if (!newEmail || newEmail === email) {
       toast.error('Please enter a different valid email');
@@ -219,14 +224,14 @@ export default function ProfileSettingsPage(): JSX.Element {
       await axiosClient.put('/profile/update-email', { email: newEmail });
       setEmailUpdateStep('otpSent');
       toast.success('Verification codes sent to both email addresses');
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponseData>;
       toast.error(error.response?.data?.message || 'Failed to send OTPs');
     } finally {
       setEmailSending(false);
     }
   };
 
-  // Email update – verify OTP
   const handleVerifyAndUpdateEmail = async (): Promise<void> => {
     if (!oldEmailOtp || !newEmailOtp) {
       toast.error('Please enter both OTP codes');
@@ -245,7 +250,8 @@ export default function ProfileSettingsPage(): JSX.Element {
         localStorage.removeItem('user');
         window.location.href = '/login';
       }, 2000);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponseData>;
       toast.error(error.response?.data?.message || 'OTP verification failed');
       setEmailVerifying(false);
     }
@@ -258,7 +264,6 @@ export default function ProfileSettingsPage(): JSX.Element {
     setNewEmailOtp('');
   };
 
-  // Save preferences
   const handleSavePreferences = async (): Promise<void> => {
     setPrefSaving(true);
     const startTime = Date.now();
@@ -271,14 +276,14 @@ export default function ProfileSettingsPage(): JSX.Element {
       const elapsed = Date.now() - startTime;
       if (elapsed < 1000) await new Promise(resolve => setTimeout(resolve, 1000 - elapsed));
       toast.success('Preferences saved');
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponseData>;
       toast.error(error.response?.data?.message || 'Failed to save preferences');
     } finally {
       setPrefSaving(false);
     }
   };
 
-  // Save notification settings
   const handleSaveNotifications = async (): Promise<void> => {
     setNotifSaving(true);
     const startTime = Date.now();
@@ -291,7 +296,8 @@ export default function ProfileSettingsPage(): JSX.Element {
       const elapsed = Date.now() - startTime;
       if (elapsed < 1000) await new Promise(resolve => setTimeout(resolve, 1000 - elapsed));
       toast.success('Notification settings saved');
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponseData>;
       toast.error(error.response?.data?.message || 'Failed to save notification settings');
     } finally {
       setNotifSaving(false);
@@ -422,7 +428,6 @@ export default function ProfileSettingsPage(): JSX.Element {
             </CardContent>
           </Card>
 
-          {/* Email Update Card */}
           <Card className="border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -510,7 +515,6 @@ export default function ProfileSettingsPage(): JSX.Element {
           </Card>
         </TabsContent>
 
-        {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -571,7 +575,6 @@ export default function ProfileSettingsPage(): JSX.Element {
           </Card>
         </TabsContent>
 
-        {/* Preferences Tab – only for interviewee */}
         {showPreferences && (
           <TabsContent value="preferences" className="space-y-6">
             <Card className="border-0 shadow-lg">
@@ -626,7 +629,6 @@ export default function ProfileSettingsPage(): JSX.Element {
           </TabsContent>
         )}
 
-        {/* Notifications Tab */}
         <TabsContent value="notifications" className="space-y-6">
           <Card className="border-0 shadow-lg">
             <CardHeader>

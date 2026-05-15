@@ -9,6 +9,12 @@ import { Search, UserX, UserCheck, Eye, Mail, Calendar, Loader2 } from 'lucide-r
 import { toast } from 'react-toastify';
 import { userService, type PaginatedResponse } from '../../services/userService';
 import type { UserListResponseDto } from '../../types/user';
+import type { AxiosError } from 'axios';
+
+// Define the shape of the error response from our backend
+interface ErrorResponse {
+  message?: string;
+}
 
 export default function AdminUsersPage(): JSX.Element {
   // Filter state
@@ -44,7 +50,8 @@ export default function AdminUsersPage(): JSX.Element {
       setUsers(response.content);
       setTotalElements(response.totalElements);
       setTotalPages(response.totalPages);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponse>;
       toast.error(error.response?.data?.message || 'Failed to fetch users');
     } finally {
       setLoading(false);
@@ -52,14 +59,14 @@ export default function AdminUsersPage(): JSX.Element {
   }, [searchQuery, roleFilter, statusFilter, currentPage, pageSize]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  fetchUsers();
+}, [fetchUsers]);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(0); 
   };
-
 
   const handleRoleChange = (value: string) => {
     setRoleFilter(value);
@@ -78,7 +85,8 @@ export default function AdminUsersPage(): JSX.Element {
       await userService.blockUser(userId);
       toast.success('User blocked successfully');
       fetchUsers(); // refresh list
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponse>;
       toast.error(error.response?.data?.message || 'Failed to block user');
     } finally {
       setActionLoading(null);
@@ -92,7 +100,8 @@ export default function AdminUsersPage(): JSX.Element {
       await userService.unblockUser(userId);
       toast.success('User unblocked successfully');
       fetchUsers();
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponse>;
       toast.error(error.response?.data?.message || 'Failed to unblock user');
     } finally {
       setActionLoading(null);
