@@ -3,22 +3,26 @@ package com.aiinterview.face2hire_backend.serviceimpl;
 
 import com.aiinterview.face2hire_backend.entity.OtpType;
 import com.aiinterview.face2hire_backend.entity.User;
+import com.aiinterview.face2hire_backend.logging.AppLogger;
+import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.service.EmailService;
+import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
-@Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
     private final OtpServiceImpl otpServiceImpl;
+
+    private final AppLoggerFactory loggerFactory;
+    private AppLogger log;
 
     @Override
     public void sendOtpToEmail(String to, String subject, String htmlMessage)
@@ -132,5 +136,10 @@ public class EmailServiceImpl implements EmailService {
                 """.formatted(otp);
 
         sendOtpToEmail(email, subject, htmlMessage);
+    }
+
+    @PostConstruct
+    public void init() {
+        this.log = loggerFactory.getLogger(getClass());
     }
 }

@@ -7,6 +7,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +47,7 @@ public class OtpServiceImpl implements OtpService {
     private static final int MAX_CACHE_SIZE = 10000;
 
     public OtpServiceImpl() {
+
         this.otpCache = Caffeine.newBuilder()
                 .expireAfterWrite(OTP_EXPIRY_SECONDS, TimeUnit.SECONDS)
                 .maximumSize(MAX_CACHE_SIZE)
@@ -378,4 +380,5 @@ public class OtpServiceImpl implements OtpService {
 
         log.info("OtpService shutdown complete");
     }
+
 }

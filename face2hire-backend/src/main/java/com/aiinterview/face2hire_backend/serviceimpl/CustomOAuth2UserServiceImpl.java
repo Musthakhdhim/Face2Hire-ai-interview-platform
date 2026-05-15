@@ -4,10 +4,12 @@ package com.aiinterview.face2hire_backend.serviceimpl;
 import com.aiinterview.face2hire_backend.entity.AuthProvider;
 import com.aiinterview.face2hire_backend.entity.Role;
 import com.aiinterview.face2hire_backend.entity.User;
+import com.aiinterview.face2hire_backend.logging.AppLogger;
+import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.UserRepository;
 import com.aiinterview.face2hire_backend.service.OAuth2UserAttributeMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -19,11 +21,12 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
     private final Map<AuthProvider, OAuth2UserAttributeMapper> attributeMappers;
+    private final AppLoggerFactory loggerFactory;
+    private AppLogger log;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest request) throws OAuth2AuthenticationException {
@@ -89,5 +92,10 @@ public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService {
         }
 
         return oAuth2User;
+    }
+
+    @PostConstruct
+    public void init() {
+        this.log = loggerFactory.getLogger(getClass());
     }
 }
