@@ -1,6 +1,10 @@
 package com.aiinterview.face2hire_backend.serviceimpl;
 
-import com.aiinterview.face2hire_backend.dto.*;
+import com.aiinterview.face2hire_backend.dto.UserListResponseDto;
+import com.aiinterview.face2hire_backend.dto.UserFilterRequest;
+import com.aiinterview.face2hire_backend.dto.ApiResponse;
+import com.aiinterview.face2hire_backend.dto.AdminStatsDto;
+import com.aiinterview.face2hire_backend.dto.UserGrowthDto;
 import com.aiinterview.face2hire_backend.entity.User;
 import com.aiinterview.face2hire_backend.exception.UserNotFoundException;
 import com.aiinterview.face2hire_backend.repository.UserRepository;
@@ -24,13 +28,15 @@ public class AdminUserServiceImpl {
     private final UserRepository userRepository;
 
     public Page<UserListResponseDto> getFilteredUsersDto(UserFilterRequest filter) {
-        Pageable pageable = PageRequest.of(filter.getPage(), filter.getSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(filter.getPage(), filter.getSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<User> userPage = userRepository.findAll(
                 UserSpecification.filterBy(filter.getSearch(), filter.getRole(), filter.getIsActive()),
                 pageable
         );
 
-        userPage.getContent().forEach(user -> System.out.println("User: " + user.getEmail() + " isActive: " + user.isActive()));
+        userPage.getContent().forEach(user ->
+                System.out.println("User: " + user.getEmail() + " isActive: " + user.isActive()));
 
         return userPage.map(user -> UserListResponseDto.builder()
                 .id(user.getId())

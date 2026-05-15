@@ -9,13 +9,14 @@ import java.io.IOException;
 
 public class ErrorResponseUtil {
 
-    private static final ObjectMapper objectMapper=new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static void writeErrorResponse(HttpServletResponse response, HttpStatus status, String message) throws IOException {
+    public static void writeErrorResponse(
+            HttpServletResponse response, HttpStatus status, String message)
+            throws IOException {
 
-        ApiResponse<?> apiResponse=ApiResponse.builder()
+        ApiResponse<?> apiResponse = ApiResponse.builder()
                 .statusCode(status.value())
-//                .time(LocalDateTime.now())
                 .message(message)
                 .success(false)
                 .data(null)

@@ -21,7 +21,8 @@ public class EmailServiceImpl implements EmailService {
     private final OtpServiceImpl otpServiceImpl;
 
     @Override
-    public void sendOtpToEmail(String to, String subject, String htmlMessage) throws MessagingException {
+    public void sendOtpToEmail(String to, String subject, String htmlMessage)
+            throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         helper.setTo(to);
@@ -56,12 +57,17 @@ public class EmailServiceImpl implements EmailService {
                 + "<body style=\"font-family: Arial, sans-serif;\">"
                 + "<div style=\"background-color: #f5f5f5; padding: 20px;\">"
                 + "<h2 style=\"color: #333;\">Welcome to InterviewAI!</h2>"
-                + "<p style=\"font-size: 16px;\">Please enter the verification code below to complete your registration:</p>"
-                + "<div style=\"background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1);\">"
+                + "<p style=\"font-size: 16px;\">Please enter the verification code " +
+                "below to complete " +
+                "your registration:</p>"
+                + "<div style=\"background-color: #fff; padding: 20px; border-radius: 5px; " +
+                "box-shadow: 0 0 10px rgba(0,0,0,0.1);\">"
                 + "<h3 style=\"color: #333;\">Your Verification Code:</h3>"
-                + "<p style=\"font-size: 24px; font-weight: bold; color: #6366F1;\">" + verificationCode + "</p>"
+                + "<p style=\"font-size: 24px; font-weight: bold; color: #6366F1;\">"
+                + verificationCode + "</p>"
                 + "</div>"
-                + "<p style=\"font-size: 12px; color: #888; margin-top: 20px;\">This code expires in 3 minutes.</p>"
+                + "<p style=\"font-size: 12px; color: #888; margin-top: 20px;\">" +
+                "This code expires in 3 minutes.</p>"
                 + "</div>"
                 + "</body>"
                 + "</html>";
@@ -79,21 +85,22 @@ public class EmailServiceImpl implements EmailService {
         log.info("otp for forgot password is:{}", otp);
 
         String htmlMessage = """
-        <html>
-        <body style="font-family: Arial, sans-serif;">
-            <div style="background-color: #f5f5f5; padding: 20px;">
-                <h2 style="color: #333;">Password Reset Request</h2>
-                <p style="font-size: 16px;">You requested to reset your password. Use the OTP below:</p>
-                <div style="background-color: #fff; padding: 20px; border-radius: 5px;">
-                    <h3 style="color: #333;">Your OTP Code:</h3>
-                    <p style="font-size: 28px; font-weight: bold; color: #6366F1;">%s</p>
-                </div>
-                <p style="font-size: 12px; color: #888;">This OTP expires in 3 minutes.</p>
-                <p>If you didn't request this, please ignore this email.</p>
-            </div>
-        </body>
-        </html>
-        """.formatted(otp);
+                <html>
+                <body style="font-family: Arial, sans-serif;">
+                    <div style="background-color: #f5f5f5; padding: 20px;">
+                        <h2 style="color: #333;">Password Reset Request</h2>
+                        <p style="font-size: 16px;">You requested to reset your password. 
+                        Use the OTP below:</p>
+                        <div style="background-color: #fff; padding: 20px; border-radius: 5px;">
+                            <h3 style="color: #333;">Your OTP Code:</h3>
+                            <p style="font-size: 28px; font-weight: bold; color: #6366F1;">%s</p>
+                        </div>
+                        <p style="font-size: 12px; color: #888;">This OTP expires in 3 minutes.</p>
+                        <p>If you didn't request this, please ignore this email.</p>
+                    </div>
+                </body>
+                </html>
+                """.formatted(otp);
 
         sendOtpToEmail(user.getEmail(), subject, htmlMessage);
     }
@@ -107,21 +114,22 @@ public class EmailServiceImpl implements EmailService {
         log.info("otp for update email is:{}", otp);
 
         String htmlMessage = """
-        <html>
-        <body style="font-family: Arial, sans-serif;">
-            <div style="background-color: #f5f5f5; padding: 20px;">
-                <h2 style="color: #333;">Email update Request</h2>
-                <p style="font-size: 16px;">You requested to update  your email. Use the OTP below:</p>
-                <div style="background-color: #fff; padding: 20px; border-radius: 5px;">
-                    <h3 style="color: #333;">Your OTP Code:</h3>
-                    <p style="font-size: 28px; font-weight: bold; color: #6366F1;">%s</p>
-                </div>
-                <p style="font-size: 12px; color: #888;">This OTP expires in 3 minutes.</p>
-                <p>If you didn't request this, please ignore this email.</p>
-            </div>
-        </body>
-        </html>
-        """.formatted(otp);
+                <html>
+                <body style="font-family: Arial, sans-serif;">
+                    <div style="background-color: #f5f5f5; padding: 20px;">
+                        <h2 style="color: #333;">Email update Request</h2>
+                        <p style="font-size: 16px;">You requested to update  your email.
+                         Use the OTP below:</p>
+                        <div style="background-color: #fff; padding: 20px; border-radius: 5px;">
+                            <h3 style="color: #333;">Your OTP Code:</h3>
+                            <p style="font-size: 28px; font-weight: bold; color: #6366F1;">%s</p>
+                        </div>
+                        <p style="font-size: 12px; color: #888;">This OTP expires in 3 minutes.</p>
+                        <p>If you didn't request this, please ignore this email.</p>
+                    </div>
+                </body>
+                </html>
+                """.formatted(otp);
 
         sendOtpToEmail(email, subject, htmlMessage);
     }

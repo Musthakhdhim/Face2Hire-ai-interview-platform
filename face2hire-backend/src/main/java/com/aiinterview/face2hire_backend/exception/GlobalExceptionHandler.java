@@ -17,13 +17,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleUserNotFound(UserNotFoundException ex) {
-        ApiResponse response=
+        ApiResponse response =
                 ApiResponse.builder()
                         .success(false)
                         .message(ex.getMessage())
                         .data(null)
                         .statusCode(HttpStatus.NOT_FOUND.value())
-//                .time(LocalDateTime.now())
                         .build();
 
         return new ResponseEntity<>(response,HttpStatus.NOT_FOUND);
@@ -31,12 +30,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ApiResponse<?>> handleInvalidCredentials(InvalidCredentialsException ex) {
-        ApiResponse response= ApiResponse.builder()
+        ApiResponse response = ApiResponse.builder()
                 .success(false)
                 .message(ex.getMessage())
                 .data(null)
                 .statusCode(HttpStatus.UNAUTHORIZED.value())
-//                .time(LocalDateTime.now())
                 .build();
 
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
@@ -44,7 +42,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<?>> handleGeneric(Exception ex) {
-        ApiResponse response= ApiResponse.builder()
+        ApiResponse response = ApiResponse.builder()
                 .success(false)
                 .message(ex.getMessage())
                 .data(null)
@@ -55,9 +53,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<?>> handleAlreadyExistsException(AlreadyExistsException ex){
+    public ResponseEntity<ApiResponse<?>> handleAlreadyExistsException(AlreadyExistsException ex) {
         ApiResponse response
-                =ApiResponse.builder()
+                = ApiResponse.builder()
                 .data(null)
                 .statusCode(HttpStatus.CONFLICT.value())
                 .success(false)
@@ -69,15 +67,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<?>> handleMethodArgumentNotValidException(
-            MethodArgumentNotValidException ex){
+            MethodArgumentNotValidException ex) {
 
-        List<String> errors=ex.getBindingResult()
+        List<String> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(error->error.getDefaultMessage())
+                .map(error -> error.getDefaultMessage())
                 .toList();
 
-        ApiResponse response=
+        ApiResponse response =
                 ApiResponse.builder()
                         .data(errors)
                         .success(false)
@@ -89,10 +87,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(TooManyRequestException.class)
-    public ResponseEntity<ApiResponse<?>> handleTooManyRequestException(TooManyRequestException ex){
-        ApiResponse response= ApiResponse.builder()
+    public ResponseEntity<ApiResponse<?>> handleTooManyRequestException(TooManyRequestException ex) {
+        ApiResponse response = ApiResponse.builder()
                 .success(false)
-                .message("too many request, wait for sometuime")
+                .message("too many request, wait for sometime")
                 .data(ex.getMessage())
                 .statusCode(HttpStatus.TOO_MANY_REQUESTS.value())
                 .build();
@@ -101,8 +99,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AccountLockedException.class)
-    public ResponseEntity<ApiResponse<?>> handleAccountLockedException(AccountLockedException ex){
-        ApiResponse apiResponse=ApiResponse.builder()
+    public ResponseEntity<ApiResponse<?>> handleAccountLockedException(AccountLockedException ex) {
+        ApiResponse apiResponse = ApiResponse.builder()
                 .success(false)
                 .message(ex.getMessage())
                 .data(null)
@@ -113,8 +111,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(PasswordNotMatchException.class)
-    public ResponseEntity<ApiResponse<?>> handlePasswordNotMatchException(PasswordNotMatchException ex){
-        ApiResponse<?> apiResponse=ApiResponse.builder()
+    public ResponseEntity<ApiResponse<?>> handlePasswordNotMatchException(PasswordNotMatchException ex) {
+        ApiResponse<?> apiResponse = ApiResponse.builder()
                 .success(false)
                 .message(ex.getMessage())
                 .data(null)
@@ -125,8 +123,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(SamePasswordException.class)
-    public ResponseEntity<ApiResponse<?>> handleSamePasswordException(SamePasswordException ex){
-        ApiResponse<?> apiResponse=ApiResponse.builder()
+    public ResponseEntity<ApiResponse<?>> handleSamePasswordException(SamePasswordException ex) {
+        ApiResponse<?> apiResponse = ApiResponse.builder()
                 .success(false)
                 .message(ex.getMessage())
                 .data(null)
@@ -137,10 +135,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(JwtException.class)
-    public ResponseEntity<ApiResponse<?>> handleJwtException(JwtException ex){
-        ApiResponse apiResponse=ApiResponse.builder()
+    public ResponseEntity<ApiResponse<?>> handleJwtException(JwtException ex) {
+        ApiResponse apiResponse = ApiResponse.builder()
                 .success(false)
-                .message("jwt exception: "+ex.getMessage())
+                .message("jwt exception: " + ex.getMessage())
                 .statusCode(HttpStatus.UNAUTHORIZED.value())
                 .data(null)
                 .build();
@@ -149,10 +147,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ApiResponse<?>> handleAuthenticationException(AuthenticationException ex){
-        ApiResponse apiResponse=ApiResponse.builder()
+    public ResponseEntity<ApiResponse<?>> handleAuthenticationException(AuthenticationException ex) {
+        ApiResponse apiResponse = ApiResponse.builder()
                 .success(false)
-                .message("Authentication failed: "+ex.getMessage())
+                .message("Authentication failed: " + ex.getMessage())
                 .statusCode(HttpStatus.UNAUTHORIZED.value())
                 .data(null)
                 .build();
@@ -161,10 +159,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiResponse<?>> handleAccessDeniedException(AccessDeniedException ex){
-        ApiResponse apiResponse=ApiResponse.builder()
+    public ResponseEntity<ApiResponse<?>> handleAccessDeniedException(AccessDeniedException ex) {
+        ApiResponse apiResponse = ApiResponse.builder()
                 .success(false)
-                .message("you are not allowed to access this: "+ex.getMessage())
+                .message("you are not allowed to access this: " + ex.getMessage())
                 .statusCode(HttpStatus.FORBIDDEN.value())
                 .data(null)
                 .build();

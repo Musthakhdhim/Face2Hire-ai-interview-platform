@@ -1,6 +1,13 @@
 package com.aiinterview.face2hire_backend.controller;
 
-import com.aiinterview.face2hire_backend.dto.*;
+import com.aiinterview.face2hire_backend.dto.RegisterRequestDto;
+import com.aiinterview.face2hire_backend.dto.ApiResponse;
+import com.aiinterview.face2hire_backend.dto.LoginResponse;
+import com.aiinterview.face2hire_backend.dto.LoginRequestDto;
+import com.aiinterview.face2hire_backend.dto.VerifyOtpRequest;
+import com.aiinterview.face2hire_backend.dto.ForgotPasswordRequest;
+import com.aiinterview.face2hire_backend.dto.ResetPasswordDto;
+import com.aiinterview.face2hire_backend.dto.ResendOtpRequest;
 import com.aiinterview.face2hire_backend.exception.AccountNotVerifiedException;
 import com.aiinterview.face2hire_backend.exception.OtpNotValidException;
 import com.aiinterview.face2hire_backend.service.AuthService;

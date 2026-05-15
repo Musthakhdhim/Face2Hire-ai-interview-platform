@@ -12,7 +12,9 @@ import java.util.List;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
-    User findByUserName(@NotBlank(message = "username should not be blank") @Size(min = 5, max = 20, message = "fullname should be of 5-20 character in length") String userName);
+    User findByUserName(@NotBlank(message = "username should not be blank")
+                        @Size(min = 5, max = 20,
+                    message = "full name should be of 5-20 character in length") String userName);
 
     User findByEmail(String email);
 
@@ -21,7 +23,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     long countByIsActive(boolean isActive);
 
-    @Query("SELECT FUNCTION('DATE_FORMAT', u.createdAt, '%Y-%m') as month, COUNT(u) as count FROM User u GROUP BY FUNCTION('DATE_FORMAT', u.createdAt, '%Y-%m') ORDER BY month")
+    @Query("SELECT FUNCTION('DATE_FORMAT', u.createdAt, '%Y-%m') as month, COUNT(u) as count FROM User u " +
+            "GROUP BY FUNCTION('DATE_FORMAT', u.createdAt, '%Y-%m') ORDER BY month")
     List<Object[]> countUsersByMonth();
 
 }
