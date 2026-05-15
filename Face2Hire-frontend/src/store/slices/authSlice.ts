@@ -3,6 +3,20 @@ import axiosClient from '../../services/axiosClient';
 import API from '../../services/endpoints';
 import type { AxiosError } from 'axios';
 
+interface RegisterRequest {
+  userName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: string;
+  acceptTermsAndConditions: boolean;
+}
+
+interface ErrorResponse {
+  message?: string;
+  data?: string[] | Record<string, unknown>;
+}
+
 export interface User {
   id: number | null;
   name: string;
@@ -33,20 +47,24 @@ const initialState: AuthState = {
 };
 
 const getErrorMessage = (error: unknown): string => {
-  if (!(error as any)?.response) return 'Network error: Unable to connect to server';
-  const { data } = (error as AxiosError).response!;
-  if (data && typeof data === 'object') {
-    if (Array.isArray((data as any).data) && (data as any).data.length > 0) {
-      return (data as any).data.join(', ');
+  if (!error || typeof error !== 'object') return 'An unexpected error occurred';
+  
+  const axiosError = error as AxiosError<ErrorResponse>;
+  if (axiosError.response?.data) {
+    const data = axiosError.response.data;
+    if (Array.isArray(data.data) && data.data.length > 0) {
+      return data.data.join(', ');
     }
-    if ((data as any).message) return (data as any).message;
+    if (data.message) {
+      return data.message;
+    }
   }
   return 'An unexpected error occurred';
 };
 
 export const register = createAsyncThunk(
   'auth/register',
-  async (userData: any, { rejectWithValue }) => {
+  async (userData: RegisterRequest, { rejectWithValue }) => {
     try {
       const response = await axiosClient.post(API.AUTH.REGISTER, userData);
       return response.data;

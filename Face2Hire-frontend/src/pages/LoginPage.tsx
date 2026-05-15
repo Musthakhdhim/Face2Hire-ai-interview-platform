@@ -45,7 +45,7 @@ export default function LoginPage(): JSX.Element {
   };
 
   const handleSocialLogin = (provider: string): void => {
-    window.location.href = `http://localhost:8080/oauth2/authorization/${provider.toLowerCase()}`;
+    window.location.href = `${import.meta.env.VITE_GOOGLE_URL}/${provider.toLowerCase()}`;
   };
 
   return (

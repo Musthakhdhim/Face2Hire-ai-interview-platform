@@ -4942,3 +4942,68 @@ Caused by: java.lang.ClassNotFoundException: com.aiinterview.face2hire_backend.s
 2026-05-15T12:21:42.567+05:30  INFO 20124 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
 2026-05-15T12:21:42.572+05:30  INFO 20124 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Started Face2hireBackendApplication in 10.04 seconds (process running for 9001.272)
 2026-05-15T12:21:42.575+05:30  INFO 20124 --- [face2hire-backend] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+2026-05-15T15:27:41.078+05:30  INFO 20124 --- [face2hire-backend] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-15T15:27:41.088+05:30  INFO 20124 --- [face2hire-backend] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-05-15T15:27:41.100+05:30  INFO 20124 --- [face2hire-backend] [SpringApplicationShutdownHook] c.a.f.serviceimpl.OtpServiceImpl         : Shutting down OtpService...
+2026-05-15T15:27:41.101+05:30  INFO 20124 --- [face2hire-backend] [SpringApplicationShutdownHook] c.a.f.serviceimpl.OtpServiceImpl         : OtpService shutdown complete
+2026-05-15T15:27:41.106+05:30  INFO 20124 --- [face2hire-backend] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-15T15:27:41.115+05:30  INFO 20124 --- [face2hire-backend] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-85 - Shutdown initiated...
+2026-05-15T15:27:41.121+05:30  INFO 20124 --- [face2hire-backend] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-85 - Shutdown completed.
+2026-05-15T15:27:46.079+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Starting Face2hireBackendApplication using Java 24.0.1 with PID 16308 (C:\Users\pmust\Desktop\face2hire-ai-interview-platform\face2hire-backend\target\classes started by pmust in C:\Users\pmust\Desktop\face2hire-ai-interview-platform\Face2Hire-backend)
+2026-05-15T15:27:46.082+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-05-15T15:27:46.146+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-05-15T15:27:46.147+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-05-15T15:27:47.034+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-15T15:27:47.099+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 56 ms. Found 3 JPA repository interfaces.
+2026-05-15T15:27:47.674+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-05-15T15:27:47.688+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-15T15:27:47.689+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-15T15:27:47.744+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1597 ms
+2026-05-15T15:27:47.905+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-15T15:27:47.980+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-05-15T15:27:48.500+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-15T15:27:48.547+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-05-15T15:27:49.050+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@50ec6ba9
+2026-05-15T15:27:49.052+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-05-15T15:27:49.138+05:30  WARN 16308 --- [face2hire-backend] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-15T15:27:49.156+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/aiinterview?createDatabaseIfNotExist=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 9.3
+	Default catalog/schema: aiinterview/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-15T15:27:50.441+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-15T15:27:50.519+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-15T15:27:50.584+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-05-15T15:27:51.681+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-05-15T15:27:51.681+05:30  WARN 16308 --- [face2hire-backend] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-05-15T15:27:51.715+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OtpService initialized with expiry: 180 seconds, max requests: 3/hour
+2026-05-15T15:27:51.716+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] c.a.f.serviceimpl.OtpServiceImpl         : OTP cleanup scheduler started
+2026-05-15T15:27:52.731+05:30  WARN 16308 --- [face2hire-backend] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-15T15:27:53.313+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-05-15T15:27:53.318+05:30  INFO 16308 --- [face2hire-backend] [restartedMain] c.a.f.Face2hireBackendApplication        : Started Face2hireBackendApplication in 7.748 seconds (process running for 9.207)
+2026-05-15T15:28:09.463+05:30  INFO 16308 --- [face2hire-backend] [http-nio-8080-exec-5] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-15T15:28:09.464+05:30  INFO 16308 --- [face2hire-backend] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-15T15:28:09.467+05:30  INFO 16308 --- [face2hire-backend] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2026-05-15T15:28:23.479+05:30  INFO 16308 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.controller.AuthController          : Login request for email: admin@gmail.com
+2026-05-15T15:28:30.669+05:30  WARN 16308 --- [face2hire-backend] [http-nio-8080-exec-5] ration$PageModule$WarningLoggingModifier : Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+
+2026-05-15T15:28:59.893+05:30  INFO 16308 --- [face2hire-backend] [http-nio-8080-exec-1] c.a.f.controller.AuthController          : Login request for email: john@gmail.com
+2026-05-15T15:29:02.717+05:30  INFO 16308 --- [face2hire-backend] [http-nio-8080-exec-6] o.apache.tomcat.util.http.parser.Cookie  : A cookie header was received [g_state={"i_l":0,"i_ll":1773247672639,"i_b":"nilCcFlZlUnoJUEJxBBPCvpH7IQ2hcuqJKlx6QARph8","i_e":{"enable_itp_optimization":0}};] that contained an invalid cookie. That cookie will be ignored.
+ Note: further occurrences of this error will be logged at DEBUG level.
+2026-05-15T15:29:20.917+05:30  INFO 16308 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.s.CustomOAuth2UserServiceImpl      : OAuth2 login attempt — provider: GOOGLE, email: 202217b3123@wilp.bits-pilani.ac.in
+2026-05-15T15:29:21.159+05:30  INFO 16308 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.s.CustomOAuth2UserServiceImpl      : Returning OAuth2 user: 202217b3123@wilp.bits-pilani.ac.in via GOOGLE
+2026-05-15T15:29:21.192+05:30  INFO 16308 --- [face2hire-backend] [http-nio-8080-exec-3] c.a.f.serviceimpl.OAuth2SuccessHandler   : OAuth2 success for 202217b3123@wilp.bits-pilani.ac.in (role: INTERVIEWEE), redirecting to /interviewee/dashboard
+2026-05-15T15:29:35.967+05:30  WARN 16308 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.o.GitHubOAuth2UserAttributeMapper  : GitHub email was null; using noreply address: Musthakhdhim@users.noreply.github.com
+2026-05-15T15:29:35.968+05:30  INFO 16308 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.s.CustomOAuth2UserServiceImpl      : OAuth2 login attempt — provider: GITHUB, email: Musthakhdhim@users.noreply.github.com
+2026-05-15T15:29:36.032+05:30  INFO 16308 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.s.CustomOAuth2UserServiceImpl      : New OAuth2 user registered: Musthakhdhim@users.noreply.github.com via GITHUB
+2026-05-15T15:29:36.034+05:30  WARN 16308 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.o.GitHubOAuth2UserAttributeMapper  : GitHub email was null; using noreply address: Musthakhdhim@users.noreply.github.com
+2026-05-15T15:29:36.049+05:30  INFO 16308 --- [face2hire-backend] [http-nio-8080-exec-6] c.a.f.serviceimpl.OAuth2SuccessHandler   : OAuth2 success for Musthakhdhim@users.noreply.github.com (role: INTERVIEWEE), redirecting to /interviewee/dashboard

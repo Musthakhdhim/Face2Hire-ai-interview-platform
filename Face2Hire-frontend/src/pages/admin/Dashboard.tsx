@@ -35,22 +35,22 @@ export default function AdminDashboard(): JSX.Element {
     const [userGrowthData, setUserGrowthData] = useState<UserGrowthDataPoint[]>([]);
 
     useEffect(() => {
-    const fetchData = async () => {
-        try {
-            const [stats, growth] = await Promise.all([
-                adminService.getStats(),
-                adminService.getUserGrowth(),
-            ]);
-            setStats(stats);
-            setUserGrowthData(growth);
-        } catch (error) {
-            toast.error('Failed to load dashboard data');
-        } finally {
-            setLoading(false);
-        }
-    };
-    fetchData();
-}, []);
+        const fetchData = async () => {
+            try {
+                const [statsData, growthData] = await Promise.all([
+                    adminService.getStats(),
+                    adminService.getUserGrowth(),
+                ]);
+                setStats(statsData);
+                setUserGrowthData(growthData);
+            } catch {
+                toast.error('Failed to load dashboard data');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
     const statItems: StatItem[] = [
         { title: 'Total Users', value: stats.totalUsers.toString(), change: '+0%', icon: Users, color: 'bg-blue-100 text-blue-600' },
@@ -58,7 +58,6 @@ export default function AdminDashboard(): JSX.Element {
         { title: 'Total Interviews', value: stats.totalInterviews.toString(), change: '+0%', icon: TrendingUp, color: 'bg-purple-100 text-purple-600' },
         { title: 'Premium Users', value: stats.premiumUsers.toString(), change: '+0%', icon: Star, color: 'bg-amber-100 text-amber-600' },
     ];
-
 
     const interviewVolumeData: InterviewVolumeDataPoint[] = [
         { type: 'Technical', count: 2354 },
