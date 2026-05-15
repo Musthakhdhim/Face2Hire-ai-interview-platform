@@ -12,7 +12,7 @@ public class ResetPasswordDto {
     private String password;
     private String confirmPassword;
 
-    public boolean isMatching(){
+    public boolean isMatching() {
         return password.equals(confirmPassword);
     }
 }

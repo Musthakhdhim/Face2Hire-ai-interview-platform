@@ -1,10 +1,17 @@
 package com.aiinterview.face2hire_backend.serviceimpl;
 
-import com.aiinterview.face2hire_backend.dto.*;
+import com.aiinterview.face2hire_backend.dto.RegisterRequestDto;
+import com.aiinterview.face2hire_backend.dto.RegisterResponse;
+import com.aiinterview.face2hire_backend.dto.ApiResponse;
+import com.aiinterview.face2hire_backend.dto.LoginResponse;
+import com.aiinterview.face2hire_backend.dto.LoginRequestDto;
+import com.aiinterview.face2hire_backend.dto.VerifyOtpRequest;
+import com.aiinterview.face2hire_backend.dto.ForgotPasswordRequest;
+import com.aiinterview.face2hire_backend.dto.ResetPasswordDto;
+import com.aiinterview.face2hire_backend.dto.ResendOtpRequest;
 import com.aiinterview.face2hire_backend.entity.OtpType;
 import com.aiinterview.face2hire_backend.entity.Role;
 import com.aiinterview.face2hire_backend.entity.User;
-import com.aiinterview.face2hire_backend.exception.*;
 import com.aiinterview.face2hire_backend.repository.UserRepository;
 import com.aiinterview.face2hire_backend.service.AuthService;
 import com.aiinterview.face2hire_backend.service.EmailService;
@@ -23,6 +30,14 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import com.aiinterview.face2hire_backend.exception.AccountNotVerifiedException;
+import com.aiinterview.face2hire_backend.exception.OtpNotValidException;
+import com.aiinterview.face2hire_backend.exception.AlreadyExistsException;
+import com.aiinterview.face2hire_backend.exception.PasswordNotMatchException;
+import com.aiinterview.face2hire_backend.exception.InvalidCredentialsException;
+import com.aiinterview.face2hire_backend.exception.AccountLockedException;
+import com.aiinterview.face2hire_backend.exception.UserNotFoundException;
+
 
 @Slf4j
 @Service
@@ -39,17 +54,18 @@ public class AuthServiceImpl implements AuthService {
 
 
     @Override
-    public ApiResponse<RegisterResponse> register(RegisterRequestDto registerRequest) throws MessagingException {
+    public ApiResponse<RegisterResponse> register(RegisterRequestDto registerRequest)
+            throws MessagingException {
 
-        if(userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new AlreadyExistsException("user with this email: "+registerRequest.getEmail()+" already exists");
+        if (userRepository.existsByEmail(registerRequest.getEmail())) {
+            throw new AlreadyExistsException("user with this email: " + registerRequest.getEmail() + " already exists");
         }
 
-        if(userRepository.existsByUserName(registerRequest.getUserName())) {
+        if (userRepository.existsByUserName(registerRequest.getUserName())) {
             throw new AlreadyExistsException("user with this username already exists");
         }
 
-        if(!registerRequest.isPasswordMatching()) {
+        if (!registerRequest.isPasswordMatching()) {
             throw new PasswordNotMatchException("password does not match confirm password");
         }
 
@@ -60,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
 
-        if(user.getRole()==null){
+        if (user.getRole() == null) {
             user.setRole(Role.INTERVIEWEE);
         }
 
@@ -69,7 +85,7 @@ public class AuthServiceImpl implements AuthService {
 
         emailService.sendVerificationEmail(savedUser);
 
-        RegisterResponse registerResponse=RegisterResponse.builder()
+        RegisterResponse registerResponse = RegisterResponse.builder()
                 .id(savedUser.getId())
                 .userName(savedUser.getUserName())
                 .email(savedUser.getEmail())
@@ -79,7 +95,8 @@ public class AuthServiceImpl implements AuthService {
 
 
         return ApiResponse.<RegisterResponse>builder()
-                .message("User registered successfully, Please verify your email with the otp sent to you email")
+                .message("User registered successfully, Please verify your email " +
+                        "with the otp sent to you email")
                 .data(registerResponse)
                 .success(true)
                 .statusCode(HttpStatus.CREATED.value())
@@ -96,20 +113,21 @@ public class AuthServiceImpl implements AuthService {
         User user =
                 userRepository.findByEmail(loginRequest.getEmail());
 
-        if(user == null){
+        if (user == null) {
             throw new InvalidCredentialsException(
                     "Invalid email or password"
             );
         }
 
-        if(!user.isVerified()){
+        if (!user.isVerified()) {
             throw new AccountNotVerifiedException(
                     "Please verify your account"
             );
         }
 
-        if(!user.isActive()){
-            throw new AccountLockedException("your account has been disabled by the admin, please contact admin");
+        if (!user.isActive()) {
+            throw new AccountLockedException("your account has been disabled by the admin," +
+                    " please contact admin");
         }
 
         authenticationManager.authenticate(
@@ -140,11 +158,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ApiResponse<?> verifyUserWithOtp(VerifyOtpRequest verifyOtpRequest) throws MessagingException, OtpNotValidException {
+    public ApiResponse<?> verifyUserWithOtp(VerifyOtpRequest verifyOtpRequest) throws
+            MessagingException, OtpNotValidException {
         User user = userRepository.findByEmail(verifyOtpRequest.getEmail());
 
         if (user == null) {
-            throw new UserNotFoundException("User not found with email: " + verifyOtpRequest.getEmail());
+            throw new UserNotFoundException("User not found with email: " +
+                    verifyOtpRequest.getEmail());
         }
 
         if (user.isVerified()) {
@@ -157,10 +177,12 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-        boolean isValid = otpServiceImpl.validateOtp(user.getEmail(), OtpType.REGISTRATION, verifyOtpRequest.getOtp());
+        boolean isValid = otpServiceImpl.validateOtp(user.getEmail(),
+                OtpType.REGISTRATION, verifyOtpRequest.getOtp());
 
         if (!isValid) {
-            throw new OtpNotValidException("Your OTP is incorrect or expired. Please request a new one.");
+            throw new OtpNotValidException("Your OTP is incorrect or expired. " +
+                    "Please request a new one.");
         }
 
         user.setVerified(true);
@@ -198,7 +220,7 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Your account is deactivated. Please contact support.");
         }
 
-        if(user.getRole()==Role.ADMIN){
+        if (user.getRole() == Role.ADMIN) {
             throw new AuthorizationDeniedException("you don't have enough rights to perform this operation.");
         }
 
@@ -207,7 +229,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         emailService.sendForgotPasswordOtp(user);
-        log.info("send mail to "+user.getEmail());
+        log.info("send mail to " + user.getEmail());
         otpServiceImpl.incrementOtpRequestCount(user.getEmail(), OtpType.FORGOT_PASSWORD);
 
         userRepository.save(user);
@@ -326,8 +348,10 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (!otpServiceImpl.canRequestOtp(user.getEmail(), OtpType.REGISTRATION)) {
-            long remainingSeconds = otpServiceImpl.getRemainingBlockTime(user.getEmail(), OtpType.REGISTRATION);
-            throw new RuntimeException("Too many OTP requests. Please try again after " + remainingSeconds + " seconds.");
+            long remainingSeconds = otpServiceImpl.getRemainingBlockTime(user.getEmail(),
+                    OtpType.REGISTRATION);
+            throw new RuntimeException("Too many OTP requests. Please try again after " +
+                    remainingSeconds + " seconds.");
         }
 
         otpServiceImpl.invalidateOtp(user.getEmail(), OtpType.REGISTRATION);
@@ -360,7 +384,8 @@ public class AuthServiceImpl implements AuthService {
 
         if (!otpServiceImpl.canRequestOtp(user.getEmail(), OtpType.FORGOT_PASSWORD)) {
             long remainingSeconds = otpServiceImpl.getRemainingBlockTime(user.getEmail(), OtpType.FORGOT_PASSWORD);
-            throw new RuntimeException("Too many OTP requests. Please try again after " + remainingSeconds + " seconds.");
+            throw new RuntimeException("Too many OTP requests. Please try again after "
+                    + remainingSeconds + " seconds.");
         }
 
         otpServiceImpl.invalidateOtp(user.getEmail(), OtpType.FORGOT_PASSWORD);
@@ -373,8 +398,6 @@ public class AuthServiceImpl implements AuthService {
 
         Map<String, Object> response = Map.of(
                 "email", user.getEmail(),
-//                "resetToken", newResetToken,
-//                "expiresInMinutes", 30,
                 "type", "FORGOT_PASSWORD",
                 "message", "New password reset OTP sent."
         );

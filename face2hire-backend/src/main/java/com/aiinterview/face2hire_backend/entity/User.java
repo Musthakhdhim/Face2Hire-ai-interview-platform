@@ -1,9 +1,23 @@
 package com.aiinterview.face2hire_backend.entity;
 
 
-import jakarta.persistence.*;
-import lombok.*;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.CascadeType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.FetchType;
+import lombok.ToString;
 import java.time.LocalDateTime;
 
 @Entity
@@ -39,7 +53,7 @@ public class User {
     private LocalDateTime lastLoginAt;
     private boolean isActive;
 
-    private boolean isVerified=false;
+    private boolean isVerified = false;
 
     @Column(name = "auth_provider")
     @Enumerated(EnumType.STRING)

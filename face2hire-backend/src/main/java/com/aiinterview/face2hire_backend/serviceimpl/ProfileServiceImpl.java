@@ -1,6 +1,5 @@
 package com.aiinterview.face2hire_backend.serviceimpl;
 
-import com.aiinterview.face2hire_backend.dto.*;
 import com.aiinterview.face2hire_backend.entity.OtpType;
 import com.aiinterview.face2hire_backend.entity.User;
 import com.aiinterview.face2hire_backend.entity.UserNotifications;
@@ -24,7 +23,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import com.aiinterview.face2hire_backend.dto.ApiResponse;
+import com.aiinterview.face2hire_backend.dto.ProfileDto;
+import com.aiinterview.face2hire_backend.dto.UpdateEmailDto;
+import com.aiinterview.face2hire_backend.dto.UpdateEmailOtpDto;
+import com.aiinterview.face2hire_backend.dto.ChangePasswordDto;
+import com.aiinterview.face2hire_backend.dto.PreferenceDto;
+import com.aiinterview.face2hire_backend.dto.ProfileResponseDto;
+import com.aiinterview.face2hire_backend.dto.NotificationDto;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
@@ -46,9 +52,9 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     public ApiResponse<?> getProfile() {
 
-        User user= jwtService.getCurrentLoginUser();
+        User user = jwtService.getCurrentLoginUser();
 
-        ProfileResponseDto profileResponseDto=modelMapper.map(user, ProfileResponseDto.class);
+        ProfileResponseDto profileResponseDto = modelMapper.map(user, ProfileResponseDto.class);
 
         return ApiResponse.builder()
                 .success(true)
@@ -64,7 +70,7 @@ public class ProfileServiceImpl implements ProfileService {
         try {
             String imageUrl = s3FileUploadService.uploadProfileImage(file);
 
-            ApiResponse response=ApiResponse.builder()
+            ApiResponse response = ApiResponse.builder()
                     .success(true)
                     .message("Profile photo uploaded successfully")
                     .data(imageUrl)
@@ -78,7 +84,7 @@ public class ProfileServiceImpl implements ProfileService {
 
             return ApiResponse.builder()
                     .success(false)
-                    .message("File upload failed"+ e)
+                    .message("File upload failed" + e)
                     .data(null)
                     .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
                     .time(LocalDateTime.now())
@@ -87,7 +93,7 @@ public class ProfileServiceImpl implements ProfileService {
         } catch (RuntimeException e) {
             return ApiResponse.builder()
                     .success(false)
-                    .message("File upload failed"+ e)
+                    .message("File upload failed" + e)
                     .data(null)
                     .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
                     .time(LocalDateTime.now())
@@ -120,19 +126,23 @@ public class ProfileServiceImpl implements ProfileService {
 
 
     @Override
-    public ApiResponse<?> updateEmail(@Valid UpdateEmailDto updateEmailDto) throws MessagingException {
+    public ApiResponse<?> updateEmail(@Valid UpdateEmailDto updateEmailDto)
+            throws MessagingException {
 
-        boolean existingUser=userRepository.existsByEmail(updateEmailDto.getEmail());
+        boolean existingUser = userRepository.existsByEmail(updateEmailDto.getEmail());
 
-        if(existingUser){
-            throw new AlreadyExistsException(updateEmailDto.getEmail()+" already exists, please use another account");
+        if (existingUser) {
+            throw new AlreadyExistsException(updateEmailDto.getEmail() +
+                    " already exists, please use another account");
         }
 
 
-        User user= jwtService.getCurrentLoginUser();
+        User user = jwtService.getCurrentLoginUser();
         emailService.updateEmailOtp(user.getEmail());
 
-        if (user.getEmail().equals(updateEmailDto.getEmail())) { throw new RuntimeException("New email must be different"); }
+        if (user.getEmail().equals(updateEmailDto.getEmail())) {
+            throw new RuntimeException("New email must be different");
+        }
 
 
         emailService.updateEmailOtp(updateEmailDto.getEmail());
@@ -147,13 +157,16 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
-    public ApiResponse<?> updateEmailVerifyOtp(@Valid UpdateEmailOtpDto emailOtpDto) throws MessagingException, OtpNotValidException {
-        User user= jwtService.getCurrentLoginUser();
-        boolean isValidOldEmailOtp = otpServiceImpl.validateOtp(user.getEmail(), OtpType.UPDATE_EMAIL, emailOtpDto.getOldEmailOtp());
+    public ApiResponse<?> updateEmailVerifyOtp(@Valid UpdateEmailOtpDto emailOtpDto)
+            throws MessagingException, OtpNotValidException {
+        User user = jwtService.getCurrentLoginUser();
+        boolean isValidOldEmailOtp = otpServiceImpl.validateOtp(user.getEmail(),
+                OtpType.UPDATE_EMAIL, emailOtpDto.getOldEmailOtp());
 
-        boolean isValidNewEmailOtp = otpServiceImpl.validateOtp(emailOtpDto.getNewEmail(), OtpType.UPDATE_EMAIL, emailOtpDto.getNewEmailOtp());
+        boolean isValidNewEmailOtp = otpServiceImpl.validateOtp(emailOtpDto.getNewEmail(),
+                OtpType.UPDATE_EMAIL, emailOtpDto.getNewEmailOtp());
 
-        if(!isValidOldEmailOtp || !isValidNewEmailOtp){
+        if (!isValidOldEmailOtp || !isValidNewEmailOtp) {
             throw new OtpNotValidException("otp is not valid, enter the correct otp");
         }
 
@@ -171,13 +184,13 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     public ApiResponse<?> changePassword(ChangePasswordDto changePasswordDto) {
-        User user= jwtService.getCurrentLoginUser();
+        User user = jwtService.getCurrentLoginUser();
 
-        if(!passwordEncoder.matches(changePasswordDto.getOldPassword(), user.getPassword())){
+        if (!passwordEncoder.matches(changePasswordDto.getOldPassword(), user.getPassword())) {
             throw new PasswordNotMatchException("existing password is incorrect");
         }
 
-        if(!changePasswordDto.getNewPassword().equals(changePasswordDto.getConfirmPassword())){
+        if (!changePasswordDto.getNewPassword().equals(changePasswordDto.getConfirmPassword())) {
             throw new PasswordNotMatchException("password does not match");
         }
 
@@ -302,7 +315,4 @@ public class ProfileServiceImpl implements ProfileService {
                 .time(LocalDateTime.now())
                 .build();
     }
-
-
-
 }

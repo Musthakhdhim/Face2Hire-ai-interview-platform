@@ -152,8 +152,8 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
-    public User getCurrentLoginUser(){
-        Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
+    public User getCurrentLoginUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null) {
             return null;

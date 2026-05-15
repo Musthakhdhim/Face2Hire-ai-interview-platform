@@ -1,7 +1,12 @@
 package com.aiinterview.face2hire_backend.controller;
 
-
-import com.aiinterview.face2hire_backend.dto.*;
+import com.aiinterview.face2hire_backend.dto.ApiResponse;
+import com.aiinterview.face2hire_backend.dto.ProfileDto;
+import com.aiinterview.face2hire_backend.dto.UpdateEmailDto;
+import com.aiinterview.face2hire_backend.dto.UpdateEmailOtpDto;
+import com.aiinterview.face2hire_backend.dto.ChangePasswordDto;
+import com.aiinterview.face2hire_backend.dto.PreferenceDto;
+import com.aiinterview.face2hire_backend.dto.NotificationDto;
 import com.aiinterview.face2hire_backend.exception.OtpNotValidException;
 import com.aiinterview.face2hire_backend.serviceimpl.ProfileServiceImpl;
 import jakarta.mail.MessagingException;
@@ -9,7 +14,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -23,7 +34,7 @@ public class ProfileController {
     @GetMapping
     public ResponseEntity<?> getProfile() {
 
-        ApiResponse apiResponse =profileService.getProfile();
+        ApiResponse apiResponse = profileService.getProfile();
 
         return ResponseEntity.ok(apiResponse);
     }

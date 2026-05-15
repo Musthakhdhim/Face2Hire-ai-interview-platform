@@ -3,7 +3,11 @@ package com.aiinterview.face2hire_backend.dto;
 import com.aiinterview.face2hire_backend.entity.Role;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.AssertTrue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,7 +37,8 @@ public class RegisterRequestDto {
     @Size(min = 8, max = 100, message = "Password must be between 8 to 100 characters")
     @Pattern(
             regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$",
-            message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character (@#$%^&+=!)"
+            message = "Password must contain at least one uppercase letter, " +
+                    "one lowercase letter, one digit, and one special character (@#$%^&+=!)"
     )
     private String password;
 
@@ -49,7 +54,7 @@ public class RegisterRequestDto {
     @AssertTrue(message = "Passwords do not match")
     public boolean isPasswordMatching() {
 
-        if(password == null || confirmPassword == null){
+        if (password == null || confirmPassword == null) {
             return false;
         }
 

@@ -18,4 +18,5 @@ public class ApiResponse<T> {
     private T data;
     private int statusCode;
     @Builder.Default
-    private LocalDateTime time = LocalDateTime.now();}
+    private LocalDateTime time = LocalDateTime.now();
+}
