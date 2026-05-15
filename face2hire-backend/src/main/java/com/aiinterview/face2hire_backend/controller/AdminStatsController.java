@@ -5,7 +5,7 @@ import com.aiinterview.face2hire_backend.dto.ApiResponse;
 import com.aiinterview.face2hire_backend.dto.UserGrowthDto;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
-import com.aiinterview.face2hire_backend.serviceimpl.AdminUserServiceImpl;
+import com.aiinterview.face2hire_backend.service.AdminUserService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminStatsController {
 
-    private final AdminUserServiceImpl adminService;
+    private final AdminUserService adminService;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 

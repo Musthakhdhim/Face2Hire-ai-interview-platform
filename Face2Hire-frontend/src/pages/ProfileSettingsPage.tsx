@@ -21,7 +21,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 
-// ---------- Cache Helpers ----------
 const PROFILE_CACHE_KEY = 'profileSettingsCache';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -80,7 +79,6 @@ const clearCache = () => {
   sessionStorage.removeItem(PROFILE_CACHE_KEY);
 };
 
-// ---------- Type Definitions ----------
 interface UserProfileData {
   fullName: string;
   userName: string;
@@ -120,35 +118,29 @@ export default function ProfileSettingsPage(): JSX.Element {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Profile state
   const [fullName, setFullName] = useState<string>('');
   const [userName, setUserName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [profileImageUrl, setProfileImageUrl] = useState<string>('');
 
-  // Password change state
   const [currentPassword, setCurrentPassword] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
 
-  // Email update OTP flow
   const [emailUpdateStep, setEmailUpdateStep] = useState<'idle' | 'otpSent'>('idle');
   const [newEmail, setNewEmail] = useState<string>('');
   const [oldEmailOtp, setOldEmailOtp] = useState<string>('');
   const [newEmailOtp, setNewEmailOtp] = useState<string>('');
 
-  // Preferences state
   const [defaultInterviewType, setDefaultInterviewType] = useState<string>('technical');
   const [avatarStyle, setAvatarStyle] = useState<string>('professional');
   const [language, setLanguage] = useState<string>('english');
 
-  // Notifications state
   const [emailUpdates, setEmailUpdates] = useState<boolean>(true);
   const [interviewReminders, setInterviewReminders] = useState<boolean>(true);
   const [marketingEmails, setMarketingEmails] = useState<boolean>(false);
 
-  // Role-based tab visibility
   const role = reduxUser?.role?.toLowerCase();
   const showPreferences = role === 'interviewee';
   const tabList = useMemo(() => {
@@ -157,7 +149,6 @@ export default function ProfileSettingsPage(): JSX.Element {
     return tabs;
   }, [showPreferences]);
 
-  // ---------- Data Fetching with Caching ----------
   const fetchProfileData = useCallback(async (forceRefresh = false): Promise<void> => {
     if (!forceRefresh) {
       const cached = loadFromCache();
@@ -221,7 +212,6 @@ export default function ProfileSettingsPage(): JSX.Element {
     fetchProfileData();
   }, [token, navigate, fetchProfileData]);
 
-  // ---------- Optimized Handlers (No extra GET after update) ----------
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -254,7 +244,6 @@ export default function ProfileSettingsPage(): JSX.Element {
       dispatch(updateUser({ profileImageUrl: imageUrl, name: updatedProfile.fullName, phone: updatedProfile.phoneNumber }));
 
       clearCache();
-      // Re‑fetch preferences/notifications to ensure cache consistency (they are unchanged, but we need to update the cached profile)
       const prefsRes = await axiosClient.get<{ data: PreferencesData }>('/profile/preferences');
       const notifRes = await axiosClient.get<{ data: NotificationsData }>('/profile/notifications');
       saveToCache(
@@ -331,7 +320,6 @@ export default function ProfileSettingsPage(): JSX.Element {
       setAvatarStyle(newPrefs.avatarStyle);
       setLanguage(newPrefs.language);
 
-      // Update cache directly (only preferences part)
       const cached = loadFromCache();
       if (cached) {
         const updatedCache = {
@@ -419,7 +407,6 @@ export default function ProfileSettingsPage(): JSX.Element {
     }
   };
 
-  // Email OTP flow (unchanged)
   const handleSendEmailOtp = async (): Promise<void> => {
     if (!newEmail || newEmail === email) {
       toast.error('Please enter a different valid email');

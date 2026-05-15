@@ -10,7 +10,7 @@ import com.aiinterview.face2hire_backend.dto.NotificationDto;
 import com.aiinterview.face2hire_backend.exception.OtpNotValidException;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
-import com.aiinterview.face2hire_backend.serviceimpl.ProfileServiceImpl;
+import com.aiinterview.face2hire_backend.service.ProfileService;
 import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
@@ -30,7 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/v1/profile")
 public class ProfileController {
 
-    private final ProfileServiceImpl profileService;
+    private final ProfileService profileService;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 

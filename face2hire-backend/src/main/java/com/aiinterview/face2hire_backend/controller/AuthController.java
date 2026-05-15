@@ -1,14 +1,8 @@
 package com.aiinterview.face2hire_backend.controller;
 
-import com.aiinterview.face2hire_backend.dto.RegisterRequestDto;
-import com.aiinterview.face2hire_backend.dto.ApiResponse;
-import com.aiinterview.face2hire_backend.dto.LoginResponse;
-import com.aiinterview.face2hire_backend.dto.LoginRequestDto;
-import com.aiinterview.face2hire_backend.dto.VerifyOtpRequest;
-import com.aiinterview.face2hire_backend.dto.ForgotPasswordRequest;
-import com.aiinterview.face2hire_backend.dto.ResetPasswordDto;
-import com.aiinterview.face2hire_backend.dto.ResendOtpRequest;
+import com.aiinterview.face2hire_backend.dto.*;
 import com.aiinterview.face2hire_backend.exception.AccountNotVerifiedException;
+import com.aiinterview.face2hire_backend.exception.InvalidCredentialsException;
 import com.aiinterview.face2hire_backend.exception.OtpNotValidException;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
@@ -19,10 +13,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -136,6 +130,28 @@ public class AuthController {
             log.warn("Failed to resend OTP for email: {}, type: {}, reason: {}",
                     resendOtpRequest.getEmail(), resendOtpRequest.getType(), response.getMessage());
         }
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<Map<String, String>>> refreshToken(
+            @CookieValue(name = "refreshToken", required = false) String refreshTokenCookie,
+            @RequestBody(required = false) RefreshTokenRequest refreshTokenRequest) {
+        String refreshToken = refreshTokenCookie != null ? refreshTokenCookie
+                : (refreshTokenRequest != null ? refreshTokenRequest.getRefreshToken() : null);
+        if (refreshToken == null) {
+            throw new InvalidCredentialsException("Refresh token is required");
+        }
+        Map<String, String> tokens = authService.refreshAccessToken(refreshToken);
+
+        ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
+                .success(true)
+                .message("Token refreshed successfully")
+                .data(tokens)
+                .statusCode(HttpStatus.OK.value())
+                .time(LocalDateTime.now())
+                .build();
+
         return ResponseEntity.ok(response);
     }
 }

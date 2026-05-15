@@ -14,6 +14,8 @@ import com.aiinterview.face2hire_backend.exception.OtpNotValidException;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 
+import java.util.Map;
+
 public interface AuthService {
     ApiResponse<RegisterResponse> register(RegisterRequestDto registerRequest) throws MessagingException;
 
@@ -30,4 +32,6 @@ public interface AuthService {
     ApiResponse<?> updatePassword(@Valid ResetPasswordDto resetPasswordDto);
 
     ApiResponse<?> resendOtp(ResendOtpRequest resendOtpRequest) throws MessagingException;
+
+    Map<String, String> refreshAccessToken(String refreshToken);
 }

@@ -91,11 +91,12 @@ export const login = createAsyncThunk(
   async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const response = await axiosClient.post(API.AUTH.LOGIN, { email, password });
-      const { jwt, role, userName, email: userEmail, id } = response.data.data;
+      const { jwt, role, userName, email: userEmail, id, refreshToken } = response.data.data;
       localStorage.setItem('accessToken', jwt);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
       const user = { id, name: userName, email: userEmail, role };
       localStorage.setItem('user', JSON.stringify(user));
-      return { jwt, role, userName, email: userEmail, id };
+      return { jwt, role, userName, email: userEmail, id, refreshToken };
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
     }
@@ -158,6 +159,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
     },
     clearError(state) {

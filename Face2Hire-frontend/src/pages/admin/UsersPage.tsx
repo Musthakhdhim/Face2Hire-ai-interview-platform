@@ -11,27 +11,23 @@ import { userService, type PaginatedResponse } from '../../services/userService'
 import type { UserListResponseDto } from '../../types/user';
 import type { AxiosError } from 'axios';
 
-// Define the shape of the error response from our backend
 interface ErrorResponse {
   message?: string;
 }
 
 export default function AdminUsersPage(): JSX.Element {
-  // Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(0); 
   const pageSize = 10;
 
-  // Data state
   const [users, setUsers] = useState<UserListResponseDto[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
 
-  // Fetch users when filters or page change
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
@@ -78,7 +74,6 @@ export default function AdminUsersPage(): JSX.Element {
     setCurrentPage(0);
   };
 
-  // Block user
   const handleBlockUser = async (userId: number) => {
     setActionLoading(userId);
     try {
@@ -93,7 +88,6 @@ export default function AdminUsersPage(): JSX.Element {
     }
   };
 
-  // Unblock user
   const handleUnblockUser = async (userId: number) => {
     setActionLoading(userId);
     try {
@@ -108,12 +102,10 @@ export default function AdminUsersPage(): JSX.Element {
     }
   };
 
-  // Pagination controls
   const goToPage = (page: number) => setCurrentPage(page);
   const canPrevious = currentPage > 0;
   const canNext = currentPage < totalPages - 1;
 
-  // Helper to format date
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return 'Never';
     return new Date(dateStr).toLocaleDateString();
@@ -126,7 +118,6 @@ export default function AdminUsersPage(): JSX.Element {
         <p className="text-gray-600 mt-1">Search, filter, and manage all users</p>
       </div>
 
-      {/* Filters */}
       <Card className="border-0 shadow-lg">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
@@ -164,7 +155,6 @@ export default function AdminUsersPage(): JSX.Element {
         </CardContent>
       </Card>
 
-      {/* User List */}
       <Card className="border-0 shadow-lg">
         <CardHeader>
           <CardTitle>Users ({totalElements})</CardTitle>
@@ -186,7 +176,6 @@ export default function AdminUsersPage(): JSX.Element {
                 <Card key={user.id} className="border border-gray-200 hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex flex-col lg:flex-row gap-6">
-                      {/* Avatar and Info */}
                       <div className="flex items-start gap-4 flex-1">
                         <Avatar className="size-16">
                           <AvatarImage src={user.profileImageUrl || undefined} />
@@ -211,7 +200,6 @@ export default function AdminUsersPage(): JSX.Element {
                               <Mail className="size-4" />
                               {user.email}
                             </div>
-                            {/* Phone may not be in DTO yet – optional */}
                             {user.lastLoginAt && (
                               <div className="flex items-center gap-2 text-gray-600">
                                 <Calendar className="size-4" />
@@ -222,7 +210,6 @@ export default function AdminUsersPage(): JSX.Element {
                         </div>
                       </div>
 
-                      {/* Interview Stats (placeholder – will be real later) */}
                       {user.role === 'INTERVIEWEE' && (
                         <div className="grid grid-cols-2 gap-4 lg:w-64">
                           <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 text-center">
@@ -236,7 +223,6 @@ export default function AdminUsersPage(): JSX.Element {
                         </div>
                       )}
 
-                      {/* Action Buttons */}
                       <div className="flex flex-col gap-2">
                         <Button size="sm" variant="outline">
                           <Eye className="mr-2 size-4" />
@@ -276,7 +262,6 @@ export default function AdminUsersPage(): JSX.Element {
         </CardContent>
       </Card>
 
-      {/* Pagination */}
       {!loading && totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 py-4">
           <Button

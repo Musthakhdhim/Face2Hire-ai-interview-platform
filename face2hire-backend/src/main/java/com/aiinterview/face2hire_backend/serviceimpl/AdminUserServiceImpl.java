@@ -10,6 +10,7 @@ import com.aiinterview.face2hire_backend.exception.UserNotFoundException;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.UserRepository;
+import com.aiinterview.face2hire_backend.service.AdminUserService;
 import com.aiinterview.face2hire_backend.specification.UserSpecification;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -26,12 +27,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AdminUserServiceImpl {
+public class AdminUserServiceImpl implements AdminUserService {
 
     private final UserRepository userRepository;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
+    @Override
     public Page<UserListResponseDto> getFilteredUsersDto(UserFilterRequest filter) {
         log.info("Fetching users with filters - search: {}, role: {}, active: {}, page: {}, size: {}",
                 filter.getSearch(), filter.getRole(), filter.getIsActive(), filter.getPage(), filter.getSize());
@@ -56,6 +58,7 @@ public class AdminUserServiceImpl {
                 .build());
     }
 
+    @Override
     public ApiResponse<?> blockUser(Long userId) {
         log.info("Attempting to block user with id: {}", userId);
         User user = userRepository.findById(userId)
@@ -87,6 +90,7 @@ public class AdminUserServiceImpl {
                 .build();
     }
 
+    @Override
     public ApiResponse<?> unBlockUser(Long userId) {
         log.info("Attempting to unblock user with id: {}", userId);
         User user = userRepository.findById(userId)
@@ -118,6 +122,7 @@ public class AdminUserServiceImpl {
                 .build();
     }
 
+    @Override
     public ApiResponse<AdminStatsDto> getAdminStats() {
         log.info("Retrieving admin dashboard statistics");
         long totalUsers = userRepository.count();
@@ -144,6 +149,7 @@ public class AdminUserServiceImpl {
                 .build();
     }
 
+    @Override
     public List<UserGrowthDto> getUserGrowth() {
         log.info("Retrieving user growth data");
         List<Object[]> results = userRepository.countUsersByMonth();
@@ -158,6 +164,7 @@ public class AdminUserServiceImpl {
     }
 
     @PostConstruct
+    @Override
     public void init() {
         this.log = loggerFactory.getLogger(getClass());
     }

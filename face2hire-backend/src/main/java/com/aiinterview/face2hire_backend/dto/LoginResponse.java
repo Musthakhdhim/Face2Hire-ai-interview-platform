@@ -13,5 +13,6 @@ public class LoginResponse {
     private String email;
     private Role role;
     private String jwt;
+    private String refreshToken;
 
 }
