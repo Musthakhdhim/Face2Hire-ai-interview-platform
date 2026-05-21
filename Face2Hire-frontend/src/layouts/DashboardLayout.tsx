@@ -60,8 +60,9 @@ export default function DashboardLayout(): JSX.Element | null {
     if (role === 'interviewee') {
       return [
         { icon: Home, label: 'Dashboard', path: '/interviewee' },
-        { icon: Briefcase, label: 'Browse Jobs', path: '#' },
-        { icon: Upload, label: 'Upload CV', path: '#' },
+        { icon: Briefcase, label: 'Browse Jobs', path: '/interviewee/jobs' }, 
+        { icon: Upload, label: 'Upload CV', path: '/interviewee/upload-cv' },
+              { icon: FileText, label: 'My Applications', path: '/interviewee/applications' }, 
         { icon: Calendar, label: 'Upcoming Interviews', path: '#' },
         { icon: FileText, label: 'History', path: '#' },
         { icon: BarChart2, label: 'Analytics', path: '#' },
@@ -70,8 +71,8 @@ export default function DashboardLayout(): JSX.Element | null {
     } else if (role === 'interviewer') {
       return [
         { icon: Home, label: 'Dashboard', path: '/interviewer' },
-        { icon: Briefcase, label: 'My Jobs', path: '#' },
-        { icon: FileText, label: 'Applications', path: '#' },
+        { icon: Briefcase, label: 'My Jobs', path: '/interviewer/jobs' },
+        { icon: FileText, label: 'Applications', path: '/interviewer/applications' },
         { icon: Calendar, label: 'Schedule Interview', path: '#' },
         { icon: Settings, label: 'Settings', path: settingsPath },
       ];
@@ -105,9 +106,9 @@ export default function DashboardLayout(): JSX.Element | null {
         <div className="p-6 border-b border-gray-200">
           <Link to={logoLink} className="flex items-center gap-2">
             <div className="size-8 rounded-lg bg-indigo-500 flex items-center justify-center">
-              <span className="font-bold text-white text-sm">IA</span>
+              <span className="font-bold text-white text-sm">FH</span>
             </div>
-            <span className="font-bold text-lg">InterviewAI</span>
+            <span className="font-bold text-lg">Face2Hire</span>
           </Link>
         </div>
         <nav className="flex-1 p-4 space-y-1">

@@ -33,4 +33,6 @@ public interface ProfileService {
     ApiResponse<?> getNotifications();
 
     ApiResponse<?> updateNotifications(NotificationDto notificationDto);
+
+    ApiResponse<?> getResumeData();
 }

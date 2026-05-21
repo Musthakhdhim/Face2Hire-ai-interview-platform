@@ -17,6 +17,15 @@ import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import OAuth2RedirectPage from './pages/OAuth2RedirectPage';
 import type { JSX } from 'react';
 import AdminUsersPage from './pages/admin/UsersPage';
+import UploadCVPage from './pages/interviewee/UploadCVPage';
+import InterviewerJobsPage from './pages/interviewer/JobsPage';
+import CreateJobPage from './pages/interviewer/CreateJobPage';
+import JobDetailPage from './pages/interviewer/JobDetailPage';
+import JobsPage from './pages/interviewee/JobsPage';
+import JobApplicationPage from './pages/interviewee/JobApplicationPage';
+import IntervieweeApplicationsPage from './pages/interviewee/ApplicationsPage';
+import InterviewerApplicationsPage from './pages/interviewer/ApplicationsPage';
+import ApplicationDetailPage from './pages/interviewee/ApplicationDetailPage';
 
 function App(): JSX.Element {
   return (
@@ -37,6 +46,11 @@ function App(): JSX.Element {
           <Route element={<ProtectedRoute allowedRoles={['interviewee']} />}>
             <Route path="/interviewee" element={<DashboardLayout />}>
               <Route index element={<IntervieweeDashboard />} />
+              <Route path="upload-cv" element={<UploadCVPage />} />
+              <Route path="jobs" element={<JobsPage />} />
+              <Route path="jobs/:jobId/apply" element={<JobApplicationPage />} />
+              <Route path="/interviewee/applications" element={<IntervieweeApplicationsPage />} />
+              <Route path="/interviewee/applications/:id" element={<ApplicationDetailPage />} />
               <Route path="settings" element={<ProfileSettingsPage />} />
             </Route>
           </Route>
@@ -44,6 +58,11 @@ function App(): JSX.Element {
           <Route element={<ProtectedRoute allowedRoles={['interviewer']} />}>
             <Route path="/interviewer" element={<DashboardLayout />}>
               <Route index element={<InterviewerDashboard />} />
+              <Route path="jobs" element={<InterviewerJobsPage />} />
+              <Route path="jobs/create" element={<CreateJobPage />} />
+              <Route path="jobs/:jobId" element={<JobDetailPage />} />  
+              <Route path="/interviewer/applications" element={<InterviewerApplicationsPage />} />
+
               <Route path="settings" element={<ProfileSettingsPage />} />
             </Route>
           </Route>

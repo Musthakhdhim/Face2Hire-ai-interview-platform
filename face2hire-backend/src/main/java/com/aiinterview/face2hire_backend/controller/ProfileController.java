@@ -111,6 +111,13 @@ public class ProfileController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/resume")
+    public ResponseEntity<ApiResponse<?>> getResumeData() {
+        log.info("Received request to get resume data");
+        ApiResponse<?> response = profileService.getResumeData();
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/preferences")
     public ResponseEntity<ApiResponse<?>> getPreferences() {
         log.info("Received request to get user preferences");

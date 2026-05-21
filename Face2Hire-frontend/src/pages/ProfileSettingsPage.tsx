@@ -20,6 +20,7 @@ import { Switch } from '../components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
+import ResumeTab from '../components/profile/ResumeTab';
 
 const PROFILE_CACHE_KEY = 'profileSettingsCache';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -143,11 +144,26 @@ export default function ProfileSettingsPage(): JSX.Element {
 
   const role = reduxUser?.role?.toLowerCase();
   const showPreferences = role === 'interviewee';
+  const showResumeTab = role === 'interviewee';
+
   const tabList = useMemo(() => {
-    const tabs = ['profile', 'security', 'notifications'];
-    if (showPreferences) tabs.splice(2, 0, 'preferences');
+    const tabs = ['profile', 'security'];
+    if (showResumeTab) tabs.push('resume');
+    if (showPreferences) tabs.push('preferences');
+    tabs.push('notifications');
     return tabs;
-  }, [showPreferences]);
+  }, [showPreferences, showResumeTab]);
+
+  const getTabLabel = (tabValue: string): string => {
+    switch (tabValue) {
+      case 'profile': return 'Profile';
+      case 'security': return 'Security';
+      case 'resume': return 'Resume';
+      case 'preferences': return 'Preferences';
+      case 'notifications': return 'Notifications';
+      default: return tabValue;
+    }
+  };
 
   const fetchProfileData = useCallback(async (forceRefresh = false): Promise<void> => {
     if (!forceRefresh) {
@@ -204,13 +220,13 @@ export default function ProfileSettingsPage(): JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchProfileData();
-  }, [token, navigate, fetchProfileData]);
+  if (!token) {
+    navigate('/login');
+    return;
+  }
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  fetchProfileData();
+}, [token, navigate, fetchProfileData]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = e.target.files?.[0];
@@ -283,7 +299,6 @@ export default function ProfileSettingsPage(): JSX.Element {
       dispatch(updateUser({ name: updatedProfile.fullName, phone: updatedProfile.phoneNumber }));
 
       clearCache();
-      // Refresh cache with new profile data (preferences/notifications unchanged)
       const prefsRes = await axiosClient.get<{ data: PreferencesData }>('/profile/preferences');
       const notifRes = await axiosClient.get<{ data: NotificationsData }>('/profile/notifications');
       saveToCache(
@@ -354,7 +369,6 @@ export default function ProfileSettingsPage(): JSX.Element {
       setInterviewReminders(newNotifs.interviewReminders);
       setMarketingEmails(newNotifs.marketingEmails);
 
-      // Update cache directly (only notifications part)
       const cached = loadFromCache();
       if (cached) {
         const updatedCache = {
@@ -375,7 +389,6 @@ export default function ProfileSettingsPage(): JSX.Element {
     }
   };
 
-  // Password change does not affect cached profile data
   const handleChangePassword = async (): Promise<void> => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast.error('Please fill all fields');
@@ -474,12 +487,10 @@ export default function ProfileSettingsPage(): JSX.Element {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className={`grid w-full ${showPreferences ? 'grid-cols-4' : 'grid-cols-3'}`}>
+        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${tabList.length}, 1fr)` }}>
           {tabList.map((tabValue) => (
             <TabsTrigger key={tabValue} value={tabValue} className="capitalize">
-              {tabValue === 'profile' ? 'Profile' :
-               tabValue === 'security' ? 'Security' :
-               tabValue === 'preferences' ? 'Preferences' : 'Notifications'}
+              {getTabLabel(tabValue)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -728,6 +739,12 @@ export default function ProfileSettingsPage(): JSX.Element {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {showResumeTab && (
+          <TabsContent value="resume" className="space-y-6">
+            <ResumeTab />
+          </TabsContent>
+        )}
 
         {showPreferences && (
           <TabsContent value="preferences" className="space-y-6">

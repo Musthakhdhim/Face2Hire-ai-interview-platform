@@ -79,7 +79,7 @@ export default function SignupPage(): JSX.Element {
             <Brain className="size-7 text-white" />
           </div>
           <span className="font-bold text-2xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            InterviewAI
+            Face2Hire
           </span>
         </Link>
 

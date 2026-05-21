@@ -1,17 +1,13 @@
 package com.aiinterview.face2hire_backend.serviceimpl;
 
-import com.aiinterview.face2hire_backend.entity.OtpType;
-import com.aiinterview.face2hire_backend.entity.User;
-import com.aiinterview.face2hire_backend.entity.UserNotifications;
-import com.aiinterview.face2hire_backend.entity.UserPreferences;
+import com.aiinterview.face2hire_backend.dto.*;
+import com.aiinterview.face2hire_backend.entity.*;
 import com.aiinterview.face2hire_backend.exception.AlreadyExistsException;
 import com.aiinterview.face2hire_backend.exception.OtpNotValidException;
 import com.aiinterview.face2hire_backend.exception.PasswordNotMatchException;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
-import com.aiinterview.face2hire_backend.repository.UserNotificationRepository;
-import com.aiinterview.face2hire_backend.repository.UserPreferenceRepository;
-import com.aiinterview.face2hire_backend.repository.UserRepository;
+import com.aiinterview.face2hire_backend.repository.*;
 import com.aiinterview.face2hire_backend.service.*;
 import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
@@ -22,16 +18,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import com.aiinterview.face2hire_backend.dto.ApiResponse;
-import com.aiinterview.face2hire_backend.dto.ProfileDto;
-import com.aiinterview.face2hire_backend.dto.UpdateEmailDto;
-import com.aiinterview.face2hire_backend.dto.UpdateEmailOtpDto;
-import com.aiinterview.face2hire_backend.dto.ChangePasswordDto;
-import com.aiinterview.face2hire_backend.dto.PreferenceDto;
-import com.aiinterview.face2hire_backend.dto.ProfileResponseDto;
-import com.aiinterview.face2hire_backend.dto.NotificationDto;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +37,10 @@ public class ProfileServiceImpl implements ProfileService {
     private final EmailService emailService;
     private final OtpService otpServiceImpl;
     private final PasswordEncoder passwordEncoder;
+    private final ResumeRepository resumeRepository;
+    private final SkillRepository skillRepository;
+    private final ExperienceRepository experienceRepository;
+    private final S3Service s3Service;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
@@ -412,6 +407,76 @@ public class ProfileServiceImpl implements ProfileService {
                 .success(true)
                 .message("Notification settings updated")
                 .data(notificationDto)
+                .statusCode(HttpStatus.OK.value())
+                .time(LocalDateTime.now())
+                .build();
+    }
+
+    @Override
+    public ApiResponse<?> getResumeData() {
+        log.info("Fetching resume data for current user");
+        User user = jwtService.getCurrentLoginUser();
+        if (user == null) {
+            return ApiResponse.builder()
+                    .success(false)
+                    .message("User not authenticated")
+                    .statusCode(HttpStatus.UNAUTHORIZED.value())
+                    .time(LocalDateTime.now())
+                    .build();
+        }
+        Resume activeResume = resumeRepository.findByUserIdAndIsActiveTrue(user.getId());
+        if (activeResume == null || activeResume.getStatus() != ResumeStatus.COMPLETED) {
+            return ApiResponse.builder()
+                    .success(true)
+                    .message("No resume uploaded or processing incomplete")
+                    .data(null)
+                    .statusCode(HttpStatus.OK.value())
+                    .time(LocalDateTime.now())
+                    .build();
+        }
+
+        String fileUrl = s3Service.generatePresignedUrlForDownload(activeResume.getFileKey());
+
+        List<Skill> skills = skillRepository.findByResumeId(activeResume.getId());
+        List<SkillInfoDto> skillDtos = skills.stream()
+                .map(s -> SkillInfoDto.builder()
+                        .name(s.getSkillName())
+                        .years(s.getYearsOfExperience())
+                        .level(s.getProficiencyLevel() != null ? s.getProficiencyLevel().name() : null)
+                        .category(s.getCategory())
+                        .build())
+                .collect(Collectors.toList());
+
+        List<Experience> experiences = experienceRepository.findByResumeId(activeResume.getId());
+        List<ExperienceInfoDto> expDtos = experiences.stream()
+                .map(e -> ExperienceInfoDto.builder()
+                        .company(e.getCompanyName())
+                        .title(e.getJobTitle())
+                        .startDate(e.getStartDate() != null ? e.getStartDate().atStartOfDay() : null)
+                        .endDate(e.getEndDate() != null ? e.getEndDate().atStartOfDay() : null)
+                        .description(e.getDescription())
+                        .build())
+                .collect(Collectors.toList());
+
+        String fileName = activeResume.getFileKey().contains("/") ?
+                activeResume.getFileKey().substring(activeResume.getFileKey().lastIndexOf('/') + 1) : "resume.pdf";
+
+        ResumeDataDto resumeData = ResumeDataDto.builder()
+                .id(activeResume.getId())
+                .fileName(fileName)
+                .fileUrl(fileUrl)
+                .uploadedAt(activeResume.getUploadedAt())
+                .status(activeResume.getStatus().name())
+                .extractedFullName(activeResume.getExtractedFullName())
+                .extractedEmail(activeResume.getExtractedEmail())
+                .skills(skillDtos)
+                .experiences(expDtos)
+                .build();
+
+        return ApiResponse.builder()
+                .success(true)
+                .message("Resume data retrieved")
+                .data(resumeData)
                 .statusCode(HttpStatus.OK.value())
                 .time(LocalDateTime.now())
                 .build();

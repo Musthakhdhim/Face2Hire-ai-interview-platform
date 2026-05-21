@@ -22,13 +22,11 @@ const axiosClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Separate instance for refresh and no inrecepors
 const refreshAxios = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor – attach token , skip refresh endponit
 axiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
     const token = localStorage.getItem('accessToken');
@@ -40,16 +38,20 @@ axiosClient.interceptors.request.use(
   (error: AxiosError): Promise<AxiosError> => Promise.reject(error)
 );
 
-// Response interceptor – handle 401 and refresh
+// Response interceptor – handle 401 and refresh, but skip auth endpoints
 axiosClient.interceptors.response.use(
   (response: AxiosResponse): AxiosResponse => response,
   async (error: AxiosError): Promise<any> => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
     
-    // Only handle 401, not already retried, and not the refresh endpoint itself
-    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/refresh')) {
+    //  Skip refresh for authentication endpoints
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
+                           originalRequest.url?.includes('/auth/signup') ||
+                           originalRequest.url?.includes('/auth/refresh');
+    
+    // Only handle 401, not already retried, and not an auth endpoint
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
-        // Queue this request while refresh is in progress
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -62,7 +64,6 @@ axiosClient.interceptors.response.use(
 
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
-        // No refresh token-> logout
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
@@ -74,17 +75,12 @@ axiosClient.interceptors.response.use(
         const response = await refreshAxios.post('/auth/refresh', { refreshToken });
         const { accessToken, refreshToken: newRefreshToken } = response.data.data;
         
-
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', newRefreshToken);
         
-        // Process all queued requests
         processQueue();
-        
-        // Retry the original request
         return axiosClient(originalRequest);
       } catch (refreshError) {
-        // Refresh failed → logout and redirect
         processQueue(refreshError);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
