@@ -72,4 +72,19 @@ public class ResumeController {
 
         return ResponseEntity.ok(apiResponse);
     }
+
+    @GetMapping("/download/{userId}")
+    public ResponseEntity<ApiResponse<String>> getResumeDownloadUrl(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long userId) {
+        String url = resumeService.getResumeDownloadUrlForInterviewer(userDetails.getUser().getId(), userId);
+        ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                .success(true)
+                .message("Download URL generated")
+                .data(url)
+                .statusCode(HttpStatus.OK.value())
+                .time(LocalDateTime.now())
+                .build();
+        return ResponseEntity.ok(apiResponse);
+    }
 }

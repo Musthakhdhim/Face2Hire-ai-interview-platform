@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { verifyOtp, resendOtp, clearPendingSignup } from '../store/slices/authSlice';
 import { Brain, Mail, ShieldCheck } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -9,36 +9,48 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
-import type { RootState } from '../store/store'; 
+import type { RootState } from '../store/store';
 import type { AppDispatch } from '../store/store';
 
 export default function VerifyEmailPage() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { pendingSignup, isLoading } = useSelector((state: RootState) => state.auth);
   const [otp, setOtp] = useState<string>('');
 
-  useEffect(() => {
-    if (!pendingSignup) navigate('/signup');
-  }, [pendingSignup, navigate]);
+  const email = location.state?.email || pendingSignup?.email;
 
-  if (!pendingSignup) return null;
+  useEffect(() => {
+    if (!email) {
+      navigate('/signup');
+    }
+  }, [email, navigate]);
+
+  if (!email) return null;
 
   const handleVerify = async () => {
-    if (!otp) return toast.error('Enter OTP');
-    const result = await dispatch(verifyOtp({ email: pendingSignup.email, otp }));
+    if (!otp) {
+      toast.error('Enter OTP');
+      return;
+    }
+    const result = await dispatch(verifyOtp({ email, otp }));
     if (verifyOtp.fulfilled.match(result)) {
       toast.success('Email verified! You can now login.');
       navigate('/login');
+      dispatch(clearPendingSignup());
     } else {
       toast.error(result.payload as string);
     }
   };
 
   const handleResend = async () => {
-    const result = await dispatch(resendOtp({ email: pendingSignup.email, type: 'REGISTRATION' }));
-    if (resendOtp.fulfilled.match(result)) toast.success('New OTP sent');
-    else toast.error(result.payload as string);
+    const result = await dispatch(resendOtp({ email, type: 'REGISTRATION' }));
+    if (resendOtp.fulfilled.match(result)) {
+      toast.success('New OTP sent');
+    } else {
+      toast.error(result.payload as string);
+    }
   };
 
   return (
@@ -56,7 +68,7 @@ export default function VerifyEmailPage() {
             <CardDescription>We've sent a verification code to</CardDescription>
             <Badge>
               <Mail className="size-3 mr-1" />
-              {pendingSignup.email}
+              {email}
             </Badge>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -64,24 +76,15 @@ export default function VerifyEmailPage() {
             <Input
               placeholder="000000"
               value={otp}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setOtp(e.target.value.replace(/\D/g, ''))
-              }
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
               maxLength={6}
               className="text-center text-2xl tracking-widest"
             />
-            <Button
-              onClick={handleVerify}
-              disabled={!otp || isLoading}
-              className="w-full"
-            >
+            <Button onClick={handleVerify} disabled={!otp || isLoading} className="w-full">
               Verify Email
             </Button>
             <div className="text-center">
-              <button
-                onClick={handleResend}
-                className="text-sm text-indigo-600 hover:underline"
-              >
+              <button onClick={handleResend} className="text-sm text-indigo-600 hover:underline">
                 Resend verification code
               </button>
             </div>

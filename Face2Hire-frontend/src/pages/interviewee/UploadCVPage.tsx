@@ -1,6 +1,6 @@
 import { useState, type JSX } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Upload, FileText, CheckCircle2, X } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, X, AlertCircle } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
@@ -14,6 +14,7 @@ export default function UploadCVPage(): JSX.Element {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [resumeData, setResumeData] = useState<ResumeResponse | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [parsedData, setParsedData] = useState<{ fullName: string; email: string; skills: SkillDto[]; experiences: ExperienceDto[] } | null>(null);
 
   const parseParsedContent = (content: string | null) => {
@@ -25,6 +26,18 @@ export default function UploadCVPage(): JSX.Element {
     }
   };
 
+  const calculateTotalYears = (experiences: ExperienceDto[]): number => {
+    return experiences.reduce((sum, exp) => {
+      if (exp.startDate) {
+        const end = exp.endDate ? new Date(exp.endDate) : new Date(); // today for ongoing
+        const start = new Date(exp.startDate);
+        const years = end.getFullYear() - start.getFullYear();
+        return sum + years;
+      }
+      return sum;
+    }, 0);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -33,6 +46,9 @@ export default function UploadCVPage(): JSX.Element {
         return;
       }
       setFile(selectedFile);
+      setErrorMessage(null);
+      setResumeData(null);
+      setParsedData(null);
       handleUpload(selectedFile);
     }
   };
@@ -40,6 +56,7 @@ export default function UploadCVPage(): JSX.Element {
   const handleUpload = async (selectedFile: File) => {
     setUploading(true);
     setUploadProgress(0);
+    setErrorMessage(null);
 
     const interval = setInterval(() => {
       setUploadProgress((prev) => {
@@ -85,11 +102,18 @@ export default function UploadCVPage(): JSX.Element {
         }
         toast.success('CV uploaded and analyzed successfully!');
       } else {
-        toast.warning('CV uploaded but parsing failed. Please try again later.');
+        let msg = 'CV parsing failed. Please try again later.';
+        if (resume.parsedContent && resume.parsedContent.startsWith('Error:')) {
+          msg = resume.parsedContent.replace('Error:', '').trim();
+        }
+        setErrorMessage(msg);
+        toast.error(msg);
       }
     } catch (error: any) {
       console.error(error);
-      toast.error(error.response?.data?.message || 'Upload failed');
+      const errMsg = error.response?.data?.message || 'Upload failed';
+      setErrorMessage(errMsg);
+      toast.error(errMsg);
     } finally {
       clearInterval(interval);
       setUploadProgress(100);
@@ -106,6 +130,7 @@ export default function UploadCVPage(): JSX.Element {
     setFile(null);
     setResumeData(null);
     setParsedData(null);
+    setErrorMessage(null);
   };
 
   return (
@@ -146,118 +171,145 @@ export default function UploadCVPage(): JSX.Element {
                 <Progress value={uploadProgress} className="h-2" />
               </div>
             )}
+
+            {errorMessage && (
+              <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                <AlertCircle className="size-5 text-red-600 mt-0.5" />
+                <div className="text-sm text-red-700">{errorMessage}</div>
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : (
         <>
-          <Card className="border-0 shadow-lg border-l-4 border-l-green-500">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle2 className="size-6 text-green-600" />
-                  CV Uploaded Successfully
-                </CardTitle>
-                <Button variant="ghost" size="sm" onClick={handleReset}>
-                  <X className="size-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                <FileText className="size-8 text-indigo-600" />
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">{file?.name}</div>
-                  <div className="text-sm text-gray-500">
-                    {((file?.size || 0) / (1024 * 1024)).toFixed(2)} MB
+          {resumeData.status === 'COMPLETED' ? (
+            <>
+              <Card className="border-0 shadow-lg border-l-4 border-l-green-500">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckCircle2 className="size-6 text-green-600" />
+                      CV Uploaded Successfully
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" onClick={handleReset}>
+                      <X className="size-4" />
+                    </Button>
                   </div>
-                </div>
-                <Badge className="bg-green-100 text-green-700">
-                  <CheckCircle2 className="size-3 mr-1" />
-                  Verified
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle>Extracted Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="text-sm font-medium text-gray-600 mb-1">Name</div>
-                <div className="text-gray-900">{parsedData?.fullName || '—'}</div>
-              </div>
-
-              <div>
-                <div className="text-sm font-medium text-gray-600 mb-1">Email</div>
-                <div className="text-gray-900">{parsedData?.email || '—'}</div>
-              </div>
-
-              <div>
-                <div className="text-sm font-medium text-gray-600 mb-1">Years of Experience</div>
-                <div className="text-gray-900">
-                  {parsedData?.experiences?.reduce((sum, exp) => {
-                    if (exp.startDate && exp.endDate) {
-                      const years = new Date(exp.endDate).getFullYear() - new Date(exp.startDate).getFullYear();
-                      return sum + years;
-                    }
-                    return sum;
-                  }, 0) || 0} years
-                </div>
-              </div>
-
-              <div>
-                <div className="text-sm font-medium text-gray-600 mb-1">Skills Detected</div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {parsedData?.skills?.map((skill, idx) => (
-                    <Badge key={idx} variant="secondary">
-                      {skill.name}
-                    </Badge>
-                  ))}
-                  {(!parsedData?.skills || parsedData.skills.length === 0) && (
-                    <span className="text-sm text-gray-500">No skills detected</span>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-sm font-medium text-gray-600 mb-1">Work Experience</div>
-                {parsedData?.experiences?.map((exp, idx) => (
-                  <div key={idx} className="mt-2 p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-gray-900">{exp.title} at {exp.company}</div>
-                    <div className="text-sm text-gray-600">
-                      {exp.startDate} – {exp.endDate || 'Present'}
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                    <FileText className="size-8 text-indigo-600" />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">{file?.name}</div>
+                      <div className="text-sm text-gray-500">
+                        {((file?.size || 0) / (1024 * 1024)).toFixed(2)} MB
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-700 mt-1">{exp.description}</div>
+                    <Badge className="bg-green-100 text-green-700">
+                      <CheckCircle2 className="size-3 mr-1" />
+                      Verified
+                    </Badge>
                   </div>
-                ))}
-                {(!parsedData?.experiences || parsedData.experiences.length === 0) && (
-                  <span className="text-sm text-gray-500">No work experience detected</span>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-r from-indigo-50 to-purple-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Ready to confirm?</h3>
-                  <p className="text-sm text-gray-600">
-                    Your CV will be used to generate personalized interview questions
-                  </p>
+              <Card className="border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle>Extracted Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <div className="text-sm font-medium text-gray-600 mb-1">Name</div>
+                    <div className="text-gray-900">{parsedData?.fullName || '—'}</div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-medium text-gray-600 mb-1">Email</div>
+                    <div className="text-gray-900">{parsedData?.email || '—'}</div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-medium text-gray-600 mb-1">Years of Experience</div>
+                    <div className="text-gray-900">
+                      {parsedData?.experiences ? calculateTotalYears(parsedData.experiences) : 0} years
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-medium text-gray-600 mb-1">Skills Detected</div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {parsedData?.skills?.map((skill, idx) => (
+                        <Badge key={idx} variant="secondary">
+                          {skill.name}
+                        </Badge>
+                      ))}
+                      {(!parsedData?.skills || parsedData.skills.length === 0) && (
+                        <span className="text-sm text-gray-500">No skills detected</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-medium text-gray-600 mb-1">Work Experience</div>
+                    {parsedData?.experiences?.map((exp, idx) => (
+                      <div key={idx} className="mt-2 p-3 bg-gray-50 rounded-lg">
+                        <div className="font-medium text-gray-900">{exp.title} at {exp.company}</div>
+                        <div className="text-sm text-gray-600">
+                          {exp.startDate} – {exp.endDate || 'Present'}
+                        </div>
+                        <div className="text-sm text-gray-700 mt-1">{exp.description}</div>
+                      </div>
+                    ))}
+                    {(!parsedData?.experiences || parsedData.experiences.length === 0) && (
+                      <span className="text-sm text-gray-500">No work experience detected</span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-lg bg-gradient-to-r from-indigo-50 to-purple-50">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-1">Ready to confirm?</h3>
+                      <p className="text-sm text-gray-600">
+                        Your CV will be used to generate personalized interview questions
+                      </p>
+                    </div>
+                    <Button
+                      size="lg"
+                      onClick={handleConfirm}
+                      className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+                    >
+                      Confirm & Save
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <Card className="border-0 shadow-lg border-l-4 border-l-red-500">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-red-600">
+                    <AlertCircle className="size-6" />
+                    CV Upload Failed
+                  </CardTitle>
+                  <Button variant="ghost" size="sm" onClick={handleReset}>
+                    <X className="size-4" />
+                  </Button>
                 </div>
-                <Button
-                  size="lg"
-                  onClick={handleConfirm}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
-                >
-                  Confirm & Save
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 bg-red-50 rounded-lg text-red-700">
+                  {errorMessage || resumeData.parsedContent?.replace('Error:', '').trim() || 'Parsing failed. Please try again.'}
+                </div>
+                <Button onClick={handleReset} className="mt-4 w-full">
+                  Try Again
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>

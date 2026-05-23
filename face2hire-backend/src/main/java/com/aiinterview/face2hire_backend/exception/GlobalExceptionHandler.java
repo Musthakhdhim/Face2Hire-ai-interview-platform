@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -192,5 +193,17 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(apiResponse.getStatusCode()).body(apiResponse);
+    }
+
+    @ExceptionHandler(AccountNotVerifiedException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleAccountNotVerified(AccountNotVerifiedException ex) {
+        ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
+                .success(false)
+                .message(ex.getMessage())
+                .data(Map.of("email", ex.getEmail()))
+                .statusCode(HttpStatus.FORBIDDEN.value())
+                .time(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 }

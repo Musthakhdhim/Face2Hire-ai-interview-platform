@@ -34,7 +34,7 @@ public class OpenAiParserServiceImpl implements OpenAiParserService {
     private AppLogger log;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());   // <-- fix for LocalDate
+            .registerModule(new JavaTimeModule());
 
     @PostConstruct
     public void init() {
@@ -91,7 +91,7 @@ public class OpenAiParserServiceImpl implements OpenAiParserService {
                             "model", model,
                             "messages", List.of(Map.of("role", "user", "content", prompt)),
                             "temperature", 0.2,
-                            "max_tokens", 2500   // ← explicitly set
+                            "max_tokens", 2500
                     ))
                     .retrieve()
                     .bodyToMono(String.class)

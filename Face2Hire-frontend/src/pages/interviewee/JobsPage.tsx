@@ -71,13 +71,24 @@ export default function JobsPage(): JSX.Element {
             try {
               const parsed = JSON.parse(resume.parsedContent) as ParsedResume;
               setUserSkills(parsed.skills?.map(s => s.name) || []);
+
               const totalExp = parsed.experiences?.reduce((sum, exp) => {
-                if (exp.startDate && exp.endDate) {
-                  const years = new Date(exp.endDate).getFullYear() - new Date(exp.startDate).getFullYear();
+                if (exp.startDate) {
+                  const end = exp.endDate ? new Date(exp.endDate) : new Date(); // use today if null
+                  const start = new Date(exp.startDate);
+                  const years = end.getFullYear() - start.getFullYear();
                   return sum + years;
                 }
                 return sum;
               }, 0) || 0;
+
+              // const totalExp = parsed.experiences?.reduce((sum, exp) => {
+              //   if (exp.startDate && exp.endDate) {
+              //     const years = new Date(exp.endDate).getFullYear() - new Date(exp.startDate).getFullYear();
+              //     return sum + years;
+              //   }
+              //   return sum;
+              // }, 0) || 0;
               setUserExperience(totalExp);
             } catch {
               // ignore JSON parse error

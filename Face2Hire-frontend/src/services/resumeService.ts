@@ -50,7 +50,6 @@ export interface ResumeResponse {
 
 export const resumeService = {
   getUploadUrl: async (req: ResumeUploadRequest): Promise<ResumeUploadResponse> => {
-    console.log('Access token:', localStorage.getItem('accessToken'));
     const response = await axiosClient.post(API.RESUME.UPLOAD_URL, req);
     return response.data.data;
   },
@@ -62,6 +61,11 @@ export const resumeService = {
 
   getActiveResume: async (): Promise<ResumeResponse | null> => {
     const response = await axiosClient.get(API.RESUME.ACTIVE);
+    return response.data.data;
+  },
+
+  getResumeDownloadUrlForUser: async (userId: number): Promise<string> => {
+    const response = await axiosClient.get(`/resume/download/${userId}`);
     return response.data.data;
   },
 };

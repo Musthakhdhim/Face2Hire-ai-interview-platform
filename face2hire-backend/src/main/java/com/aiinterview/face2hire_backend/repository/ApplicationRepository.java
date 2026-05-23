@@ -16,4 +16,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     @Query("SELECT a FROM Application a WHERE a.jobId IN (SELECT j.id FROM Job j WHERE j.postedByUserId = :interviewerId)")
     Page<Application> findByInterviewerId(@Param("interviewerId") Long interviewerId, Pageable pageable);
+
+    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Application a JOIN Job j ON a.jobId = j.id WHERE a.userId = :userId AND j.postedByUserId = :interviewerId")
+    boolean existsByUserIdAndJobPostedByUserId(@Param("userId") Long userId, @Param("interviewerId") Long interviewerId);
 }

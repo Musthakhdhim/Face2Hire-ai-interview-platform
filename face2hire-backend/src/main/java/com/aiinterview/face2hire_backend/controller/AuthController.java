@@ -32,16 +32,6 @@ public class AuthController {
         this.log = loggerFactory.getLogger(getClass());
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse> registerUser(@Valid @RequestBody
-                                                        RegisterRequestDto registerRequest)
-            throws MessagingException {
-        log.info("Registration request for email: {}", registerRequest.getEmail());
-        ApiResponse apiResponse = authService.register(registerRequest);
-        log.info("Registration completed for email: {}, success: {}",
-                registerRequest.getEmail(), apiResponse.isSuccess());
-        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
-    }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> login(@Valid @RequestBody LoginRequestDto loginRequest)
@@ -57,20 +47,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/verify-otp")
-    public ResponseEntity<ApiResponse> verifyAccountUsingOtp(@Valid @RequestBody
-                                                                 VerifyOtpRequest verifyOtpRequest)
-            throws MessagingException, OtpNotValidException {
-        log.info("OTP verification request for email: {}", verifyOtpRequest.getEmail());
-        ApiResponse response = authService.verifyUserWithOtp(verifyOtpRequest);
-        if (response.isSuccess()) {
-            log.info("OTP verification successful for email: {}", verifyOtpRequest.getEmail());
-        } else {
-            log.warn("OTP verification failed for email: {}, reason: {}",
-                    verifyOtpRequest.getEmail(), response.getMessage());
-        }
-        return ResponseEntity.ok(response);
-    }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse> forgotPassword(
@@ -155,3 +131,57 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//    @PostMapping("/verify-otp")
+//    public ResponseEntity<ApiResponse> verifyAccountUsingOtp(@Valid @RequestBody
+//                                                                 VerifyOtpRequest verifyOtpRequest)
+//            throws MessagingException, OtpNotValidException {
+//        log.info("OTP verification request for email: {}", verifyOtpRequest.getEmail());
+//        ApiResponse response = authService.verifyUserWithOtp(verifyOtpRequest);
+//        if (response.isSuccess()) {
+//            log.info("OTP verification successful for email: {}", verifyOtpRequest.getEmail());
+//        } else {
+//            log.warn("OTP verification failed for email: {}, reason: {}",
+//                    verifyOtpRequest.getEmail(), response.getMessage());
+//        }
+//        return ResponseEntity.ok(response);
+//    }
+
+
+
+//    @PostMapping("/register")
+//    public ResponseEntity<ApiResponse> registerUser(@Valid @RequestBody
+//                                                        RegisterRequestDto registerRequest)
+//            throws MessagingException {
+//        log.info("Registration request for email: {}", registerRequest.getEmail());
+//        ApiResponse apiResponse = authService.register(registerRequest);
+//        log.info("Registration completed for email: {}, success: {}",
+//                registerRequest.getEmail(), apiResponse.isSuccess());
+//        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+//    }

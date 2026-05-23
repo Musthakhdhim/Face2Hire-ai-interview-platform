@@ -1,6 +1,6 @@
 import { useEffect, useState, type JSX } from 'react';
 import { motion } from 'motion/react';
-import { CheckCircle2, XCircle, Clock, Filter, Loader2, User, Mail } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Filter, Loader2, User, Mail, Download } from 'lucide-react'; 
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { applicationService, type ApplicationListResponse } from '../../services/applicationService';
 import { jobService, type JobListResponse } from '../../services/jobService';
 import { toast } from 'react-toastify';
+import { resumeService } from '../../services/resumeService';   
 
 interface ErrorWithResponse {
   response?: {
@@ -34,6 +35,15 @@ export default function InterviewerApplicationsPage(): JSX.Element {
   const [totalPages, setTotalPages] = useState(0);
   const pageSize = 10;
 
+  const handleDownloadResume = async (userId: number) => {
+    try {
+      const url = await resumeService.getResumeDownloadUrlForUser(userId);
+      window.open(url, '_blank');
+    } catch (error) {
+      toast.error('Failed to download resume');
+    }
+  };
+
   useEffect(() => {
     const fetchJobs = async () => {
       try {
@@ -41,7 +51,6 @@ export default function InterviewerApplicationsPage(): JSX.Element {
         setJobs(data.content);
       } catch {
         console.log("failed to fetch jobs");
-    
       }
     };
     fetchJobs();
@@ -153,6 +162,14 @@ export default function InterviewerApplicationsPage(): JSX.Element {
                           <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
                             <span className="flex items-center gap-1"><User className="size-4" />{app.userName}</span>
                             <span className="flex items-center gap-1"><Mail className="size-4" />{app.userEmail}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDownloadResume(app.userId)}
+                              className="text-indigo-600 hover:text-indigo-800"
+                            >
+                              <Download className="size-4" /> CV
+                            </Button>
                           </div>
                         </div>
                         {getStatusBadge(app.status)}

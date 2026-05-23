@@ -17,11 +17,8 @@ import jakarta.validation.Valid;
 import java.util.Map;
 
 public interface AuthService {
-    ApiResponse<RegisterResponse> register(RegisterRequestDto registerRequest) throws MessagingException;
 
     ApiResponse<LoginResponse> login(LoginRequestDto loginRequest) throws AccountNotVerifiedException;
-
-    ApiResponse<?> verifyUserWithOtp(VerifyOtpRequest verifyOtpRequest) throws MessagingException, OtpNotValidException;
 
     ApiResponse<?> resetPasswordWithOtp(@Valid ForgotPasswordRequest forgotPasswordRequest)
             throws MessagingException;
@@ -35,3 +32,15 @@ public interface AuthService {
 
     Map<String, String> refreshAccessToken(String refreshToken);
 }
+
+
+
+
+
+
+
+
+
+
+//ApiResponse<RegisterResponse> register(RegisterRequestDto registerRequest) throws MessagingException;
+//ApiResponse<?> verifyUserWithOtp(VerifyOtpRequest verifyOtpRequest) throws MessagingException, OtpNotValidException;

@@ -28,7 +28,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -59,101 +58,35 @@ public class AuthServiceImpl implements AuthService {
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
-    @Override
-    public ApiResponse<RegisterResponse> register(RegisterRequestDto registerRequest)
-            throws MessagingException {
-        log.info("Register request for email: {}", registerRequest.getEmail());
-
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            log.warn("Registration failed – email already exists: {}", registerRequest.getEmail());
-            throw new AlreadyExistsException("user with this email: " +
-                    registerRequest.getEmail() + " already exists");
-        }
-
-        if (userRepository.existsByUserName(registerRequest.getUserName())) {
-            log.warn("Registration failed – username already exists: {}",
-                    registerRequest.getUserName());
-            throw new AlreadyExistsException("user with this username already exists");
-        }
-
-        if (!registerRequest.isPasswordMatching()) {
-            log.warn("Registration failed – password mismatch for email: {}",
-                    registerRequest.getEmail());
-            throw new PasswordNotMatchException("password does not match confirm password");
-        }
-
-        User user = modelMapper.map(registerRequest, User.class);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setVerified(false);
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-        user.setActive(true);
-        if (user.getRole() == null) {
-            user.setRole(Role.INTERVIEWEE);
-        }
-
-        User savedUser = userRepository.save(user);
-        log.info("User registered successfully: email={}, username={}, role={}",
-                savedUser.getEmail(), savedUser.getUserName(), savedUser.getRole());
-
-        emailService.sendVerificationEmail(savedUser);
-        log.info("Verification email sent to: {}", savedUser.getEmail());
-
-        RegisterResponse registerResponse = RegisterResponse.builder()
-                .id(savedUser.getId())
-                .userName(savedUser.getUserName())
-                .email(savedUser.getEmail())
-                .role(savedUser.getRole())
-                .requireVerification(true)
-                .build();
-
-        return ApiResponse.<RegisterResponse>builder()
-                .message("User registered successfully, " +
-                        "Please verify your email with the otp sent to you email")
-                .data(registerResponse)
-                .success(true)
-                .statusCode(HttpStatus.CREATED.value())
-                .time(LocalDateTime.now())
-                .build();
-    }
 
     @Override
-    public ApiResponse<LoginResponse> login(LoginRequestDto loginRequest)
-            throws AccountNotVerifiedException {
+    public ApiResponse<LoginResponse> login(LoginRequestDto loginRequest) {
         log.info("Login attempt for email: {}", loginRequest.getEmail());
 
         User user = userRepository.findByEmail(loginRequest.getEmail());
         if (user == null) {
-            log.warn("Login failed – user not found: {}", loginRequest.getEmail());
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
         if (!user.isVerified()) {
             log.warn("Login failed – account not verified: {}", loginRequest.getEmail());
-            throw new AccountNotVerifiedException("Please verify your account");
+            throw new AccountNotVerifiedException("Signup again and verify your account", user.getEmail());
         }
 
         if (!user.isActive()) {
-            log.warn("Login failed – account locked (admin blocked): {}", loginRequest.getEmail());
-            throw new AccountLockedException("your account has been disabled " +
-                    "by the admin, please contact admin");
+            throw new AccountLockedException("your account has been disabled by the admin, please contact admin");
         }
 
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequest.getEmail(),
-                            loginRequest.getPassword()
-                    )
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
             );
         } catch (Exception e) {
-            log.warn("Login failed – invalid credentials for email: {}", loginRequest.getEmail());
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
-        log.info("Login successful for email: {}, role: {}", user.getEmail(), user.getRole());
 
         LoginResponse response = LoginResponse.builder()
                 .id(user.getId())
@@ -169,61 +102,6 @@ public class AuthServiceImpl implements AuthService {
                 .message("Login successful")
                 .data(response)
                 .statusCode(200)
-                .build();
-    }
-
-    @Override
-    public ApiResponse<?> verifyUserWithOtp(VerifyOtpRequest verifyOtpRequest)
-            throws MessagingException, OtpNotValidException {
-        log.info("OTP verification attempt for email: {}", verifyOtpRequest.getEmail());
-
-        User user = userRepository.findByEmail(verifyOtpRequest.getEmail());
-        if (user == null) {
-            log.warn("OTP verification failed – user not found: {}", verifyOtpRequest.getEmail());
-            throw new UserNotFoundException("User not found with email: "
-                    + verifyOtpRequest.getEmail());
-        }
-
-        if (user.isVerified()) {
-            log.warn("OTP verification ignored – account already verified: {}",
-                    verifyOtpRequest.getEmail());
-            return ApiResponse.builder()
-                    .success(false)
-                    .message("Account is already verified")
-                    .data(null)
-                    .statusCode(HttpStatus.BAD_REQUEST.value())
-                    .time(LocalDateTime.now())
-                    .build();
-        }
-
-        boolean isValid = otpServiceImpl.validateOtp(user.getEmail(),
-                OtpType.REGISTRATION, verifyOtpRequest.getOtp());
-        if (!isValid) {
-            log.warn("OTP verification failed – invalid or expired OTP for email: {}",
-                    verifyOtpRequest.getEmail());
-            throw new OtpNotValidException("Your OTP is incorrect or expired. " +
-                    "Please request a new one.");
-        }
-
-        user.setVerified(true);
-        user.setUpdatedAt(LocalDateTime.now());
-        User savedUser = userRepository.save(user);
-        log.info("Account verified successfully for email: {}", savedUser.getEmail());
-
-        RegisterResponse response = RegisterResponse.builder()
-                .id(savedUser.getId())
-                .userName(savedUser.getUserName())
-                .email(savedUser.getEmail())
-                .role(savedUser.getRole())
-                .requireVerification(false)
-                .build();
-
-        return ApiResponse.builder()
-                .success(true)
-                .message("Verification successful! You can now login.")
-                .data(response)
-                .statusCode(HttpStatus.OK.value())
-                .time(LocalDateTime.now())
                 .build();
     }
 
@@ -484,3 +362,165 @@ public class AuthServiceImpl implements AuthService {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//@Override
+//public ApiResponse<RegisterResponse> register(RegisterRequestDto registerRequest)
+//        throws MessagingException {
+//    log.info("Register request for email: {}", registerRequest.getEmail());
+//
+//    User existingUser = userRepository.findByEmail(registerRequest.getEmail());
+//    if (existingUser != null) {
+//        if (existingUser.isVerified()) {
+//            log.warn("Registration failed – email already exists and verified: {}", registerRequest.getEmail());
+//            throw new AlreadyExistsException("user with this email: " + registerRequest.getEmail() + " already exists");
+//        } else {
+//            log.info("Resending verification OTP for existing unverified email: {}", registerRequest.getEmail());
+//            existingUser.setUserName(registerRequest.getUserName());
+//            existingUser.setUpdatedAt(LocalDateTime.now());
+//            userRepository.save(existingUser);
+//
+//            otpServiceImpl.invalidateOtp(existingUser.getEmail(), OtpType.REGISTRATION);
+//            emailService.sendVerificationEmail(existingUser);
+//
+//            RegisterResponse response = RegisterResponse.builder()
+//                    .id(existingUser.getId())
+//                    .userName(existingUser.getUserName())
+//                    .email(existingUser.getEmail())
+//                    .role(existingUser.getRole())
+//                    .requireVerification(true)
+//                    .build();
+//            return ApiResponse.<RegisterResponse>builder()
+//                    .message("Account already exists but not verified. A new verification OTP has been sent to your email.")
+//                    .data(response)
+//                    .success(true)
+//                    .statusCode(HttpStatus.OK.value())
+//                    .time(LocalDateTime.now())
+//                    .build();
+//        }
+//    }
+//
+//    if (userRepository.existsByUserName(registerRequest.getUserName())) {
+//        throw new AlreadyExistsException("user with this username already exists");
+//    }
+//    if (!registerRequest.isPasswordMatching()) {
+//        throw new PasswordNotMatchException("password does not match confirm password");
+//    }
+//
+//    User user = modelMapper.map(registerRequest, User.class);
+//    user.setPassword(passwordEncoder.encode(user.getPassword()));
+//    user.setVerified(false);
+//    user.setCreatedAt(LocalDateTime.now());
+//    user.setUpdatedAt(LocalDateTime.now());
+//    user.setActive(true);
+//    if (user.getRole() == null) {
+//        user.setRole(Role.INTERVIEWEE);
+//    }
+//
+//    User savedUser = userRepository.save(user);
+//    log.info("User registered successfully: email={}", savedUser.getEmail());
+//
+//    emailService.sendVerificationEmail(savedUser);
+//
+//    RegisterResponse registerResponse = RegisterResponse.builder()
+//            .id(savedUser.getId())
+//            .userName(savedUser.getUserName())
+//            .email(savedUser.getEmail())
+//            .role(savedUser.getRole())
+//            .requireVerification(true)
+//            .build();
+//
+//    return ApiResponse.<RegisterResponse>builder()
+//            .message("User registered successfully. Please verify your email with the OTP sent to your email.")
+//            .data(registerResponse)
+//            .success(true)
+//            .statusCode(HttpStatus.CREATED.value())
+//            .time(LocalDateTime.now())
+//            .build();
+//}
+
+
+
+//@Override
+//public ApiResponse<?> verifyUserWithOtp(VerifyOtpRequest verifyOtpRequest)
+//        throws MessagingException, OtpNotValidException {
+//    log.info("OTP verification attempt for email: {}", verifyOtpRequest.getEmail());
+//
+//    User user = userRepository.findByEmail(verifyOtpRequest.getEmail());
+//    if (user == null) {
+//        log.warn("OTP verification failed – user not found: {}", verifyOtpRequest.getEmail());
+//        throw new UserNotFoundException("User not found with email: "
+//                + verifyOtpRequest.getEmail());
+//    }
+//
+//    if (user.isVerified()) {
+//        log.warn("OTP verification ignored – account already verified: {}",
+//                verifyOtpRequest.getEmail());
+//        return ApiResponse.builder()
+//                .success(false)
+//                .message("Account is already verified")
+//                .data(null)
+//                .statusCode(HttpStatus.BAD_REQUEST.value())
+//                .time(LocalDateTime.now())
+//                .build();
+//    }
+//
+//    boolean isValid = otpServiceImpl.validateOtp(user.getEmail(),
+//            OtpType.REGISTRATION, verifyOtpRequest.getOtp());
+//    if (!isValid) {
+//        log.warn("OTP verification failed – invalid or expired OTP for email: {}",
+//                verifyOtpRequest.getEmail());
+//        throw new OtpNotValidException("Your OTP is incorrect or expired. " +
+//                "Please request a new one.");
+//    }
+//
+//    user.setVerified(true);
+//    user.setUpdatedAt(LocalDateTime.now());
+//    User savedUser = userRepository.save(user);
+//    log.info("Account verified successfully for email: {}", savedUser.getEmail());
+//
+//    RegisterResponse response = RegisterResponse.builder()
+//            .id(savedUser.getId())
+//            .userName(savedUser.getUserName())
+//            .email(savedUser.getEmail())
+//            .role(savedUser.getRole())
+//            .requireVerification(false)
+//            .build();
+//
+//    return ApiResponse.builder()
+//            .success(true)
+//            .message("Verification successful! You can now login.")
+//            .data(response)
+//            .statusCode(HttpStatus.OK.value())
+//            .time(LocalDateTime.now())
+//            .build();
+//}

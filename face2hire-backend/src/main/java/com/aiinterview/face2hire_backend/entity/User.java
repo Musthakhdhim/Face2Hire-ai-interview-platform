@@ -17,7 +17,6 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.FetchType;
-import lombok.ToString;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,7 +25,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@ToString
 public class User {
 
     @Id
