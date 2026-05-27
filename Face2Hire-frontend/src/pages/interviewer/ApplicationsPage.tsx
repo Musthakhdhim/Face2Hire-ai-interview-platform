@@ -39,7 +39,7 @@ export default function InterviewerApplicationsPage(): JSX.Element {
     try {
       const url = await resumeService.getResumeDownloadUrlForUser(userId);
       window.open(url, '_blank');
-    } catch (error) {
+    } catch  {
       toast.error('Failed to download resume');
     }
   };
