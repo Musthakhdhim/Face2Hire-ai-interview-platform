@@ -10,7 +10,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    # MySQL service for backend tests
     services:
       mysql:
         image: mysql:8.0
@@ -25,7 +24,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ---------- Backend (interviewai) ----------
+      # ---------- Backend ----------
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -36,15 +35,24 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('interviewai/pom.xml') }}
+          key: ${{ runner.os }}-m2-${{ hashFiles('face2hire-backend/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      # 1. Run Checkstyle (fails on violations)
+      - name: Run Checkstyle
+        run: |
+          cd face2hire-backend
+          mvn checkstyle:check
+        env:
+          # Minimal env variables needed for checkstyle (no DB required)
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      # 2. Build and test backend (runs unit/integration tests)
       - name: Build and test backend
         run: |
           cd face2hire-backend
           mvn clean verify -e -X
         env:
-          # These environment variables are picked up by application.properties
           DB_URL: jdbc:mysql://localhost:3306/aiinterview?createDatabaseIfNotExist=true
           DB_USERNAME: root
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -63,22 +71,23 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Upload test reports
-        if: always()  # Upload even if tests fail
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
           path: face2hire-backend/target/surefire-reports/
-      # ---------- Frontend (interview-ai) ----------
+
+      # ---------- Frontend ----------
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'   # instead of '21'
+          node-version: '20'
 
       - name: Cache npm dependencies
         uses: actions/cache@v3
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('interview-ai/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('Face2Hire-frontend/package-lock.json') }}
           restore-keys: ${{ runner.os }}-node-
 
       - name: Create .env file for frontend
@@ -90,6 +99,16 @@ jobs:
         run: |
           cd Face2Hire-frontend
           npm ci
+
+      # 3. Run ESLint (fail on any error or warning)
+      - name: Run ESLint
+        run: |
+          cd Face2Hire-frontend
+          if npm run | grep -q " lint"; then
+            npm run lint
+          else
+            npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0
+          fi
 
       - name: Run frontend tests (if script exists)
         run: |
