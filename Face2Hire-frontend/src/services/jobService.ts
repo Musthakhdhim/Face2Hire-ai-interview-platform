@@ -56,6 +56,14 @@ export interface PaginatedJobs<T> {
   last: boolean;
 }
 
+interface GetAllActiveJobsParams {
+  page: number;
+  size: number;
+  sortBy: string;
+  direction: 'asc' | 'desc';
+  search?: string;
+}
+
 export const jobService = {
   createJob: async (data: JobRequest): Promise<JobResponse> => {
     const response = await axiosClient.post(API.JOBS.CREATE, data);
@@ -75,7 +83,7 @@ export const jobService = {
   },
 
   getAllActiveJobs: async (page: number = 0, size: number = 10, search?: string, sortBy: string = 'createdAt', direction: 'asc' | 'desc' = 'desc'): Promise<PaginatedJobs<JobListResponse>> => {
-    const params: any = { page, size, sortBy, direction };
+    const params: GetAllActiveJobsParams = { page, size, sortBy, direction };
     if (search) params.search = search;
     const response = await axiosClient.get(API.JOBS.ALL_ACTIVE, { params });
     return response.data.data;

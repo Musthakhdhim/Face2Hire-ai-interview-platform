@@ -15,6 +15,22 @@ import type { RootState, AppDispatch } from '../store/store';
 
 type Role = 'interviewee' | 'interviewer' | 'admin';
 
+interface LoginErrorResponse {
+  response?: {
+    status?: number;
+    data?: {
+      data?: {
+        email?: string;
+      };
+      message?: string;
+    };
+  };
+}
+
+const isLoginError = (error: unknown): error is LoginErrorResponse => {
+  return typeof error === 'object' && error !== null && 'response' in error;
+};
+
 export default function LoginPage(): JSX.Element {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -24,53 +40,32 @@ export default function LoginPage(): JSX.Element {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [role, setRole] = useState<Role>('interviewee');
 
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  if (!email || !password) {
-    toast.error('Please fill in all fields');
-    return;
-  }
-  try {
-    const result = await dispatch(login({ email, password })).unwrap();
-    const backendRole = result.role;
-    if (backendRole.toLowerCase() !== role.toLowerCase()) {
-      toast.error(`Role mismatch. You are registered as ${backendRole}`);
+    e.preventDefault();
+    if (!email || !password) {
+      toast.error('Please fill in all fields');
       return;
     }
-    toast.success('Login successful!');
-    navigate(`/${backendRole.toLowerCase()}`, { replace: true });
-  } catch (err: any) {
-    if (err?.response?.status === 403 && err?.response?.data?.data?.email) {
-      const unverifiedEmail = err.response.data.data.email;
-      navigate('/verify-email', { state: { email: unverifiedEmail, fromLogin: true } });
-      toast.error('Account not verified. Please verify your email.');
-      return;
+    try {
+      const result = await dispatch(login({ email, password })).unwrap();
+      const backendRole = result.role;
+      if (backendRole.toLowerCase() !== role.toLowerCase()) {
+        toast.error(`Role mismatch. You are registered as ${backendRole}`);
+        return;
+      }
+      toast.success('Login successful!');
+      navigate(`/${backendRole.toLowerCase()}`, { replace: true });
+    } catch (err: unknown) {
+      if (isLoginError(err) && err.response?.status === 403 && err.response?.data?.data?.email) {
+        const unverifiedEmail = err.response.data.data.email;
+        navigate('/verify-email', { state: { email: unverifiedEmail, fromLogin: true } });
+        toast.error('Account not verified. Please verify your email.');
+        return;
+      }
+      console.log(err + "hello");
+      toast.error('Login failed');
     }
-    console.log(err+"hello");
-    
-    toast.error((err as string) || 'Login failed');
-  }
-};
-  // const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  //   e.preventDefault();
-  //   if (!email || !password) {
-  //     toast.error('Please fill in all fields');
-  //     return;
-  //   }
-  //   try {
-  //     const result = await dispatch(login({ email, password })).unwrap();
-  //     const backendRole = result.role; 
-  //     if (backendRole.toLowerCase() !== role.toLowerCase()) {
-  //       toast.error(`Role mismatch. You are registered as ${backendRole}`);
-  //       return;
-  //     }
-  //     toast.success('Login successful!');
-  //     navigate(`/${backendRole.toLowerCase()}`, { replace: true });
-  //   } catch (errorMsg) {
-  //     toast.error((errorMsg as string) || 'Login failed');
-  //   }
-  // };
+  };
 
   const handleSocialLogin = (provider: string): void => {
     window.location.href = `${import.meta.env.VITE_GOOGLE_URL}/${provider.toLowerCase()}`;

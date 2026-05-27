@@ -6,6 +6,22 @@ import { Download, FileText, Calendar, Briefcase, Award, Loader2 } from 'lucide-
 import { profileService, type ResumeData } from '../../services/profileService';
 import { toast } from 'react-toastify';
 
+interface ErrorWithResponse {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
+const getErrorMessage = (error: unknown): string => {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const err = error as ErrorWithResponse;
+    if (err.response?.data?.message) return err.response.data.message;
+  }
+  return 'Failed to load resume data';
+};
+
 export default function ResumeTab() {
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -15,8 +31,8 @@ export default function ResumeTab() {
       try {
         const data = await profileService.getResumeData();
         setResumeData(data);
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || 'Failed to load resume data');
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error));
       } finally {
         setLoading(false);
       }
@@ -135,5 +151,4 @@ export default function ResumeTab() {
       </Card>
     </div>
   );
-  
 }

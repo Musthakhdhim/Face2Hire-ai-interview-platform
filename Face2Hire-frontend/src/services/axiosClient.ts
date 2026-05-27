@@ -6,7 +6,7 @@ let failedQueue: Array<{
   reject: (reason?: unknown) => void;
 }> = [];
 
-const processQueue = (error: any = null) => {
+const processQueue = (error?: unknown) => {
   failedQueue.forEach(prom => {
     if (error) {
       prom.reject(error);
@@ -55,10 +55,9 @@ axiosClient.interceptors.request.use(
 // Response interceptor
 axiosClient.interceptors.response.use(
   (response: AxiosResponse): AxiosResponse => response,
-  async (error: AxiosError): Promise<any> => {
+  async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // If no config (e.g. network error before request was made), reject immediately
     if (!originalRequest) {
       return Promise.reject(error);
     }
@@ -68,16 +67,12 @@ axiosClient.interceptors.response.use(
       originalRequest.url?.includes('/auth/signup') ||
       originalRequest.url?.includes('/auth/refresh');
 
-    // Only attempt refresh on 401, not already retried, and not an auth endpoint
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
-      
-      // If a refresh is already in progress, queue this request
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then(() => {
-            // Update the authorization header with the new token
             const newToken = localStorage.getItem('accessToken');
             if (newToken) {
               originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -92,7 +87,6 @@ axiosClient.interceptors.response.use(
 
       const refreshToken = localStorage.getItem('refreshToken');
 
-      // No refresh token available — log out immediately
       if (!refreshToken) {
         isRefreshing = false;
         processQueue(new Error('No refresh token'));
@@ -103,7 +97,6 @@ axiosClient.interceptors.response.use(
       try {
         const response = await refreshAxios.post('/auth/refresh', { refreshToken });
 
-        // Validate the response structure
         const newAccessToken = response.data?.data?.accessToken;
         const newRefreshToken = response.data?.data?.refreshToken;
 
@@ -116,15 +109,10 @@ axiosClient.interceptors.response.use(
           localStorage.setItem('refreshToken', newRefreshToken);
         }
 
-        // Update the failed request's auth header
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-        processQueue(); // resolve all queued requests
+        processQueue();
         return axiosClient(originalRequest);
-
       } catch (refreshError) {
-  
-        
         processQueue(refreshError);
         clearAuthAndRedirect();
         return Promise.reject(refreshError);
@@ -133,10 +121,8 @@ axiosClient.interceptors.response.use(
       }
     }
 
-    // For 500 errors, don't retry — just reject with the error
     if (error.response?.status === 500) {
       console.log("hello 500");
-      
       return Promise.reject(error);
     }
 
