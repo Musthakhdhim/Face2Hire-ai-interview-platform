@@ -26,6 +26,12 @@ import JobApplicationPage from './pages/interviewee/JobApplicationPage';
 import IntervieweeApplicationsPage from './pages/interviewee/ApplicationsPage';
 import InterviewerApplicationsPage from './pages/interviewer/ApplicationsPage';
 import ApplicationDetailPage from './pages/interviewee/ApplicationDetailPage';
+import ActiveInterviewPage from './pages/interviewee/ActiveInterviewPage';
+import InterviewSetupPage from './pages/interviewee/InterviewSetupPage';
+import HistoryPage from './pages/interviewee/HistoryPage';
+import AnalyticsPage from './pages/interviewee/AnalyticsPage';
+import UpcomingInterviewsPage from './pages/interviewee/UpcomingInterviewsPage';
+import FeedbackPage from './pages/interviewee/FeedbackPage';
 
 function App(): JSX.Element {
   return (
@@ -52,6 +58,12 @@ function App(): JSX.Element {
               <Route path="/interviewee/applications" element={<IntervieweeApplicationsPage />} />
               <Route path="/interviewee/applications/:id" element={<ApplicationDetailPage />} />
               <Route path="settings" element={<ProfileSettingsPage />} />
+              <Route path="interview/setup" element={<InterviewSetupPage />} />
+              <Route path="interview/active/:sessionId" element={<ActiveInterviewPage />} />
+              <Route path="interview/feedback/:sessionId" element={<FeedbackPage />} /> 
+               <Route path="history" element={<HistoryPage />} /> 
+               <Route path="analytics" element={<AnalyticsPage />} /> 
+               <Route path="upcoming" element={<UpcomingInterviewsPage />} />
             </Route>
           </Route>
 

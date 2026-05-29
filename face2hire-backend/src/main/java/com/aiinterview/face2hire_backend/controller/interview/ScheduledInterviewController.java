@@ -1,0 +1,42 @@
+package com.aiinterview.face2hire_backend.controller.interview;
+
+import com.aiinterview.face2hire_backend.dto.interview.ScheduleInterviewRequest;
+import com.aiinterview.face2hire_backend.dto.interview.ScheduledInterviewDto;
+import com.aiinterview.face2hire_backend.security.CustomUserDetails;
+import com.aiinterview.face2hire_backend.service.interview.ScheduledInterviewService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/scheduled-interviews")
+@RequiredArgsConstructor
+public class ScheduledInterviewController {
+
+    private final ScheduledInterviewService service;
+
+    @PostMapping
+    public ResponseEntity<ScheduledInterviewDto> schedule(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody ScheduleInterviewRequest request) {
+        String interviewerName = userDetails.getUser().getFullName(); // or getUserName()
+        return ResponseEntity.ok(service.schedule(interviewerName, request));
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<List<ScheduledInterviewDto>> getMyScheduled(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();   // ✅ numeric ID from the User entity
+        return ResponseEntity.ok(service.getForUser(userId));
+    }
+
+    @GetMapping("/for-interviewer")
+    public ResponseEntity<List<ScheduledInterviewDto>> getByInterviewer(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String interviewerName = userDetails.getUser().getFullName(); // or getUserName()
+        return ResponseEntity.ok(service.getByInterviewer(interviewerName));
+    }
+}

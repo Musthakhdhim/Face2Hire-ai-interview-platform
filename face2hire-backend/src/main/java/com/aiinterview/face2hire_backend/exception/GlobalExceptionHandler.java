@@ -206,4 +206,16 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
+
+    @ExceptionHandler(InterviewSessionNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleNotFound(InterviewSessionNotFoundException ex) {
+
+        ApiResponse apiResponse = ApiResponse.builder()
+                .success(false)
+                .message("interview session is not found: " + ex.getMessage())
+                .statusCode(HttpStatus.NOT_FOUND.value())
+                .data(null)
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiResponse);
+    }
 }
