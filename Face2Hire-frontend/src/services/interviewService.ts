@@ -1,7 +1,6 @@
 import axiosClient from './axiosClient';
 import API from './endpoints';
 
-// Types
 export type InterviewType = 'technical' | 'hr' | 'behavioral' | 'salary';
 export type Difficulty = 'beginner' | 'intermediate' | 'expert';
 export type AvatarStyle = 'professional' | 'friendly' | 'strict';
@@ -35,7 +34,7 @@ export interface AnswerSubmissionDto {
   sessionId: number;
   questionId: number;
   audioUrl: string;
-  responseDuration: number; // seconds
+  responseDuration: number;
 }
 
 export interface FeedbackResponseDto {
@@ -76,7 +75,7 @@ export interface InterviewSessionDto {
   startedAt: string;
   completedAt?: string;
   createdAt: string;
-  scheduledInterviewId?: number; // added for scheduled interviews
+  scheduledInterviewId?: number; 
 }
 
 export const interviewService = {

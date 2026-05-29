@@ -18,7 +18,6 @@ export default function ScheduleInterviewPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Initialise form data with URL parameters (no useEffect needed)
   const [formData, setFormData] = useState<ScheduleInterviewRequest>(() => {
     const idParam = searchParams.get("intervieweeId");
     const nameParam = searchParams.get("candidateName");

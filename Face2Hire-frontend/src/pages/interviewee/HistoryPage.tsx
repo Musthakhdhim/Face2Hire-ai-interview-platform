@@ -17,7 +17,6 @@ export default function HistoryPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
 
-  // Fetch sessions once
   useEffect(() => {
     const fetch = async () => {
       try {
@@ -33,7 +32,6 @@ export default function HistoryPage() {
     fetch();
   }, []);
 
-  // Compute filtered, sorted list – no additional state update needed
   const filtered = useMemo(() => {
     let result = sessions;
     if (filterType !== "all") {

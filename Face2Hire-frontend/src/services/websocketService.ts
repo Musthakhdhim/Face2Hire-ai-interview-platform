@@ -1,19 +1,18 @@
-// Declare global to avoid 'any'
 declare global {
   interface Window {
     global?: Window;
   }
 }
 
-// Polyfill for sockjs-client
 if (typeof window !== 'undefined' && !window.global) {
   window.global = window;
 }
 
-import { Client, IMessage } from '@stomp/stompjs';
+import { Client } from '@stomp/stompjs';
+import type { IMessage } from '@stomp/stompjs'; 
 import SockJS from 'sockjs-client';
 
-type MessageHandler = (message: IMessage) => void;
+type MessageHandler = (payload: unknown) => void; 
 
 class WebSocketService {
   private client: Client | null = null;
@@ -28,12 +27,13 @@ class WebSocketService {
       debug: () => {},
       onConnect: () => {
         this.subscribeToUserQueue('/queue/interview.state', (msg: IMessage) => {
-          this.handlers.get('state')?.(msg);
+          const payload = JSON.parse(msg.body);
+          this.handlers.get('state')?.(payload);
         });
         this.subscribeToUserQueue('/queue/interview.timer', (msg: IMessage) => {
-          this.handlers.get('timer')?.(msg);
+          const payload = JSON.parse(msg.body);
+          this.handlers.get('timer')?.(payload);
         });
-        // Send join message
         this.client?.publish({
           destination: '/app/interview.join',
           body: JSON.stringify({ sessionId }),
@@ -55,8 +55,6 @@ class WebSocketService {
   }
 
   sendAudioChunk(_chunk: Blob) {
-    // Convert to base64 and send (optional – we'll use REST for final answer)
-    // For simplicity we skip live streaming; final audio is sent via REST after answer.
   }
 
   disconnect() {

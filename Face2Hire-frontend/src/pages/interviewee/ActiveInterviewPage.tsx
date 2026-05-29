@@ -23,7 +23,12 @@ interface SessionConfig {
   scheduledInterviewId?: number;
 }
 
-// Type for Web Speech Recognition
+// Timer message type from WebSocket
+interface TimerMessage {
+  remainingSeconds: number;
+}
+
+// Speech recognition interfaces (unchanged)
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
@@ -106,7 +111,11 @@ export default function ActiveInterviewPage() {
         setQuestionIndex(1);
         setLoading(false);
         websocketService.connect(Number(sessionId), token!, () => {
-          websocketService.on('timer', (data) => setTimeRemaining(data.remainingSeconds));
+          // ✅ Cast `data` to TimerMessage type to access `remainingSeconds`
+          websocketService.on('timer', (data) => {
+            const timerData = data as TimerMessage;
+            setTimeRemaining(timerData.remainingSeconds);
+          });
         });
         await speakQuestion(firstQuestion.questionText);
       } catch {

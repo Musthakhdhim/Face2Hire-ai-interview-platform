@@ -10,7 +10,7 @@ export interface ScheduleInterviewRequest {
   duration: number;
   questionCount: number;
   avatarStyle: AvatarStyle;
-  dueDate: string; // YYYY-MM-DD
+  dueDate: string; 
 }
 
 export interface ScheduledInterviewDto {

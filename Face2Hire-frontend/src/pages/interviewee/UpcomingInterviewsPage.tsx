@@ -17,12 +17,11 @@ export default function UpcomingInterviewsPage() {
     const fetch = async () => {
       try {
         const data = await scheduledInterviewService.getMyScheduled();
-        // Ensure data is an array (API might return null or undefined)
         setInterviews(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to load scheduled interviews", error);
         toast.error("Failed to load scheduled interviews");
-        setInterviews([]); // fallback to empty array
+        setInterviews([]);
       } finally {
         setLoading(false);
       }
@@ -62,7 +61,6 @@ export default function UpcomingInterviewsPage() {
     return <div className="text-center py-12">Loading...</div>;
   }
 
-  // Safety: use a local variable that is guaranteed to be an array
   const interviewList = Array.isArray(interviews) ? interviews : [];
 
   return (
