@@ -9,18 +9,16 @@ if (typeof window !== 'undefined' && !window.global) {
 }
 
 import { Client } from '@stomp/stompjs';
-import type { IMessage } from '@stomp/stompjs'; 
+import type { IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
-type MessageHandler = (payload: unknown) => void; 
+type MessageHandler = (payload: unknown) => void;
 
 class WebSocketService {
   private client: Client | null = null;
-  private sessionId: number | null = null;
   private handlers: Map<string, MessageHandler> = new Map();
 
   connect(sessionId: number, token: string, onConnected: () => void) {
-    this.sessionId = sessionId;
     this.client = new Client({
       webSocketFactory: () => new SockJS(`${import.meta.env.VITE_API_BASE_URL}/ws/interview`),
       connectHeaders: { Authorization: `Bearer ${token}` },
@@ -55,6 +53,7 @@ class WebSocketService {
   }
 
   sendAudioChunk(_chunk: Blob) {
+    // For simplicity we skip live streaming; final audio is sent via REST.
   }
 
   disconnect() {
