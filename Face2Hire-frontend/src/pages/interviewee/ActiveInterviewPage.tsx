@@ -1,26 +1,49 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'motion/react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
-import { Mic, MicOff, Volume2, VolumeX, SkipForward, CheckCircle } from 'lucide-react';
+import { Mic, MicOff, Volume2, SkipForward, CheckCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { interviewService } from '../../services/interviewService';
-import type { QuestionResponseDto, FeedbackResponseDto } from '../../services/interviewService';
+import { interviewService, type QuestionResponseDto, type InterviewType, type Difficulty, type AvatarStyle } from '../../services/interviewService';
 import { audioService } from '../../services/audioService';
 import { websocketService } from '../../services/websocketService';
 import Avatar from '../../components/interview/Avatar';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store/store';
 
+interface SessionConfig {
+  type: InterviewType;
+  difficulty: Difficulty;
+  duration: number;
+  questionCount: number;
+  avatarStyle: AvatarStyle;
+  firstQuestionId?: number;
+  scheduledInterviewId?: number;
+}
+
+// Type for Web Speech Recognition
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+}
+
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
 export default function ActiveInterviewPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { token } = useSelector((state: RootState) => state.auth);
-  const sessionConfig = location.state as any; // { type, difficulty, duration, questionCount, avatarStyle, scheduledInterviewId }
+  const sessionConfig = location.state as SessionConfig;
 
   const [currentQuestion, setCurrentQuestion] = useState<QuestionResponseDto | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -33,23 +56,39 @@ export default function ActiveInterviewPage() {
   const [loading, setLoading] = useState(true);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const recognitionRef = useRef<any>(null);
-  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  // Load first question on mount
+  const speakQuestion = useCallback(async (text: string) => {
+    setAvatarState('speaking');
+    try {
+      const audioBlob = await audioService.textToSpeech(text, sessionConfig.avatarStyle);
+      const url = URL.createObjectURL(audioBlob);
+      const audio = new Audio(url);
+      setAudioElement(audio);
+      audio.onended = () => {
+        setAvatarState('listening');
+        URL.revokeObjectURL(url);
+        setAudioElement(null);
+      };
+      audio.play();
+    } catch {
+      console.error('TTS error');
+      setAvatarState('listening');
+    }
+  }, [sessionConfig]);
+
   useEffect(() => {
     const startSession = async () => {
       try {
         let firstQuestion: QuestionResponseDto;
         if (sessionConfig?.firstQuestionId) {
-          // If we already have a session (e.g., from setup)
           const res = await interviewService.getNextQuestion(Number(sessionId), 0);
           firstQuestion = res;
         } else {
-          // Start a new session
           const started = await interviewService.startSession({
             type: sessionConfig.type,
             difficulty: sessionConfig.difficulty,
@@ -66,41 +105,17 @@ export default function ActiveInterviewPage() {
         setCurrentQuestion(firstQuestion);
         setQuestionIndex(1);
         setLoading(false);
-        // Connect WebSocket for timer & state
         websocketService.connect(Number(sessionId), token!, () => {
           websocketService.on('timer', (data) => setTimeRemaining(data.remainingSeconds));
         });
-        // Speak the first question
-        speakQuestion(firstQuestion.questionText);
-      } catch (err) {
+        await speakQuestion(firstQuestion.questionText);
+      } catch {
         toast.error('Failed to start interview');
         navigate('/interviewee/interview/setup');
       }
     };
-    if (sessionId) startSession();
-  }, [sessionId, sessionConfig, token, navigate]);
-
-  const speakQuestion = async (text: string) => {
-    setAvatarState('speaking');
-    try {
-      const audioBlob = await audioService.textToSpeech(text, sessionConfig.avatarStyle);
-      const url = URL.createObjectURL(audioBlob);
-      if (ttsAudioRef.current) {
-        ttsAudioRef.current.pause();
-        URL.revokeObjectURL(ttsAudioRef.current.src);
-      }
-      const audio = new Audio(url);
-      ttsAudioRef.current = audio;
-      audio.onended = () => {
-        setAvatarState('listening');
-        URL.revokeObjectURL(url);
-      };
-      audio.play();
-    } catch (err) {
-      console.error('TTS error', err);
-      setAvatarState('listening');
-    }
-  };
+    if (sessionId && sessionConfig) startSession();
+  }, [sessionId, sessionConfig, token, navigate, speakQuestion]);
 
   const startRecording = async () => {
     if (isMuted) {
@@ -113,17 +128,17 @@ export default function ActiveInterviewPage() {
     mediaRecorderRef.current.ondataavailable = (e) => {
       if (e.data.size > 0) audioChunksRef.current.push(e.data);
     };
-    mediaRecorderRef.current.start(1000); // chunk every second
+    mediaRecorderRef.current.start(1000);
     setIsRecording(true);
     setAvatarState('listening');
 
-    // Optional: use Web Speech API for live transcript
     if ('webkitSpeechRecognition' in window) {
-      const recognition = new (window as any).webkitSpeechRecognition();
+      const SpeechRecognitionConstructor = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      const recognition = new SpeechRecognitionConstructor() as SpeechRecognition;
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let interim = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
           interim += event.results[i][0].transcript;
@@ -143,13 +158,12 @@ export default function ActiveInterviewPage() {
     setAvatarState('idle');
     if (recognitionRef.current) recognitionRef.current.stop();
 
-    // Wait for final audio blob
     await new Promise(resolve => setTimeout(resolve, 500));
     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
     setSubmitting(true);
     try {
       const audioUrl = await audioService.uploadAudio(audioBlob);
-      const responseDuration = Math.round(audioChunksRef.current.length); // rough estimate in seconds
+      const responseDuration = Math.round(audioChunksRef.current.length);
       const feedback = await interviewService.submitAnswer({
         sessionId: Number(sessionId),
         questionId: currentQuestion!.questionId,
@@ -157,14 +171,12 @@ export default function ActiveInterviewPage() {
         responseDuration,
       });
       setAnswerSubmitted(true);
-      // Show feedback briefly
       toast.success(`Score: ${feedback.score}%`);
-      // Automatically go to next question after delay
       setTimeout(() => {
         setAnswerSubmitted(false);
         goToNextQuestion();
       }, 2000);
-    } catch (err) {
+    } catch {
       toast.error('Failed to submit answer');
     } finally {
       setSubmitting(false);
@@ -173,7 +185,6 @@ export default function ActiveInterviewPage() {
 
   const goToNextQuestion = async () => {
     if (questionIndex >= totalQuestions) {
-      // End interview
       const overallFeedback = await interviewService.endSession(Number(sessionId));
       navigate(`/interviewee/interview/feedback/${sessionId}`, { state: { feedback: overallFeedback } });
       return;
@@ -183,8 +194,8 @@ export default function ActiveInterviewPage() {
       setCurrentQuestion(next);
       setQuestionIndex(prev => prev + 1);
       setTranscript('');
-      speakQuestion(next.questionText);
-    } catch (err) {
+      await speakQuestion(next.questionText);
+    } catch {
       toast.error('Failed to load next question');
     }
   };
@@ -216,7 +227,7 @@ export default function ActiveInterviewPage() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="max-w-4xl w-full grid lg:grid-cols-2 gap-8 items-center">
           <div className="flex justify-center">
-            <Avatar mode={sessionConfig.avatarStyle} isSpeaking={avatarState === 'speaking'} audioElement={ttsAudioRef.current || undefined} />
+            <Avatar mode={sessionConfig.avatarStyle} isSpeaking={avatarState === 'speaking'} audioElement={audioElement || undefined} />
           </div>
           <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
             <CardContent className="p-8">
@@ -267,9 +278,9 @@ export default function ActiveInterviewPage() {
             variant="ghost"
             className="text-white"
             onClick={() => {
-              if (ttsAudioRef.current) {
-                if (ttsAudioRef.current.paused) ttsAudioRef.current.play();
-                else ttsAudioRef.current.pause();
+              if (audioElement) {
+                if (audioElement.paused) audioElement.play();
+                else audioElement.pause();
               }
             }}
           >

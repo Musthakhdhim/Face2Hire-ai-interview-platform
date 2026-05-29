@@ -1,12 +1,19 @@
-if (typeof window !== 'undefined' && !(window as any).global) {
-  (window as any).global = window;
+// Declare global to avoid 'any'
+declare global {
+  interface Window {
+    global?: Window;
+  }
 }
 
-import { Client } from '@stomp/stompjs';
-import type { Message } from '@stomp/stompjs';
+// Polyfill for sockjs-client
+if (typeof window !== 'undefined' && !window.global) {
+  window.global = window;
+}
+
+import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
-type MessageHandler = (message: any) => void;
+type MessageHandler = (message: IMessage) => void;
 
 class WebSocketService {
   private client: Client | null = null;
@@ -20,11 +27,11 @@ class WebSocketService {
       connectHeaders: { Authorization: `Bearer ${token}` },
       debug: () => {},
       onConnect: () => {
-        this.subscribeToUserQueue('/queue/interview.state', (msg) => {
-          this.handlers.get('state')?.(JSON.parse(msg.body));
+        this.subscribeToUserQueue('/queue/interview.state', (msg: IMessage) => {
+          this.handlers.get('state')?.(msg);
         });
-        this.subscribeToUserQueue('/queue/interview.timer', (msg) => {
-          this.handlers.get('timer')?.(JSON.parse(msg.body));
+        this.subscribeToUserQueue('/queue/interview.timer', (msg: IMessage) => {
+          this.handlers.get('timer')?.(msg);
         });
         // Send join message
         this.client?.publish({
@@ -38,7 +45,7 @@ class WebSocketService {
     this.client.activate();
   }
 
-  private subscribeToUserQueue(destination: string, callback: (msg: Message) => void) {
+  private subscribeToUserQueue(destination: string, callback: (msg: IMessage) => void) {
     if (!this.client) return;
     this.client.subscribe(`/user${destination}`, callback);
   }
@@ -47,7 +54,7 @@ class WebSocketService {
     this.handlers.set(event, handler);
   }
 
-  sendAudioChunk(chunk: Blob) {
+  sendAudioChunk(_chunk: Blob) {
     // Convert to base64 and send (optional – we'll use REST for final answer)
     // For simplicity we skip live streaming; final audio is sent via REST after answer.
   }

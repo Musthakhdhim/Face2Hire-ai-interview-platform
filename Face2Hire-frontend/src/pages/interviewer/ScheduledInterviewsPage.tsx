@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
-import { Button } from "../../components/ui/button";
-import { Calendar, User, Clock, CheckCircle2 } from "lucide-react";
+import { Calendar, User } from "lucide-react";
 import { scheduledInterviewService } from "../../services/scheduledInterviewService";
 import type { ScheduledInterviewDto } from "../../services/scheduledInterviewService";
 import { toast } from "react-toastify";

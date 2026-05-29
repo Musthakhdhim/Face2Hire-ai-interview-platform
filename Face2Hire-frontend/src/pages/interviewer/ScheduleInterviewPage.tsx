@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "motion/react";
-import { Calendar, User, Clock, CheckCircle2 } from "lucide-react";
+import { Calendar, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -18,28 +18,21 @@ export default function ScheduleInterviewPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [formData, setFormData] = useState<ScheduleInterviewRequest>({
-    intervieweeId: 0,
-    intervieweeName: "",
-    type: "technical",
-    difficulty: "intermediate",
-    duration: 30,
-    questionCount: 10,
-    avatarStyle: "professional",
-    dueDate: "",
+  // Initialise form data with URL parameters (no useEffect needed)
+  const [formData, setFormData] = useState<ScheduleInterviewRequest>(() => {
+    const idParam = searchParams.get("intervieweeId");
+    const nameParam = searchParams.get("candidateName");
+    return {
+      intervieweeId: idParam ? Number(idParam) : 0,
+      intervieweeName: nameParam ? decodeURIComponent(nameParam) : "",
+      type: "technical",
+      difficulty: "intermediate",
+      duration: 30,
+      questionCount: 10,
+      avatarStyle: "professional",
+      dueDate: "",
+    };
   });
-
-  useEffect(() => {
-    const id = searchParams.get("intervieweeId");
-    const name = searchParams.get("candidateName");
-    if (id && name) {
-      setFormData(prev => ({
-        ...prev,
-        intervieweeId: Number(id),
-        intervieweeName: decodeURIComponent(name),
-      }));
-    }
-  }, [searchParams]);
 
   const avatars = [
     { id: "professional", emoji: "👔", name: "Professional", description: "Formal and focused" },
@@ -57,7 +50,7 @@ export default function ScheduleInterviewPage() {
       await scheduledInterviewService.schedule(formData);
       toast.success("Interview scheduled successfully!");
       navigate("/interviewer/scheduled");
-    } catch (err) {
+    } catch {
       toast.error("Failed to schedule interview");
     }
   };

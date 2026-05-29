@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
@@ -12,37 +12,55 @@ import { toast } from "react-toastify";
 
 export default function HistoryPage() {
   const [sessions, setSessions] = useState<InterviewSessionDto[]>([]);
-  const [filtered, setFiltered] = useState<InterviewSessionDto[]>([]);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
 
+  // Fetch sessions once
   useEffect(() => {
     const fetch = async () => {
       try {
         const data = await interviewService.getUserSessions();
-        // Ensure data is an array (API might return null or undefined)
         const sessionsArray = Array.isArray(data) ? data : [];
         setSessions(sessionsArray);
-        setFiltered(sessionsArray);
       } catch (error) {
         console.error("Failed to load history", error);
         toast.error("Failed to load history");
         setSessions([]);
-        setFiltered([]);
       }
     };
     fetch();
   }, []);
 
-  useEffect(() => {
+  // Compute filtered, sorted list – no additional state update needed
+  const filtered = useMemo(() => {
     let result = sessions;
-    if (filterType !== "all") result = result.filter(s => s.type === filterType);
-    if (search) result = result.filter(s => s.type.toLowerCase().includes(search.toLowerCase()) || s.difficulty.toLowerCase().includes(search.toLowerCase()));
-    setFiltered(result.sort((a, b) => new Date(b.completedAt || b.createdAt).getTime() - new Date(a.completedAt || a.createdAt).getTime()));
+    if (filterType !== "all") {
+      result = result.filter(s => s.type === filterType);
+    }
+    if (search) {
+      result = result.filter(s =>
+        s.type.toLowerCase().includes(search.toLowerCase()) ||
+        s.difficulty.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    // Sort by date descending (latest first)
+    return [...result].sort((a, b) =>
+      new Date(b.completedAt || b.createdAt).getTime() -
+      new Date(a.completedAt || a.createdAt).getTime()
+    );
+  }, [sessions, filterType, search]);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
     setCurrentPage(0);
-  }, [search, filterType, sessions]);
+  };
+
+  const handleFilterTypeChange = (value: string) => {
+    setFilterType(value);
+    setCurrentPage(0);
+  };
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const currentSessions = filtered.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
@@ -70,10 +88,10 @@ export default function HistoryPage() {
             <Input
               placeholder="Search by type or difficulty..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="flex-1"
             />
-            <Select value={filterType} onValueChange={setFilterType}>
+            <Select value={filterType} onValueChange={handleFilterTypeChange}>
               <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
