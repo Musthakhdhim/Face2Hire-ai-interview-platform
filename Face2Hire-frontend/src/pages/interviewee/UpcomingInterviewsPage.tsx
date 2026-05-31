@@ -61,7 +61,7 @@ export default function UpcomingInterviewsPage() {
     return <div className="text-center py-12">Loading...</div>;
   }
 
-  const interviewList = Array.isArray(interviews) ? interviews : [];
+  const interviewList = Array.isArray(interviews) ? interviews.filter(i => !i.completed) : [];
 
   return (
     <div className="space-y-6">

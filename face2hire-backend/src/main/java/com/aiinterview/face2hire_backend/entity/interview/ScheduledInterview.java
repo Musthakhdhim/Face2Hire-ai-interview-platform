@@ -38,6 +38,11 @@ public class ScheduledInterview {
     @Column(name = "scheduled_by_interviewer")
     private String scheduledByInterviewer;
 
+    @Column(name = "application_id")
+    private Long applicationId;
+
+    @Column(name = "minimum_score")
+    private Double minimumScore;
 
     @Column(name = "due_date")
     private LocalDateTime dueDate;

@@ -118,4 +118,20 @@ public class InterviewController {
                 .build();
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/feedback/by-scheduled/{scheduledId}")
+    public ResponseEntity<ApiResponse<OverallFeedbackDto>> getFeedbackByScheduledId(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long scheduledId) {
+        Long userId = userDetails.getUser().getId();
+        OverallFeedbackDto dto = orchestrator.getOverallFeedbackByScheduledId(scheduledId, userId);
+        ApiResponse<OverallFeedbackDto> response = ApiResponse.<OverallFeedbackDto>builder()
+                .success(true)
+                .message("Feedback retrieved")
+                .data(dto)
+                .statusCode(HttpStatus.OK.value())
+                .time(LocalDateTime.now())
+                .build();
+        return ResponseEntity.ok(response);
+    }
 }

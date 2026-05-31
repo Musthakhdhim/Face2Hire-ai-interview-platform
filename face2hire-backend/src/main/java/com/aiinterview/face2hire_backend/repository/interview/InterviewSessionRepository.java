@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface InterviewSessionRepository extends JpaRepository<InterviewSession, Long> {
     Optional<InterviewSession> findByUserIdAndStatus(Long userId, SessionStatus status);
     List<InterviewSession> findByUserId(Long userId);
+    boolean existsByScheduledInterviewIdAndStatus(Long scheduledInterviewId, SessionStatus status);
+    Optional<InterviewSession> findByScheduledInterviewId(Long scheduledInterviewId);
 }

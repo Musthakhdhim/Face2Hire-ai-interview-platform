@@ -31,6 +31,7 @@ export interface ApplicationListResponse {
   score: number;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   appliedAt: string;
+  hasScheduledInterview: boolean;
 }
 
 export interface PaginatedApplications<T> {

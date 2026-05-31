@@ -1,9 +1,13 @@
 package com.aiinterview.face2hire_backend.serviceimpl.interview;
 
 import com.aiinterview.face2hire_backend.dto.interview.*;
+import com.aiinterview.face2hire_backend.entity.ApplicationStatus;
+import com.aiinterview.face2hire_backend.entity.User;
 import com.aiinterview.face2hire_backend.entity.interview.*;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
+import com.aiinterview.face2hire_backend.repository.ApplicationRepository;
+import com.aiinterview.face2hire_backend.repository.UserRepository;
 import com.aiinterview.face2hire_backend.repository.interview.*;
 import com.aiinterview.face2hire_backend.service.interview.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -33,6 +37,9 @@ public class InterviewOrchestratorImpl {
     private final QuestionFeedbackRepository questionFeedbackRepository;
     private final InterviewFeedbackRepository interviewFeedbackRepository;
     private final ObjectMapper objectMapper;
+    private final ScheduledInterviewRepository scheduledInterviewRepository;
+    private final ApplicationRepository applicationRepository;
+    private final UserRepository userRepository;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
@@ -187,10 +194,31 @@ public class InterviewOrchestratorImpl {
             session.setTechnicalScore(overall.getTechnicalScore());
             session.setConfidenceScore(overall.getConfidenceScore());
             sessionRepository.save(session);
+
+            if (session.getScheduledInterviewId() != null) {
+                final Double finalScore = overall.getOverallScore();
+                scheduledInterviewRepository.findById(session.getScheduledInterviewId()).ifPresent(scheduled -> {
+                    if (scheduled.getApplicationId() != null && scheduled.getMinimumScore() != null) {
+                        applicationRepository.findById(scheduled.getApplicationId()).ifPresent(application -> {
+                            application.setScore(finalScore);
+                            if (finalScore < scheduled.getMinimumScore()) {
+                                application.setStatus(ApplicationStatus.REJECTED);
+                                log.info("Application {} auto-rejected with score {} (below minimum {})",
+                                        application.getId(), finalScore, scheduled.getMinimumScore());
+                            } else {
+                                log.info("Application {} score {} meets minimum {}, awaiting manual approval",
+                                        application.getId(), finalScore, scheduled.getMinimumScore());
+                            }
+                            applicationRepository.save(application);
+                        });
+                    }
+                });
+            }
         }
 
         return overall;
     }
+
 
     private OverallFeedbackDto createDefaultFeedback(String reason) {
         return OverallFeedbackDto.builder()
@@ -244,6 +272,48 @@ public class InterviewOrchestratorImpl {
         InterviewFeedback feedback = interviewFeedbackRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new RuntimeException("No feedback found for this session"));
         System.out.println("feedback retrieved "+feedback);
+        try {
+            List<String> resources = objectMapper.readValue(
+                    feedback.getSuggestedResources(),
+                    new TypeReference<List<String>>() {});
+            return OverallFeedbackDto.builder()
+                    .overallScore(feedback.getOverallScore())
+                    .communicationScore(session.getCommunicationScore())
+                    .technicalScore(session.getTechnicalScore())
+                    .confidenceScore(session.getConfidenceScore())
+                    .strengths(feedback.getStrengths())
+                    .improvements(feedback.getImprovements())
+                    .detailedFeedback(feedback.getDetailedFeedback())
+                    .suggestedResources(resources)
+                    .build();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse suggested resources", e);
+        }
+    }
+
+    public OverallFeedbackDto getOverallFeedbackByScheduledId(Long scheduledId, Long userId) {
+        log.info("Fetching overall feedback for scheduled interview {}, user {}", scheduledId, userId);
+
+        // Find the interview session linked to this scheduled interview
+        InterviewSession session = sessionRepository.findByScheduledInterviewId(scheduledId)
+                .orElseThrow(() -> new RuntimeException("No interview session found for scheduled interview " + scheduledId));
+
+        // Authorize: only the interviewee or the interviewer who scheduled it can view
+        ScheduledInterview scheduled = scheduledInterviewRepository.findById(scheduledId)
+                .orElseThrow(() -> new RuntimeException("Scheduled interview not found"));
+
+        // Fetch the current user to get full name (for interviewer check)
+        User currentUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Check if the logged-in user is either the interviewee or the interviewer who scheduled it
+        if (!session.getUserId().equals(userId) && !scheduled.getScheduledByInterviewer().equals(currentUser.getFullName())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        InterviewFeedback feedback = interviewFeedbackRepository.findBySessionId(session.getId())
+                .orElseThrow(() -> new RuntimeException("No feedback found for this session"));
+
         try {
             List<String> resources = objectMapper.readValue(
                     feedback.getSuggestedResources(),

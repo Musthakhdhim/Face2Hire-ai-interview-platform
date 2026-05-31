@@ -108,4 +108,9 @@ export const interviewService = {
     const response = await axiosClient.get(API.INTERVIEW.MY_SESSIONS);
     return response.data.data;
   },
+
+  getOverallFeedbackByScheduledId: async (scheduledId: number): Promise<OverallFeedbackDto> => {
+    const response = await axiosClient.get(`/interview/feedback/by-scheduled/${scheduledId}`);
+    return response.data.data;
+  },
 };

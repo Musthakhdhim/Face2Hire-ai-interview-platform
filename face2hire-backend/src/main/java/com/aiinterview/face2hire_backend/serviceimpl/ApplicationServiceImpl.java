@@ -7,6 +7,7 @@ import com.aiinterview.face2hire_backend.exception.ValidationException;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.*;
+import com.aiinterview.face2hire_backend.repository.interview.ScheduledInterviewRepository;
 import com.aiinterview.face2hire_backend.service.ApplicationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,6 +32,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ResumeRepository resumeRepository;
     private final ExperienceRepository experienceRepository;
     private final SkillRepository skillRepository;
+    private final ScheduledInterviewRepository scheduledInterviewRepository;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
@@ -219,6 +221,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private ApplicationListResponseDto mapToListDto(Application application) {
         Job job = jobRepository.findById(application.getJobId()).orElse(null);
         User user = userRepository.findById(application.getUserId()).orElse(null);
+        boolean hasScheduled = scheduledInterviewRepository.existsByApplicationId(application.getId());
         return ApplicationListResponseDto.builder()
                 .id(application.getId())
                 .jobId(application.getJobId())
@@ -229,6 +232,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .score(application.getScore())
                 .status(application.getStatus())
                 .appliedAt(application.getAppliedAt())
+                .hasScheduledInterview(hasScheduled)
                 .build();
     }
 

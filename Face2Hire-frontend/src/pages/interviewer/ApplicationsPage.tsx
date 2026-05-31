@@ -79,32 +79,6 @@ export default function InterviewerApplicationsPage(): JSX.Element {
     fetchApplications();
   }, [selectedJobId, page]);
 
-  const handleStatusUpdate = async (applicationId: number, newStatus: 'APPROVED' | 'REJECTED') => {
-    try {
-      await applicationService.updateApplicationStatus(applicationId, newStatus);
-      toast.success(`Application ${newStatus.toLowerCase()} successfully`);
-      const refreshApplications = async () => {
-        setLoading(true);
-        try {
-          let data;
-          if (selectedJobId && selectedJobId !== 'all') {
-            data = await applicationService.getApplicationsForJob(Number(selectedJobId), page, pageSize);
-          } else {
-            data = await applicationService.getApplicationsForInterviewer(page, pageSize);
-          }
-          setApplications(data.content);
-          setTotalPages(data.totalPages);
-        } catch (err: unknown) {
-          toast.error(getErrorMessage(err) || 'Failed to refresh applications');
-        } finally {
-          setLoading(false);
-        }
-      };
-      refreshApplications();
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error) || 'Update failed');
-    }
-  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -180,18 +154,23 @@ export default function InterviewerApplicationsPage(): JSX.Element {
                       <div className="mt-2 text-sm">Score: {app.score || 'Not yet'}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {app.status === 'PENDING' && (
-                        <>
-                          <Button onClick={() => handleStatusUpdate(app.id, 'APPROVED')} className="bg-green-600 hover:bg-green-700">Approve</Button>
-                          <Button onClick={() => handleStatusUpdate(app.id, 'REJECTED')} variant="destructive">Reject</Button>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => navigate(`/interviewer/schedule?intervieweeId=${app.userId}&candidateName=${encodeURIComponent(app.userName)}`)}
-                          >
-                            Schedule Interview
-                          </Button>
-                        </>
-                      )}
+                        {app.hasScheduledInterview ? (
+                            <Button 
+                                variant="outline" 
+                                onClick={() => navigate(`/interviewer/applications/${app.id}/status`)}
+                            >
+                                View Status
+                            </Button>
+                        ) : (
+                            app.status === 'PENDING' && (
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => navigate(`/interviewer/schedule?intervieweeId=${app.userId}&candidateName=${encodeURIComponent(app.userName)}&applicationId=${app.id}`)}
+                                >
+                                    Schedule Interview
+                                </Button>
+                            )
+                        )}
                     </div>
                   </div>
                 </CardContent>

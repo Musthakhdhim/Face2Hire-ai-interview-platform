@@ -27,4 +27,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             "GROUP BY FUNCTION('DATE_FORMAT', u.createdAt, '%Y-%m') ORDER BY month")
     List<Object[]> countUsersByMonth();
 
+    List<User> findByEmailContainingIgnoreCase(String email);
+
 }

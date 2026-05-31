@@ -24,4 +24,7 @@ public class ScheduledInterviewDto {
     private String scheduledByInterviewer;
     private LocalDateTime dueDate;
     private LocalDateTime createdAt;
+    private Long applicationId;
+    private Double minimumScore;
+    private Boolean completed;
 }

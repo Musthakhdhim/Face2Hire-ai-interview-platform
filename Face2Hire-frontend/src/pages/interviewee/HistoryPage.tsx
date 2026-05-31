@@ -157,9 +157,15 @@ export default function HistoryPage() {
                     <Link to={`/interviewee/interview/feedback/${session.id}`}>
                       <Button size="sm"><Eye className="mr-2 size-4" />View Feedback</Button>
                     </Link>
-                    <Link to="/interviewee/interview/setup">
-                      <Button size="sm" variant="outline">Retake Interview</Button>
-                    </Link>
+                    {session.scheduledInterviewId ? (
+                      <Button size="sm" variant="outline" disabled className="opacity-50 cursor-not-allowed">
+                          Retake Interview (Scheduled)
+                      </Button>
+                  ) : (
+                      <Link to="/interviewee/interview/setup">
+                          <Button size="sm" variant="outline">Retake Interview</Button>
+                      </Link>
+                  )}
                   </div>
                 </div>
               </div>

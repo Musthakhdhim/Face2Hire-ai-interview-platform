@@ -33,6 +33,9 @@ import AnalyticsPage from './pages/interviewee/AnalyticsPage';
 import UpcomingInterviewsPage from './pages/interviewee/UpcomingInterviewsPage';
 import FeedbackPage from './pages/interviewee/FeedbackPage';
 import ScheduleInterviewPage from './pages/interviewer/ScheduleInterviewPage';
+import ApplicationStatusPage from './pages/interviewer/ApplicationStatusPage';
+import ScheduledInterviewsPage from './pages/interviewer/ScheduledInterviewsPage';
+import ScheduledInterviewDetailPage from './pages/interviewer/ScheduledInterviewDetailPage';
 
 function App(): JSX.Element {
   return (
@@ -76,7 +79,9 @@ function App(): JSX.Element {
               <Route path="jobs/:jobId" element={<JobDetailPage />} />  
               <Route path="schedule" element={<ScheduleInterviewPage />} />
               <Route path="/interviewer/applications" element={<InterviewerApplicationsPage />} />
-
+              <Route path="applications/:applicationId/status" element={<ApplicationStatusPage />} />
+              <Route path="scheduled" element={<ScheduledInterviewsPage />} />
+              <Route path="scheduled/:scheduledId" element={<ScheduledInterviewDetailPage />} />
               <Route path="settings" element={<ProfileSettingsPage />} />
             </Route>
           </Route>

@@ -8,4 +8,6 @@ public interface ScheduledInterviewService {
     ScheduledInterviewDto schedule(String interviewerName, ScheduleInterviewRequest request);
     List<ScheduledInterviewDto> getForUser(Long userId);
     List<ScheduledInterviewDto> getByInterviewer(String interviewerName);
+    ScheduledInterviewDto getByApplicationId(Long applicationId);
+    ScheduledInterviewDto getById(Long id);
 }

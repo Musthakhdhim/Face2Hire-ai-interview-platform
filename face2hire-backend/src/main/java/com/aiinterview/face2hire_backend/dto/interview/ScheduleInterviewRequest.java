@@ -27,4 +27,7 @@ public class ScheduleInterviewRequest {
     private AvatarStyle avatarStyle;
     @NotNull
     private LocalDate dueDate;
+
+    private Long applicationId;
+    private Double minimumScore;
 }
