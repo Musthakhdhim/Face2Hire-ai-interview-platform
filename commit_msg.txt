@@ -1,0 +1,9 @@
+feat(interviewer): complete interview scheduling and application management
+
+- View application status with scheduled interview details
+- Schedule interview directly from a job application
+- Set minimum score threshold – auto-reject if candidate fails to achieve it
+- Manual approve/reject option for interviewer after interview
+- Add Schedule Interview tab in sidebar (search users by email)
+- View and manage all scheduled interviews with status/details
+
