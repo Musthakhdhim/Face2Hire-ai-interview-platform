@@ -16,7 +16,6 @@ public class LiveMetricsCalculatorImpl implements LiveMetricsCalculator {
         int wordCount = partialTranscript.trim().isEmpty() ? 0 : partialTranscript.split("\\s+").length;
         double durationMinutes = durationMs / 60000.0;
         int wpm = durationMinutes > 0 ? (int) (wordCount / durationMinutes) : 0;
-        // Dummy confidence - in real app, could come from client
         double confidence = 0.85;
 
         return LiveMetricsDto.builder()

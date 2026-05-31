@@ -4,9 +4,13 @@ import com.aiinterview.face2hire_backend.entity.interview.AvatarStyle;
 import com.aiinterview.face2hire_backend.entity.interview.Difficulty;
 import com.aiinterview.face2hire_backend.entity.interview.InterviewType;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class StartSessionRequest {
     @NotNull
     private InterviewType type;

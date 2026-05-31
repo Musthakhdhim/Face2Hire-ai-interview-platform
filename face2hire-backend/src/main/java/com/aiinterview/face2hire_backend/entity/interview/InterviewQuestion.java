@@ -27,7 +27,7 @@ public class InterviewQuestion {
     private String category;
 
     @Column(name = "expected_keywords", columnDefinition = "TEXT")
-    private String expectedKeywords; // JSON array
+    private String expectedKeywords;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

@@ -1,12 +1,18 @@
 package com.aiinterview.face2hire_backend.serviceimpl.interview;
 
-import com.aiinterview.face2hire_backend.dto.interview.*;
-import com.aiinterview.face2hire_backend.entity.interview.*;
+import com.aiinterview.face2hire_backend.dto.interview.SessionStartedDto;
+import com.aiinterview.face2hire_backend.dto.interview.SessionStateDto;
+import com.aiinterview.face2hire_backend.dto.interview.StartSessionRequest;
+import com.aiinterview.face2hire_backend.entity.interview.InterviewSession;
+import com.aiinterview.face2hire_backend.entity.interview.SessionStatus;
 import com.aiinterview.face2hire_backend.exception.InterviewSessionNotFoundException;
+import com.aiinterview.face2hire_backend.logging.AppLogger;
+import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.interview.InterviewSessionRepository;
 import com.aiinterview.face2hire_backend.service.interview.InterviewSessionManager;
 import com.aiinterview.face2hire_backend.service.interview.QuestionGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,11 +24,20 @@ public class InterviewSessionManagerImpl implements InterviewSessionManager {
 
     private final InterviewSessionRepository sessionRepository;
     private final QuestionGenerator questionGenerator;
+    private final AppLoggerFactory loggerFactory;
+    private AppLogger log;
+
+    @PostConstruct
+    public void init() {
+        this.log = loggerFactory.getLogger(getClass());
+    }
 
     @Override
     @Transactional
     public SessionStartedDto startSession(Long userId, StartSessionRequest request) throws JsonProcessingException {
-        // Create session
+        log.info("Starting new interview session for user {}, type={}, difficulty={}, duration={}, questions={}",
+                userId, request.getType(), request.getDifficulty(), request.getDuration(), request.getQuestionCount());
+
         InterviewSession session = InterviewSession.builder()
                 .userId(userId)
                 .type(request.getType())
@@ -34,14 +49,17 @@ public class InterviewSessionManagerImpl implements InterviewSessionManager {
                 .scheduledInterviewId(request.getScheduledInterviewId())
                 .build();
         session = sessionRepository.save(session);
+        log.info("Created interview session with id={}", session.getId());
 
-        // Generate questions based on user's CV skills
+        log.debug("Calling question generator for session {}", session.getId());
         var questions = questionGenerator.generateQuestions(session.getId(), userId,
                 request.getType(), request.getDifficulty(), request.getQuestionCount());
 
-        if (questions.isEmpty()) {
+        if (questions == null || questions.isEmpty()) {
+            log.error("No questions generated for session {}", session.getId());
             throw new RuntimeException("Failed to generate questions");
         }
+        log.info("Generated {} questions for session {}", questions.size(), session.getId());
 
         return SessionStartedDto.builder()
                 .sessionId(session.getId())
@@ -54,29 +72,38 @@ public class InterviewSessionManagerImpl implements InterviewSessionManager {
     @Override
     @Transactional
     public void endSession(Long sessionId, Long userId) {
+        log.info("Ending session {} for user {}", sessionId, userId);
         InterviewSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new InterviewSessionNotFoundException("Session not found"));
+                .orElseThrow(() -> {
+                    log.error("Session {} not found", sessionId);
+                    return new InterviewSessionNotFoundException("Session not found");
+                });
         if (!session.getUserId().equals(userId)) {
+            log.error("User {} not authorized to end session {}", userId, sessionId);
             throw new RuntimeException("Unauthorized");
         }
         session.setStatus(SessionStatus.COMPLETED);
         session.setCompletedAt(LocalDateTime.now());
         sessionRepository.save(session);
+        log.info("Session {} completed", sessionId);
     }
 
     @Override
     public SessionStateDto getSessionState(Long sessionId, Long userId) {
+        log.debug("Getting state for session {} user {}", sessionId, userId);
         InterviewSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new InterviewSessionNotFoundException("Session not found"));
+                .orElseThrow(() -> {
+                    log.error("Session {} not found", sessionId);
+                    return new InterviewSessionNotFoundException("Session not found");
+                });
         if (!session.getUserId().equals(userId)) {
+            log.error("User {} not authorized to view session {}", userId, sessionId);
             throw new RuntimeException("Unauthorized");
         }
-        // In a real implementation, we'd also fetch current question index from somewhere
-        // For now, return basic info
         return SessionStateDto.builder()
                 .sessionId(sessionId)
                 .totalQuestions(session.getQuestionCount())
-                .remainingTimeSeconds(0) // will be computed from start time + duration
+                .remainingTimeSeconds(0)
                 .status(session.getStatus())
                 .build();
     }

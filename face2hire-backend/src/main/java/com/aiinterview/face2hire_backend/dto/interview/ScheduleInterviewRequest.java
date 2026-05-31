@@ -2,10 +2,15 @@ package com.aiinterview.face2hire_backend.dto.interview;
 
 import com.aiinterview.face2hire_backend.entity.interview.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ScheduleInterviewRequest {
     @NotNull
     private Long intervieweeId;

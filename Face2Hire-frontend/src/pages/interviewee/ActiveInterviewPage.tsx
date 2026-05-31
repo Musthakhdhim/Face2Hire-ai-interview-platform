@@ -23,12 +23,10 @@ interface SessionConfig {
   scheduledInterviewId?: number;
 }
 
-// Timer message type from WebSocket
 interface TimerMessage {
   remainingSeconds: number;
 }
 
-// Speech recognition interfaces (unchanged)
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
@@ -86,6 +84,33 @@ export default function ActiveInterviewPage() {
     }
   }, [sessionConfig]);
 
+  // Define endInterview and handleTimeEnd before they are used
+  const endInterview = useCallback(async () => {
+    const overallFeedback = await interviewService.endSession(Number(sessionId));
+    navigate(`/interviewee/interview/feedback/${sessionId}`, { state: { feedback: overallFeedback } });
+  }, [sessionId, navigate]);
+
+  const handleTimeEnd = useCallback(async () => {
+    toast.info("Time's up! Ending interview.");
+    await endInterview();
+  }, [endInterview]);
+
+  // Timer countdown (client-side) - now handleTimeEnd is defined above
+  useEffect(() => {
+    if (loading || answerSubmitted) return;
+    const interval = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          handleTimeEnd();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [loading, answerSubmitted, handleTimeEnd]);
+
   useEffect(() => {
     const startSession = async () => {
       try {
@@ -111,7 +136,6 @@ export default function ActiveInterviewPage() {
         setQuestionIndex(1);
         setLoading(false);
         websocketService.connect(Number(sessionId), token!, () => {
-          // ✅ Cast `data` to TimerMessage type to access `remainingSeconds`
           websocketService.on('timer', (data) => {
             const timerData = data as TimerMessage;
             setTimeRemaining(timerData.remainingSeconds);
@@ -194,8 +218,7 @@ export default function ActiveInterviewPage() {
 
   const goToNextQuestion = async () => {
     if (questionIndex >= totalQuestions) {
-      const overallFeedback = await interviewService.endSession(Number(sessionId));
-      navigate(`/interviewee/interview/feedback/${sessionId}`, { state: { feedback: overallFeedback } });
+      await endInterview();
       return;
     }
     try {

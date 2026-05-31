@@ -18,7 +18,7 @@ public class UserResponse {
     @Column(name = "question_id", nullable = false)
     private Long questionId;
 
-    @Column(name = "audio_url")
+    @Column(name = "audio_url", columnDefinition = "TEXT")
     private String audioUrl;
 
     @Column(name = "transcribed_text", columnDefinition = "TEXT")

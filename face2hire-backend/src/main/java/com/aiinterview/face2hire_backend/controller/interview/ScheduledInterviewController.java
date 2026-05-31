@@ -22,21 +22,21 @@ public class ScheduledInterviewController {
     public ResponseEntity<ScheduledInterviewDto> schedule(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ScheduleInterviewRequest request) {
-        String interviewerName = userDetails.getUser().getFullName(); // or getUserName()
+        String interviewerName = userDetails.getUser().getFullName();
         return ResponseEntity.ok(service.schedule(interviewerName, request));
     }
 
     @GetMapping("/my")
     public ResponseEntity<List<ScheduledInterviewDto>> getMyScheduled(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Long userId = userDetails.getUser().getId();   // ✅ numeric ID from the User entity
+        Long userId = userDetails.getUser().getId();
         return ResponseEntity.ok(service.getForUser(userId));
     }
 
     @GetMapping("/for-interviewer")
     public ResponseEntity<List<ScheduledInterviewDto>> getByInterviewer(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        String interviewerName = userDetails.getUser().getFullName(); // or getUserName()
+        String interviewerName = userDetails.getUser().getFullName();
         return ResponseEntity.ok(service.getByInterviewer(interviewerName));
     }
 }
