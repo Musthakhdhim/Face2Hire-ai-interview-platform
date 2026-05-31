@@ -1,4 +1,5 @@
 import { useEffect, useState, type JSX } from 'react';
+import { useNavigate } from 'react-router-dom'; 
 import { motion } from 'motion/react';
 import { CheckCircle2, XCircle, Clock, Filter, Loader2, User, Mail, Download } from 'lucide-react'; 
 import { Card, CardContent } from '../../components/ui/card';
@@ -27,6 +28,7 @@ const getErrorMessage = (error: unknown): string => {
 };
 
 export default function InterviewerApplicationsPage(): JSX.Element {
+  const navigate = useNavigate();   
   const [applications, setApplications] = useState<ApplicationListResponse[]>([]);
   const [jobs, setJobs] = useState<JobListResponse[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>('all');
@@ -182,7 +184,10 @@ export default function InterviewerApplicationsPage(): JSX.Element {
                         <>
                           <Button onClick={() => handleStatusUpdate(app.id, 'APPROVED')} className="bg-green-600 hover:bg-green-700">Approve</Button>
                           <Button onClick={() => handleStatusUpdate(app.id, 'REJECTED')} variant="destructive">Reject</Button>
-                          <Button variant="outline" onClick={() => toast.info('schedule interview')}>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => navigate(`/interviewer/schedule?intervieweeId=${app.userId}&candidateName=${encodeURIComponent(app.userName)}`)}
+                          >
                             Schedule Interview
                           </Button>
                         </>

@@ -20,6 +20,8 @@ public class ScheduledInterviewServiceImpl implements ScheduledInterviewService 
 
     @Override
     public ScheduledInterviewDto schedule(String interviewerName, ScheduleInterviewRequest request) {
+
+
         ScheduledInterview entity = ScheduledInterview.builder()
                 .intervieweeId(request.getIntervieweeId())
                 .intervieweeName(request.getIntervieweeName())

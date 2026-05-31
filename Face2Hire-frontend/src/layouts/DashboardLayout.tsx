@@ -73,7 +73,7 @@ export default function DashboardLayout(): JSX.Element | null {
         { icon: Home, label: 'Dashboard', path: '/interviewer' },
         { icon: Briefcase, label: 'My Jobs', path: '/interviewer/jobs' },
         { icon: FileText, label: 'Applications', path: '/interviewer/applications' },
-        { icon: Calendar, label: 'Schedule Interview', path: '#' },
+        { icon: Calendar, label: 'Schedule Interview', path: '/interviewer/schedule' },
         { icon: Settings, label: 'Settings', path: settingsPath },
       ];
     } else if (role === 'admin') {

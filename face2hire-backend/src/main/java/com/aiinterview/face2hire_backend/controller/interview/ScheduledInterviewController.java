@@ -23,6 +23,9 @@ public class ScheduledInterviewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ScheduleInterviewRequest request) {
         String interviewerName = userDetails.getUser().getFullName();
+        if (interviewerName == null || interviewerName.isBlank()) {
+            interviewerName = userDetails.getUsername();
+        }
         return ResponseEntity.ok(service.schedule(interviewerName, request));
     }
 

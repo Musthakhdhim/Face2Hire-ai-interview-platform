@@ -38,6 +38,7 @@ public class ScheduledInterview {
     @Column(name = "scheduled_by_interviewer")
     private String scheduledByInterviewer;
 
+
     @Column(name = "due_date")
     private LocalDateTime dueDate;
 

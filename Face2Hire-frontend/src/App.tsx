@@ -32,6 +32,7 @@ import HistoryPage from './pages/interviewee/HistoryPage';
 import AnalyticsPage from './pages/interviewee/AnalyticsPage';
 import UpcomingInterviewsPage from './pages/interviewee/UpcomingInterviewsPage';
 import FeedbackPage from './pages/interviewee/FeedbackPage';
+import ScheduleInterviewPage from './pages/interviewer/ScheduleInterviewPage';
 
 function App(): JSX.Element {
   return (
@@ -73,6 +74,7 @@ function App(): JSX.Element {
               <Route path="jobs" element={<InterviewerJobsPage />} />
               <Route path="jobs/create" element={<CreateJobPage />} />
               <Route path="jobs/:jobId" element={<JobDetailPage />} />  
+              <Route path="schedule" element={<ScheduleInterviewPage />} />
               <Route path="/interviewer/applications" element={<InterviewerApplicationsPage />} />
 
               <Route path="settings" element={<ProfileSettingsPage />} />

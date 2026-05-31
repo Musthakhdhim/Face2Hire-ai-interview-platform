@@ -30,14 +30,16 @@ export interface ScheduledInterviewDto {
 export const scheduledInterviewService = {
   schedule: async (data: ScheduleInterviewRequest): Promise<ScheduledInterviewDto> => {
     const response = await axiosClient.post(API.SCHEDULED_INTERVIEWS.CREATE, data);
-    return response.data.data;
+    return response.data;   // ✅ backend returns the DTO directly
   },
+
   getMyScheduled: async (): Promise<ScheduledInterviewDto[]> => {
     const response = await axiosClient.get(API.SCHEDULED_INTERVIEWS.MY);
-    return response.data.data;
+    return response.data;   // ✅ backend returns list directly
   },
+
   getForInterviewer: async (): Promise<ScheduledInterviewDto[]> => {
     const response = await axiosClient.get(API.SCHEDULED_INTERVIEWS.FOR_INTERVIEWER);
-    return response.data.data;
+    return response.data;   // ✅ backend returns list directly
   },
 };
