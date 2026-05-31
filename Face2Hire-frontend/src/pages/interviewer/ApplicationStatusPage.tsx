@@ -253,16 +253,6 @@ export default function ApplicationStatusPage() {
                                 <h4 className="font-semibold text-gray-900 mb-2">Detailed Feedback</h4>
                                 <p className="text-gray-700 whitespace-pre-wrap">{feedback.detailedFeedback}</p>
                             </div>
-                            {feedback.suggestedResources && feedback.suggestedResources.length > 0 && (
-                                <div>
-                                    <h4 className="font-semibold text-gray-900 mb-2">Suggested Resources</h4>
-                                    <ul className="list-disc list-inside space-y-1 text-gray-700">
-                                        {feedback.suggestedResources.map((resource, i) => (
-                                            <li key={i}>{resource}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
                         </CardContent>
                     </Card>
                 </motion.div>

@@ -307,7 +307,7 @@ public class InterviewOrchestratorImpl {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Check if the logged-in user is either the interviewee or the interviewer who scheduled it
-        if (!session.getUserId().equals(userId) && !scheduled.getScheduledByInterviewer().equals(currentUser.getFullName())) {
+        if (!session.getUserId().equals(userId) && !scheduled.getScheduledByInterviewer().equals(currentUser.getEmail())) {
             throw new RuntimeException("Unauthorized");
         }
 
