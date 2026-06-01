@@ -102,7 +102,6 @@ export default function DashboardLayout(): JSX.Element | null {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 border-b border-gray-200">
           <Link to={logoLink} className="flex items-center gap-2">
@@ -153,7 +152,6 @@ export default function DashboardLayout(): JSX.Element | null {
         </div>
       </aside>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
           <div className="flex items-center gap-4 flex-1 max-w-2xl">

@@ -9,7 +9,7 @@ export type SessionStatus = 'ACTIVE' | 'COMPLETED' | 'ABANDONED';
 export interface StartSessionRequest {
   type: InterviewType;
   difficulty: Difficulty;
-  duration: number;       // minutes
+  duration: number;      
   questionCount: number;
   avatarStyle: AvatarStyle;
   scheduledInterviewId?: number;

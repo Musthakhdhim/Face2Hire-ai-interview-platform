@@ -46,8 +46,6 @@ public class WebSecurityConfig {
 
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-//                .cors(Customizer.withDefaults())
-
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )

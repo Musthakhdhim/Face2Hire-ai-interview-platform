@@ -16,7 +16,7 @@ export default function InterviewerJobsPage(): JSX.Element {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<JobTypeFilter>('all');
-  const [currentPage, setCurrentPage] = useState(0); // zero-based for backend
+  const [currentPage, setCurrentPage] = useState(0); 
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const pageSize = 10;

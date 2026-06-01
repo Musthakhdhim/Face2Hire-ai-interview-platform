@@ -29,7 +29,6 @@ export default function AnalyticsPage() {
     return <div className="text-center py-12">Loading analytics...</div>;
   }
 
-  // Empty state – styled card similar to "No interviews found"
   if (sessions.length === 0) {
     return (
       <div className="space-y-6">
@@ -53,7 +52,6 @@ export default function AnalyticsPage() {
     );
   }
 
-  // Analytics calculations
   const scoreByDate = [...sessions].reverse().map(s => ({
     date: new Date(s.completedAt || s.createdAt).toLocaleDateString(),
     score: s.overallScore || 0,

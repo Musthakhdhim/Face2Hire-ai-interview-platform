@@ -22,7 +22,6 @@ public class UserController {
     @PreAuthorize("hasRole('INTERVIEWER')")
     public ResponseEntity<List<UserSearchDto>> searchUsers(@RequestParam String email) {
         List<User> users = userRepository.findByEmailContainingIgnoreCase(email);
-        // Optionally filter by role INTERVIEWEE
         List<UserSearchDto> dtos = users.stream()
                 .filter(u -> u.getRole().name().equals("INTERVIEWEE"))
                 .map(u -> new UserSearchDto(u.getId(), u.getFullName(), u.getEmail()))

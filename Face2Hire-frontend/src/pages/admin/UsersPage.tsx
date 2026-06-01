@@ -79,7 +79,7 @@ export default function AdminUsersPage(): JSX.Element {
     try {
       await userService.blockUser(userId);
       toast.success('User blocked successfully');
-      fetchUsers(); // refresh list
+      fetchUsers(); 
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
       toast.error(error.response?.data?.message || 'Failed to block user');

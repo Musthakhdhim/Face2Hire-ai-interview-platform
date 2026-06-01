@@ -30,7 +30,6 @@ public class InterviewOrchestratorImpl {
     private final AudioProcessor audioProcessor;
     private final AnswerEvaluator answerEvaluator;
     private final FeedbackAggregator feedbackAggregator;
-    private final LiveMetricsCalculator metricsCalculator;
     private final InterviewSessionRepository sessionRepository;
     private final InterviewQuestionRepository questionRepository;
     private final UserResponseRepository userResponseRepository;
