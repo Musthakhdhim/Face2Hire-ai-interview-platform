@@ -62,15 +62,26 @@ export default function UpcomingInterviewsPage() {
   }
 
   const interviewList = Array.isArray(interviews) ? interviews.filter(i => !i.completed) : [];
+  const hasScheduledInterviews = interviewList.length > 0;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Upcoming Interviews</h1>
-        <p className="text-gray-600 mt-1">Interviews scheduled by recruiters</p>
+      {/* Header with title and optional practice button (only when scheduled interviews exist) */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Upcoming Interviews</h1>
+          <p className="text-gray-600 mt-1">Interviews scheduled by recruiters</p>
+        </div>
+        {hasScheduledInterviews && (
+          <Link to="/interviewee/interview/setup">
+            <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              Practice Interview
+            </Button>
+          </Link>
+        )}
       </div>
 
-      {interviewList.length === 0 ? (
+      {!hasScheduledInterviews ? (
         <Card className="border-0 shadow-lg">
           <CardContent className="p-12 text-center">
             <Calendar className="size-16 mx-auto mb-4 text-gray-300" />
@@ -81,7 +92,9 @@ export default function UpcomingInterviewsPage() {
               You don't have any scheduled interviews at the moment.
             </p>
             <Link to="/interviewee/interview/setup">
-              <Button>Practice Interview</Button>
+              <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                Practice Interview
+              </Button>
             </Link>
           </CardContent>
         </Card>

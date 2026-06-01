@@ -4,7 +4,7 @@ import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
-import { Mic, MicOff, Volume2, SkipForward, CheckCircle } from 'lucide-react';
+import { Mic, MicOff, Volume2, SkipForward, CheckCircle, Maximize2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { interviewService, type QuestionResponseDto, type InterviewType, type Difficulty, type AvatarStyle } from '../../services/interviewService';
 import { audioService } from '../../services/audioService';
@@ -12,6 +12,8 @@ import { websocketService } from '../../services/websocketService';
 import Avatar from '../../components/interview/Avatar';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store/store';
+import screenfull from 'screenfull';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 
 interface SessionConfig {
   type: InterviewType;
@@ -60,42 +62,76 @@ export default function ActiveInterviewPage() {
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  // Show fullscreen modal only if we have valid session data
+  const [showFullscreenModal, setShowFullscreenModal] = useState(() => !!(sessionId && sessionConfig));
+  const [showFullscreenWarningDialog, setShowFullscreenWarningDialog] = useState(false);
+  const [showVisibilityWarningDialog, setShowVisibilityWarningDialog] = useState(false);
+
+  // Counters that never reset – second violation terminates
+  const fullscreenExitCountRef = useRef(0);
+  const visibilityHiddenCountRef = useRef(0);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
+  // Helper to stop any currently playing audio
+  const stopCurrentAudio = useCallback(() => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      currentAudioRef.current.onended = null;
+      const url = currentAudioRef.current.src;
+      if (url && url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+      currentAudioRef.current = null;
+    }
+    setAudioElement(null);
+  }, []);
+
   const speakQuestion = useCallback(async (text: string) => {
+    // Stop any previous audio before speaking new question
+    stopCurrentAudio();
     setAvatarState('speaking');
     try {
       const audioBlob = await audioService.textToSpeech(text, sessionConfig.avatarStyle);
       const url = URL.createObjectURL(audioBlob);
       const audio = new Audio(url);
+      currentAudioRef.current = audio;
       setAudioElement(audio);
       audio.onended = () => {
         setAvatarState('listening');
         URL.revokeObjectURL(url);
+        if (currentAudioRef.current === audio) {
+          currentAudioRef.current = null;
+        }
         setAudioElement(null);
       };
-      audio.play();
+      await audio.play();
     } catch {
       console.error('TTS error');
       setAvatarState('listening');
     }
-  }, [sessionConfig]);
+  }, [sessionConfig, stopCurrentAudio]);
 
-  // Define endInterview and handleTimeEnd before they are used
   const endInterview = useCallback(async () => {
+    // Stop any playing audio before ending
+    stopCurrentAudio();
     const overallFeedback = await interviewService.endSession(Number(sessionId));
+    if (screenfull.isFullscreen) {
+      await screenfull.exit();
+    }
     navigate(`/interviewee/interview/feedback/${sessionId}`, { state: { feedback: overallFeedback } });
-  }, [sessionId, navigate]);
+  }, [sessionId, navigate, stopCurrentAudio]);
 
   const handleTimeEnd = useCallback(async () => {
     toast.info("Time's up! Ending interview.");
     await endInterview();
   }, [endInterview]);
 
-  // Timer countdown (client-side) - now handleTimeEnd is defined above
+  // Timer countdown
   useEffect(() => {
     if (loading || answerSubmitted) return;
     const interval = setInterval(() => {
@@ -111,44 +147,104 @@ export default function ActiveInterviewPage() {
     return () => clearInterval(interval);
   }, [loading, answerSubmitted, handleTimeEnd]);
 
+  // Fullscreen and tab violation handling – never reset counters
   useEffect(() => {
-    const startSession = async () => {
-      try {
-        let firstQuestion: QuestionResponseDto;
-        if (sessionConfig?.firstQuestionId) {
-          const res = await interviewService.getNextQuestion(Number(sessionId), 0);
-          firstQuestion = res;
-        } else {
-          const started = await interviewService.startSession({
-            type: sessionConfig.type,
-            difficulty: sessionConfig.difficulty,
-            duration: sessionConfig.duration,
-            questionCount: sessionConfig.questionCount,
-            avatarStyle: sessionConfig.avatarStyle,
-            scheduledInterviewId: sessionConfig.scheduledInterviewId,
-          });
-          setTotalQuestions(started.totalQuestions);
-          setTimeRemaining(started.durationSeconds);
-          const q = await interviewService.getNextQuestion(started.sessionId, 0);
-          firstQuestion = q;
+    if (!loading && !showFullscreenModal) {
+      const handleFullscreenChange = () => {
+        if (!screenfull.isFullscreen) {
+          fullscreenExitCountRef.current += 1;
+          if (fullscreenExitCountRef.current === 1) {
+            setShowFullscreenWarningDialog(true);
+          } else {
+            toast.error('You exited fullscreen again. The interview will be ended.');
+            endInterview();
+          }
         }
-        setCurrentQuestion(firstQuestion);
-        setQuestionIndex(1);
-        setLoading(false);
-        websocketService.connect(Number(sessionId), token!, () => {
-          websocketService.on('timer', (data) => {
-            const timerData = data as TimerMessage;
-            setTimeRemaining(timerData.remainingSeconds);
-          });
-        });
-        await speakQuestion(firstQuestion.questionText);
-      } catch {
-        toast.error('Failed to start interview');
-        navigate('/interviewee/interview/setup');
+      };
+
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          visibilityHiddenCountRef.current += 1;
+          if (visibilityHiddenCountRef.current === 1) {
+            setShowVisibilityWarningDialog(true);
+          } else {
+            toast.error('You switched tabs again. The interview will be ended.');
+            endInterview();
+          }
+        }
+      };
+
+      if (screenfull.isEnabled) {
+        screenfull.on('change', handleFullscreenChange);
       }
-    };
-    if (sessionId && sessionConfig) startSession();
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        if (screenfull.isEnabled) {
+          screenfull.off('change', handleFullscreenChange);
+        }
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
+    }
+  }, [loading, showFullscreenModal, endInterview]);
+
+  // Start interview after fullscreen is granted
+  const startInterview = useCallback(async () => {
+    try {
+      let firstQuestion: QuestionResponseDto;
+      if (sessionConfig?.firstQuestionId) {
+        const res = await interviewService.getNextQuestion(Number(sessionId), 0);
+        firstQuestion = res;
+      } else {
+        const started = await interviewService.startSession({
+          type: sessionConfig.type,
+          difficulty: sessionConfig.difficulty,
+          duration: sessionConfig.duration,
+          questionCount: sessionConfig.questionCount,
+          avatarStyle: sessionConfig.avatarStyle,
+          scheduledInterviewId: sessionConfig.scheduledInterviewId,
+        });
+        setTotalQuestions(started.totalQuestions);
+        setTimeRemaining(started.durationSeconds);
+        const q = await interviewService.getNextQuestion(started.sessionId, 0);
+        firstQuestion = q;
+      }
+      setCurrentQuestion(firstQuestion);
+      setQuestionIndex(1);
+      setLoading(false);
+      websocketService.connect(Number(sessionId), token!, () => {
+        websocketService.on('timer', (data) => {
+          const timerData = data as TimerMessage;
+          setTimeRemaining(timerData.remainingSeconds);
+        });
+      });
+      await speakQuestion(firstQuestion.questionText);
+    } catch {
+      toast.error('Failed to start interview');
+      navigate('/interviewee/interview/setup');
+    }
   }, [sessionId, sessionConfig, token, navigate, speakQuestion]);
+
+  const enableFullscreenAndStart = async () => {
+    if (screenfull.isEnabled) {
+      try {
+        await screenfull.request();
+        setShowFullscreenModal(false);
+        startInterview();
+      } catch {
+        toast.error('Failed to enter fullscreen. Please allow fullscreen to continue.');
+      }
+    } else {
+      toast.error('Fullscreen is not supported in your browser.');
+    }
+  };
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      stopCurrentAudio();
+    };
+  }, [stopCurrentAudio]);
 
   const startRecording = async () => {
     if (isMuted) {
@@ -166,7 +262,7 @@ export default function ActiveInterviewPage() {
     setAvatarState('listening');
 
     if ('webkitSpeechRecognition' in window) {
-      const SpeechRecognitionConstructor = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      const SpeechRecognitionConstructor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       const recognition = new SpeechRecognitionConstructor() as SpeechRecognition;
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -221,6 +317,8 @@ export default function ActiveInterviewPage() {
       await endInterview();
       return;
     }
+    // Stop current audio before loading next question
+    stopCurrentAudio();
     try {
       const next = await interviewService.getNextQuestion(Number(sessionId), currentQuestion!.questionId);
       setCurrentQuestion(next);
@@ -238,10 +336,74 @@ export default function ActiveInterviewPage() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  if (showFullscreenModal) {
+    return (
+      <Dialog open={showFullscreenModal} onOpenChange={setShowFullscreenModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Fullscreen Required</DialogTitle>
+            <DialogDescription>
+              To maintain interview integrity, you must enter fullscreen mode before starting.
+              Click the button below to enable fullscreen and begin your interview.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <Button onClick={enableFullscreenAndStart} className="bg-indigo-600">
+              <Maximize2 className="mr-2 size-4" />
+              Enter Fullscreen & Start
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   if (loading) return <div className="flex justify-center py-12">Loading interview...</div>;
 
   return (
     <div className="h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 flex flex-col overflow-hidden">
+      {/* Fullscreen Warning Dialog */}
+      <Dialog open={showFullscreenWarningDialog} onOpenChange={setShowFullscreenWarningDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>⚠️ Fullscreen Exited</DialogTitle>
+            <DialogDescription>
+              You have exited fullscreen mode. Please re-enter fullscreen immediately to continue the interview.
+              If you exit fullscreen again, the interview will be terminated.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <Button
+              onClick={() => {
+                setShowFullscreenWarningDialog(false);
+                if (screenfull.isEnabled && !screenfull.isFullscreen) {
+                  screenfull.request();
+                }
+              }}
+            >
+              Re-enter Fullscreen
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Tab Switch Warning Dialog */}
+      <Dialog open={showVisibilityWarningDialog} onOpenChange={setShowVisibilityWarningDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>⚠️ Tab Switched</DialogTitle>
+            <DialogDescription>
+              You have switched away from the interview tab. Please return to this tab immediately.
+              If you switch tabs again, the interview will be terminated.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <Button onClick={() => setShowVisibilityWarningDialog(false)}>I'm Back</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Main interview UI */}
       <div className="bg-black/30 backdrop-blur-sm border-b border-white/10 p-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <Badge className="bg-red-500/20 text-red-300 border-red-500/30">

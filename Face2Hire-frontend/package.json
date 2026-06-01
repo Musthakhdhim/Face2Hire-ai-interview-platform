@@ -66,6 +66,7 @@
     "react-slick": "^0.31.0",
     "react-toastify": "^11.1.0",
     "recharts": "^2.15.2",
+    "screenfull": "^6.0.2",
     "sockjs-client": "^1.6.1",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",

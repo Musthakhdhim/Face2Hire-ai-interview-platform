@@ -43,9 +43,16 @@ export default function ApplicationDetailPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <Button variant="ghost" onClick={() => navigate('/interviewee/applications')}>← Back to Applications</Button>
-      
+    <div className="max-w-4xl mx-auto space-y-6">
+      <Button variant="ghost" onClick={() => navigate('/interviewee/applications')}>
+        ← Back to Applications
+      </Button>
+
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Application Details</h1>
+        <p className="text-gray-600 mt-1">View your job application and status</p>
+      </div>
+
       <Card className="border-0 shadow-lg">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -56,14 +63,28 @@ export default function ApplicationDetailPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-4">
-            <div className="flex items-center gap-2 text-gray-600"><User className="size-4" />{application.userName}</div>
-            <div className="flex items-center gap-2 text-gray-600"><Mail className="size-4" />{application.userEmail || 'Not provided'}</div>
-            <div className="flex items-center gap-2 text-gray-600"><Calendar className="size-4" />Applied on {new Date(application.appliedAt).toLocaleString()}</div>
-            <div className="flex items-center gap-2 text-gray-600"><FileText className="size-4" />Score: {application.score || 'Not yet'}</div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <User className="size-4" />
+              {application.userName}
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <Mail className="size-4" />
+              {application.userEmail || 'Not provided'}
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <Calendar className="size-4" />
+              Applied on {new Date(application.appliedAt).toLocaleString()}
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <FileText className="size-4" />
+              Score: {application.score || 'Not yet'}
+            </div>
           </div>
           <div>
             <h3 className="font-semibold text-gray-900 mb-2">Cover Letter</h3>
-            <div className="p-4 bg-gray-50 rounded-lg whitespace-pre-wrap">{application.coverLetter || 'No cover letter provided.'}</div>
+            <div className="p-4 bg-gray-50 rounded-lg whitespace-pre-wrap">
+              {application.coverLetter || 'No cover letter provided.'}
+            </div>
           </div>
         </CardContent>
       </Card>

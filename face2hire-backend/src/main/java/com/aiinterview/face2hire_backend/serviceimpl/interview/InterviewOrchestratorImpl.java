@@ -294,19 +294,15 @@ public class InterviewOrchestratorImpl {
     public OverallFeedbackDto getOverallFeedbackByScheduledId(Long scheduledId, Long userId) {
         log.info("Fetching overall feedback for scheduled interview {}, user {}", scheduledId, userId);
 
-        // Find the interview session linked to this scheduled interview
         InterviewSession session = sessionRepository.findByScheduledInterviewId(scheduledId)
                 .orElseThrow(() -> new RuntimeException("No interview session found for scheduled interview " + scheduledId));
 
-        // Authorize: only the interviewee or the interviewer who scheduled it can view
         ScheduledInterview scheduled = scheduledInterviewRepository.findById(scheduledId)
                 .orElseThrow(() -> new RuntimeException("Scheduled interview not found"));
 
-        // Fetch the current user to get full name (for interviewer check)
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Check if the logged-in user is either the interviewee or the interviewer who scheduled it
         if (!session.getUserId().equals(userId) && !scheduled.getScheduledByInterviewer().equals(currentUser.getEmail())) {
             throw new RuntimeException("Unauthorized");
         }
