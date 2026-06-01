@@ -7,8 +7,8 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -23,58 +23,65 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class OtpServiceImpl implements OtpService {
 
-    private final Cache<String, OtpData> otpCache;
+    @Value("${otp.expiry.seconds}")
+    private int otpExpirySeconds;
 
+    @Value("${otp.max.requests.per.hour}")
+    private int maxOtpRequestsPerHour;
+
+    @Value("${otp.block.duration.minutes}")
+    private int blockDurationMinutes;
+
+    @Value("${otp.max.failed.attempts}")
+    private int maxFailedAttempts;
+
+    @Value("${otp.failed.attempts.window.minutes}")
+    private int failedAttemptsWindowMinutes;
+
+    @Value("${otp.cleanup.interval.seconds}")
+    private int cleanupIntervalSeconds;
+
+    @Value("${otp.max.cache.size}")
+    private int maxCacheSize;
+
+    private Cache<String, OtpData> otpCache;
     private final Map<String, Boolean> verifiedOtps;
-
     private final Map<String, Integer> otpRequestCounts;
-
     private final Map<String, Long> otpRequestBlockedUntil;
-
     private final Map<String, Integer> failedAttempts;
-
     private final ScheduledExecutorService scheduler;
-
     private final SecureRandom secureRandom;
 
-    private static final int OTP_LENGTH = 6;
-    private static final int OTP_EXPIRY_SECONDS = 180;
-    private static final int MAX_OTP_REQUESTS_PER_HOUR = 3;
-    private static final int BLOCK_DURATION_MINUTES = 15;
-    private static final int MAX_FAILED_ATTEMPTS = 3;
-    private static final int FAILED_ATTEMPTS_WINDOW_MINUTES = 5;
-    private static final int CLEANUP_INTERVAL_SECONDS = 30;
-    private static final int MAX_CACHE_SIZE = 10000;
-
     public OtpServiceImpl() {
-
-        this.otpCache = Caffeine.newBuilder()
-                .expireAfterWrite(OTP_EXPIRY_SECONDS, TimeUnit.SECONDS)
-                .maximumSize(MAX_CACHE_SIZE)
-                .recordStats()
-                .build();
-
         this.verifiedOtps = new ConcurrentHashMap<>();
         this.otpRequestCounts = new ConcurrentHashMap<>();
         this.otpRequestBlockedUntil = new ConcurrentHashMap<>();
         this.failedAttempts = new ConcurrentHashMap<>();
-
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
-
         this.secureRandom = new SecureRandom();
-
-        log.info("OtpService initialized with expiry: {} seconds, max requests: {}/hour",
-                OTP_EXPIRY_SECONDS, MAX_OTP_REQUESTS_PER_HOUR);
     }
 
     @PostConstruct
+    public void init() {
+        // Initialize Caffeine cache after @Value injection
+        this.otpCache = Caffeine.newBuilder()
+                .expireAfterWrite(otpExpirySeconds, TimeUnit.SECONDS)
+                .maximumSize(maxCacheSize)
+                .recordStats()
+                .build();
+
+        log.info("OtpService initialized with expiry: {} seconds, max requests: {}/hour, max cache size: {}",
+                otpExpirySeconds, maxOtpRequestsPerHour, maxCacheSize);
+        startCleanup();
+    }
+
     @Override
     public void startCleanup() {
         scheduler.scheduleAtFixedRate(this::cleanupExpiredEntries,
-                CLEANUP_INTERVAL_SECONDS,
-                CLEANUP_INTERVAL_SECONDS,
+                cleanupIntervalSeconds,
+                cleanupIntervalSeconds,
                 TimeUnit.SECONDS);
-        log.info("OTP cleanup scheduler started");
+        log.info("OTP cleanup scheduler started with interval {} seconds", cleanupIntervalSeconds);
     }
 
     @Override
@@ -93,23 +100,19 @@ public class OtpServiceImpl implements OtpService {
         OtpData otpData = OtpData.builder()
                 .otp(otp)
                 .generatedAt(System.currentTimeMillis())
-                .expirySeconds(OTP_EXPIRY_SECONDS)
+                .expirySeconds(otpExpirySeconds)
                 .type(type)
                 .attempts(0)
                 .build();
 
         otpCache.put(identifier, otpData);
-
         incrementOtpRequestCount(userEmail, type);
-
         clearVerifiedOtp(userEmail, type);
         clearFailedAttempts(userEmail, type);
 
         log.info("OTP generated for {} ({}): {}", userEmail, type, otp);
-
         return otp;
     }
-
 
     @Override
     public boolean validateOtp(String userEmail, OtpType type, String otp) {
@@ -144,11 +147,9 @@ public class OtpServiceImpl implements OtpService {
 
         otpCache.invalidate(identifier);
         clearFailedAttempts(userEmail, type);
-
         log.info("OTP validated successfully for {} ({})", userEmail, type);
         return true;
     }
-
 
     @Override
     public void markOtpVerified(String userEmail, OtpType type) {
@@ -157,13 +158,11 @@ public class OtpServiceImpl implements OtpService {
         log.info("OTP marked as verified for {} ({})", userEmail, type);
     }
 
-
     @Override
     public boolean isOtpVerified(String userEmail, OtpType type) {
         String identifier = buildIdentifier(userEmail, type);
         return verifiedOtps.getOrDefault(identifier, false);
     }
-
 
     @Override
     public void clearVerifiedOtp(String userEmail, OtpType type) {
@@ -171,7 +170,6 @@ public class OtpServiceImpl implements OtpService {
         verifiedOtps.remove(identifier);
         log.debug("Verified OTP cleared for {} ({})", userEmail, type);
     }
-
 
     @Override
     public boolean canRequestOtp(String userEmail, OtpType type) {
@@ -191,11 +189,11 @@ public class OtpServiceImpl implements OtpService {
         }
 
         Integer count = otpRequestCounts.getOrDefault(identifier, 0);
-        if (count >= MAX_OTP_REQUESTS_PER_HOUR) {
-            long blockUntil = System.currentTimeMillis() + (BLOCK_DURATION_MINUTES * 60 * 1000);
+        if (count >= maxOtpRequestsPerHour) {
+            long blockUntil = System.currentTimeMillis() + (blockDurationMinutes * 60L * 1000L);
             otpRequestBlockedUntil.put(identifier, blockUntil);
             log.warn("OTP request limit exceeded for {} ({}). Blocked until {}",
-                    userEmail, type, LocalDateTime.now().plusMinutes(BLOCK_DURATION_MINUTES));
+                    userEmail, type, LocalDateTime.now().plusMinutes(blockDurationMinutes));
             return false;
         }
 
@@ -206,11 +204,9 @@ public class OtpServiceImpl implements OtpService {
     public long getRemainingBlockTime(String userEmail, OtpType type) {
         String identifier = buildIdentifier(userEmail, type);
         Long blockedUntil = otpRequestBlockedUntil.get(identifier);
-
         if (blockedUntil == null || System.currentTimeMillis() >= blockedUntil) {
             return 0;
         }
-
         return (blockedUntil - System.currentTimeMillis()) / 1000;
     }
 
@@ -226,30 +222,20 @@ public class OtpServiceImpl implements OtpService {
         }, 1, TimeUnit.HOURS);
     }
 
-
     @Override
     public boolean isOtpValid(String userEmail, OtpType type) {
         String identifier = buildIdentifier(userEmail, type);
         OtpData otpData = otpCache.getIfPresent(identifier);
-
-        if (otpData == null) {
-            return false;
-        }
-
+        if (otpData == null) return false;
         long elapsed = System.currentTimeMillis() - otpData.getGeneratedAt();
         return elapsed <= otpData.getExpirySeconds() * 1000L;
     }
-
 
     @Override
     public long getOtpRemainingSeconds(String userEmail, OtpType type) {
         String identifier = buildIdentifier(userEmail, type);
         OtpData otpData = otpCache.getIfPresent(identifier);
-
-        if (otpData == null) {
-            return 0;
-        }
-
+        if (otpData == null) return 0;
         long elapsed = System.currentTimeMillis() - otpData.getGeneratedAt();
         long remaining = otpData.getExpirySeconds() - (elapsed / 1000);
         return Math.max(0, remaining);
@@ -264,20 +250,17 @@ public class OtpServiceImpl implements OtpService {
         log.info("OTP invalidated for {} ({})", userEmail, type);
     }
 
-
     @Override
     public void recordFailedAttempt(String userEmail, OtpType type) {
         String identifier = buildIdentifier(userEmail, type);
         int attempts = failedAttempts.getOrDefault(identifier, 0) + 1;
         failedAttempts.put(identifier, attempts);
 
-        scheduler.schedule(() -> {
-            clearFailedAttempts(userEmail, type);
-        }, FAILED_ATTEMPTS_WINDOW_MINUTES, TimeUnit.MINUTES);
+        scheduler.schedule(() -> clearFailedAttempts(userEmail, type),
+                failedAttemptsWindowMinutes, TimeUnit.MINUTES);
 
         log.warn("Failed OTP attempt {} for {} ({})", attempts, userEmail, type);
     }
-
 
     @Override
     public void clearFailedAttempts(String userEmail, OtpType type) {
@@ -285,30 +268,25 @@ public class OtpServiceImpl implements OtpService {
         failedAttempts.remove(identifier);
     }
 
-
     @Override
     public boolean isUserBlocked(String userEmail, OtpType type) {
         String identifier = buildIdentifier(userEmail, type);
         Integer attempts = failedAttempts.get(identifier);
-        return attempts != null && attempts >= MAX_FAILED_ATTEMPTS;
+        return attempts != null && attempts >= maxFailedAttempts;
     }
 
     @Override
     public int getRemainingFailedAttempts(String userEmail, OtpType type) {
         String identifier = buildIdentifier(userEmail, type);
         Integer attempts = failedAttempts.get(identifier);
-        if (attempts == null) {
-            return MAX_FAILED_ATTEMPTS;
-        }
-        return Math.max(0, MAX_FAILED_ATTEMPTS - attempts);
+        if (attempts == null) return maxFailedAttempts;
+        return Math.max(0, maxFailedAttempts - attempts);
     }
 
     @Override
     public void cleanupExpiredEntries() {
         long now = System.currentTimeMillis();
         int cleaned = 0;
-
-
         for (Map.Entry<String, Long> entry : otpRequestBlockedUntil.entrySet()) {
             if (now >= entry.getValue()) {
                 otpRequestBlockedUntil.remove(entry.getKey());
@@ -316,8 +294,6 @@ public class OtpServiceImpl implements OtpService {
                 cleaned++;
             }
         }
-
-
         if (cleaned > 0) {
             log.debug("Cleaned up {} expired entries from rate limiting maps", cleaned);
         }
@@ -337,13 +313,11 @@ public class OtpServiceImpl implements OtpService {
                 otpCache.stats().evictionCount());
     }
 
-
     @Override
     public int getRequestCount(String userEmail, OtpType type) {
         String identifier = buildIdentifier(userEmail, type);
         return otpRequestCounts.getOrDefault(identifier, 0);
     }
-
 
     @Override
     public boolean isUserBlockedFromRequesting(String userEmail, OtpType type) {
@@ -371,14 +345,13 @@ public class OtpServiceImpl implements OtpService {
             scheduler.shutdownNow();
             Thread.currentThread().interrupt();
         }
-
-        otpCache.invalidateAll();
+        if (otpCache != null) {
+            otpCache.invalidateAll();
+        }
         verifiedOtps.clear();
         otpRequestCounts.clear();
         otpRequestBlockedUntil.clear();
         failedAttempts.clear();
-
         log.info("OtpService shutdown complete");
     }
-
 }

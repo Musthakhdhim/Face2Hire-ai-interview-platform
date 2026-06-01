@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class InterviewOrchestratorImpl {
+public class InterviewOrchestratorImpl implements InterviewOrchestrator {
 
     private final InterviewSessionManager sessionManager;
     private final QuestionGenerator questionGenerator;
@@ -43,17 +43,20 @@ public class InterviewOrchestratorImpl {
     private AppLogger log;
 
     @PostConstruct
+    @Override
     public void init() {
         this.log = loggerFactory.getLogger(getClass());
     }
 
     @Transactional
+    @Override
     public SessionStartedDto start(Long userId, StartSessionRequest request) throws JsonProcessingException {
         log.info("Orchestrator: starting interview for user {}", userId);
         return sessionManager.startSession(userId, request);
     }
 
     @Transactional
+    @Override
     public FeedbackResponseDto submitAnswer(Long userId, AnswerSubmissionDto dto) throws JsonProcessingException {
         log.info("Orchestrator: submitting answer for user {}, session {}, question {}",
                 userId, dto.getSessionId(), dto.getQuestionId());
@@ -117,6 +120,7 @@ public class InterviewOrchestratorImpl {
     }
 
     @Transactional
+    @Override
     public QuestionResponseDto getNextQuestion(Long sessionId, Long currentQuestionId, Long userId) throws JsonProcessingException {
         log.info("Fetching next question for session {}, current={}, user={}", sessionId, currentQuestionId, userId);
 
@@ -150,6 +154,7 @@ public class InterviewOrchestratorImpl {
     }
 
     @Transactional
+    @Override
     public OverallFeedbackDto endSession(Long sessionId, Long userId) throws JsonProcessingException {
         log.info("Ending session {} for user {}", sessionId, userId);
         OverallFeedbackDto overall = null;
@@ -219,19 +224,7 @@ public class InterviewOrchestratorImpl {
     }
 
 
-    private OverallFeedbackDto createDefaultFeedback(String reason) {
-        return OverallFeedbackDto.builder()
-                .overallScore(0.0)
-                .communicationScore(0.0)
-                .technicalScore(0.0)
-                .confidenceScore(0.0)
-                .strengths("Incomplete interview")
-                .improvements("Please complete the full interview to receive detailed feedback.")
-                .detailedFeedback(reason)
-                .suggestedResources(List.of())
-                .build();
-    }
-
+    @Override
     public List<InterviewSessionDto> getUserSessions(Long userId) {
         log.debug("Fetching all sessions for user {}", userId);
         List<InterviewSession> sessions = sessionRepository.findByUserId(userId);
@@ -240,26 +233,7 @@ public class InterviewOrchestratorImpl {
                 .collect(Collectors.toList());
     }
 
-    private InterviewSessionDto toSessionDto(InterviewSession session) {
-        return InterviewSessionDto.builder()
-                .id(session.getId())
-                .type(session.getType())
-                .difficulty(session.getDifficulty())
-                .duration(session.getDuration())
-                .questionCount(session.getQuestionCount())
-                .avatarStyle(session.getAvatarStyle())
-                .status(session.getStatus())
-                .overallScore(session.getOverallScore())
-                .communicationScore(session.getCommunicationScore())
-                .technicalScore(session.getTechnicalScore())
-                .confidenceScore(session.getConfidenceScore())
-                .startedAt(session.getStartedAt())
-                .completedAt(session.getCompletedAt())
-                .createdAt(session.getCreatedAt())
-                .scheduledInterviewId(session.getScheduledInterviewId())
-                .build();
-    }
-
+    @Override
     public OverallFeedbackDto getOverallFeedback(Long sessionId, Long userId) {
         log.info("Fetching overall feedback for session {}, user {}", sessionId, userId);
         System.out.println("Fetching overall feedback for session , user {}"+ sessionId+", "+ userId);
@@ -290,6 +264,7 @@ public class InterviewOrchestratorImpl {
         }
     }
 
+    @Override
     public OverallFeedbackDto getOverallFeedbackByScheduledId(Long scheduledId, Long userId) {
         log.info("Fetching overall feedback for scheduled interview {}, user {}", scheduledId, userId);
 

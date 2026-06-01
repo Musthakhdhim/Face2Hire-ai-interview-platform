@@ -3,7 +3,7 @@ package com.aiinterview.face2hire_backend.controller.interview;
 import com.aiinterview.face2hire_backend.dto.ApiResponse;
 import com.aiinterview.face2hire_backend.dto.interview.*;
 import com.aiinterview.face2hire_backend.security.CustomUserDetails;
-import com.aiinterview.face2hire_backend.serviceimpl.interview.InterviewOrchestratorImpl;
+import com.aiinterview.face2hire_backend.service.interview.InterviewOrchestrator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InterviewController {
 
-    private final InterviewOrchestratorImpl orchestrator;
+    private final InterviewOrchestrator orchestrator;
 
     @PostMapping("/start")
     public ResponseEntity<ApiResponse<SessionStartedDto>> start(
