@@ -30,7 +30,6 @@ export default function ScheduledInterviewsPage() {
         fetch();
     }, []);
 
-    // Compute filtered list directly using useMemo (no separate state)
     const filtered = useMemo(() => {
         if (!searchQuery.trim()) {
             return interviews;
@@ -45,7 +44,7 @@ export default function ScheduledInterviewsPage() {
 
     const handleSearch = (value: string) => {
         setSearchQuery(value);
-        setCurrentPage(0); // Reset page when search changes
+        setCurrentPage(0);
     };
 
     const totalPages = Math.ceil(filtered.length / itemsPerPage);

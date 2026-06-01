@@ -41,7 +41,6 @@ public class FeedbackAggregatorImpl implements FeedbackAggregator {
                     .map(f -> String.format("Q: score %.2f, feedback: %s", f.getScore(), f.getFeedbackText()))
                     .collect(Collectors.joining("\n"));
 
-            // Build type‑specific score fields
             String scoreFields;
             switch (session.getType()) {
                 case technical:

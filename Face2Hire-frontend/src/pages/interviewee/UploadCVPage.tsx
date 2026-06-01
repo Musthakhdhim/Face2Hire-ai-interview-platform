@@ -29,7 +29,7 @@ export default function UploadCVPage(): JSX.Element {
   const calculateTotalYears = (experiences: ExperienceDto[]): number => {
     return experiences.reduce((sum, exp) => {
       if (exp.startDate) {
-        const end = exp.endDate ? new Date(exp.endDate) : new Date(); // today for ongoing
+        const end = exp.endDate ? new Date(exp.endDate) : new Date(); 
         const start = new Date(exp.startDate);
         const years = end.getFullYear() - start.getFullYear();
         return sum + years;

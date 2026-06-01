@@ -28,7 +28,6 @@ export default function ApplicationStatusPage() {
                 setApplication(app);
                 const sched = await scheduledInterviewService.getByApplicationId(Number(applicationId));
                 setScheduled(sched);
-                // Fetch feedback if application has a score and a scheduled interview exists
                 if (app.score && app.score > 0 && sched) {
                     try {
                         const fb = await interviewService.getOverallFeedbackByScheduledId(sched.id);
@@ -90,7 +89,6 @@ export default function ApplicationStatusPage() {
                 <p className="text-gray-600 mt-1">Review candidate information and interview results</p>
             </div>
 
-            {/* Application Details Card */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                 <Card className="border-0 shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between">
@@ -146,7 +144,6 @@ export default function ApplicationStatusPage() {
                 </Card>
             </motion.div>
 
-            {/* Scheduled Interview Card */}
             {scheduled && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                     <Card className="border-0 shadow-lg">
@@ -216,7 +213,6 @@ export default function ApplicationStatusPage() {
                 </motion.div>
             )}
 
-            {/* Feedback Card */}
             {feedback && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                     <Card className="border-0 shadow-lg">
@@ -258,7 +254,6 @@ export default function ApplicationStatusPage() {
                 </motion.div>
             )}
 
-            {/* Action Buttons (only if application is still pending) */}
             {application?.status === "PENDING" && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                     <Card className="border-0 shadow-lg bg-gradient-to-r from-indigo-50 to-purple-50">

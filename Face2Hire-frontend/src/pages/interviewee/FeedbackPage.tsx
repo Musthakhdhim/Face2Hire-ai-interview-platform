@@ -25,7 +25,6 @@ export default function FeedbackPage() {
           confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         }
       } catch {
-        // No need to capture error, just show toast
         toast.error("Failed to load feedback");
       } finally {
         setLoading(false);

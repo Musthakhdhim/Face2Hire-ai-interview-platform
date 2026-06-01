@@ -19,11 +19,9 @@ class WebSocketService {
   private handlers: Map<string, MessageHandler> = new Map();
 
   connect(sessionId: number, token: string, onConnected: () => void) {
-    // ✅ Append token as query parameter (SockJS preserves it)
     const wsUrl = `${import.meta.env.VITE_API_BASE_URL}/ws/interview?token=${token}`;
     this.client = new Client({
       webSocketFactory: () => new SockJS(wsUrl),
-      // connectHeaders: { Authorization: `Bearer ${token}` }, // optional now
       debug: () => {},
       onConnect: () => {
         this.subscribeToUserQueue('/queue/interview.state', (msg: IMessage) => {
@@ -55,7 +53,6 @@ class WebSocketService {
   }
 
   sendAudioChunk(_chunk: Blob) {
-    // For simplicity we skip live streaming; final audio is sent via REST.
   }
 
   disconnect() {

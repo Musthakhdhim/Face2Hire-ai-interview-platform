@@ -43,10 +43,7 @@ export default function ScheduleInterviewPage() {
     const [emailSearchValue, setEmailSearchValue] = useState("");
     const [emailSearchResults, setEmailSearchResults] = useState<UserSearchResult[]>([]);
     const [searching, setSearching] = useState(false);
-    const [selectedEmail, setSelectedEmail] = useState(""); // ✅ store selected email for display
-
-    // If coming from application (URL params), we can try to fetch email? Optional.
-    // For now, we leave it as is; the email display will be empty until a search is done.
+    const [selectedEmail, setSelectedEmail] = useState(""); 
 
     useEffect(() => {
         const timer = setTimeout(async () => {
@@ -74,7 +71,7 @@ export default function ScheduleInterviewPage() {
             intervieweeId: user.id,
             intervieweeName: user.name,
         }));
-        setSelectedEmail(user.email);   // ✅ save email for display
+        setSelectedEmail(user.email);  
         setEmailSearchValue("");
         setEmailSearchOpen(false);
     };
@@ -179,7 +176,6 @@ export default function ScheduleInterviewPage() {
                     </CardContent>
                 </Card>
 
-                {/* Rest of the form unchanged (Interview Configuration, Avatar, etc.) */}
                 <Card className="border-0 shadow-lg">
                     <CardHeader><CardTitle>Interview Configuration</CardTitle></CardHeader>
                     <CardContent className="space-y-4">

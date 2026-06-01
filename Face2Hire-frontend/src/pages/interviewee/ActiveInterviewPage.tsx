@@ -62,12 +62,10 @@ export default function ActiveInterviewPage() {
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
-  // Show fullscreen modal only if we have valid session data
   const [showFullscreenModal, setShowFullscreenModal] = useState(() => !!(sessionId && sessionConfig));
   const [showFullscreenWarningDialog, setShowFullscreenWarningDialog] = useState(false);
   const [showVisibilityWarningDialog, setShowVisibilityWarningDialog] = useState(false);
 
-  // Counters that never reset – second violation terminates
   const fullscreenExitCountRef = useRef(0);
   const visibilityHiddenCountRef = useRef(0);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -76,7 +74,6 @@ export default function ActiveInterviewPage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  // Helper to stop any currently playing audio
   const stopCurrentAudio = useCallback(() => {
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
@@ -92,7 +89,6 @@ export default function ActiveInterviewPage() {
   }, []);
 
   const speakQuestion = useCallback(async (text: string) => {
-    // Stop any previous audio before speaking new question
     stopCurrentAudio();
     setAvatarState('speaking');
     try {
@@ -117,7 +113,6 @@ export default function ActiveInterviewPage() {
   }, [sessionConfig, stopCurrentAudio]);
 
   const endInterview = useCallback(async () => {
-    // Stop any playing audio before ending
     stopCurrentAudio();
     const overallFeedback = await interviewService.endSession(Number(sessionId));
     if (screenfull.isFullscreen) {
@@ -131,7 +126,6 @@ export default function ActiveInterviewPage() {
     await endInterview();
   }, [endInterview]);
 
-  // Timer countdown
   useEffect(() => {
     if (loading || answerSubmitted) return;
     const interval = setInterval(() => {
@@ -147,7 +141,6 @@ export default function ActiveInterviewPage() {
     return () => clearInterval(interval);
   }, [loading, answerSubmitted, handleTimeEnd]);
 
-  // Fullscreen and tab violation handling – never reset counters
   useEffect(() => {
     if (!loading && !showFullscreenModal) {
       const handleFullscreenChange = () => {
@@ -188,7 +181,6 @@ export default function ActiveInterviewPage() {
     }
   }, [loading, showFullscreenModal, endInterview]);
 
-  // Start interview after fullscreen is granted
   const startInterview = useCallback(async () => {
     try {
       let firstQuestion: QuestionResponseDto;
@@ -239,7 +231,6 @@ export default function ActiveInterviewPage() {
     }
   };
 
-  // Cleanup audio on unmount
   useEffect(() => {
     return () => {
       stopCurrentAudio();
@@ -317,7 +308,6 @@ export default function ActiveInterviewPage() {
       await endInterview();
       return;
     }
-    // Stop current audio before loading next question
     stopCurrentAudio();
     try {
       const next = await interviewService.getNextQuestion(Number(sessionId), currentQuestion!.questionId);
@@ -362,7 +352,6 @@ export default function ActiveInterviewPage() {
 
   return (
     <div className="h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 flex flex-col overflow-hidden">
-      {/* Fullscreen Warning Dialog */}
       <Dialog open={showFullscreenWarningDialog} onOpenChange={setShowFullscreenWarningDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -387,7 +376,6 @@ export default function ActiveInterviewPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Tab Switch Warning Dialog */}
       <Dialog open={showVisibilityWarningDialog} onOpenChange={setShowVisibilityWarningDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -403,7 +391,6 @@ export default function ActiveInterviewPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Main interview UI */}
       <div className="bg-black/30 backdrop-blur-sm border-b border-white/10 p-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <Badge className="bg-red-500/20 text-red-300 border-red-500/30">

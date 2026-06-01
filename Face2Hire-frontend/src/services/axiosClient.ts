@@ -40,7 +40,6 @@ const refreshAxios = axios.create({
   },
 });
 
-// Request interceptor
 axiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
     const token = localStorage.getItem('accessToken');
@@ -52,7 +51,6 @@ axiosClient.interceptors.request.use(
   (error: AxiosError): Promise<AxiosError> => Promise.reject(error)
 );
 
-// Response interceptor
 axiosClient.interceptors.response.use(
   (response: AxiosResponse): AxiosResponse => response,
   async (error: AxiosError) => {

@@ -38,7 +38,7 @@ public class OtpServiceImpl implements OtpService {
     private final SecureRandom secureRandom;
 
     private static final int OTP_LENGTH = 6;
-    private static final int OTP_EXPIRY_SECONDS = 180; // 3 minutes
+    private static final int OTP_EXPIRY_SECONDS = 180;
     private static final int MAX_OTP_REQUESTS_PER_HOUR = 3;
     private static final int BLOCK_DURATION_MINUTES = 15;
     private static final int MAX_FAILED_ATTEMPTS = 3;
