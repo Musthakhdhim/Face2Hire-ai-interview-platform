@@ -17,4 +17,5 @@ public class ApplicationListResponseDto {
     private Double score;
     private ApplicationStatus status;
     private LocalDateTime appliedAt;
+    private boolean hasScheduledInterview;
 }

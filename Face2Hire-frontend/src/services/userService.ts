@@ -23,6 +23,12 @@ export interface UserGrowthDataPoint {
     users: number;
 }
 
+export interface UserSearchResult {
+    id: number;
+    name: string;
+    email: string;
+}
+
 export const userService = {
     getUsers: async (filter: UserFilterRequest): Promise<PaginatedResponse<UserListResponseDto>> => {
         const response = await axiosClient.post('/admin/users', filter);
@@ -34,6 +40,11 @@ export const userService = {
     },
     unblockUser: async (userId: number): Promise<void> => {
         await axiosClient.put(`/admin/users/unblock/${userId}`);
+    },
+
+    searchByEmail: async (email: string): Promise<UserSearchResult[]> => {
+        const response = await axiosClient.get('/users/search', { params: { email } });
+        return response.data;
     },
 };
 
@@ -47,4 +58,6 @@ export const adminService = {
         const response = await axiosClient.get('/admin/user-growth');
         return response.data.data;
     },
+
+    
 };

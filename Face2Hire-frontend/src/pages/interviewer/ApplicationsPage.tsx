@@ -1,4 +1,5 @@
 import { useEffect, useState, type JSX } from 'react';
+import { useNavigate } from 'react-router-dom'; 
 import { motion } from 'motion/react';
 import { CheckCircle2, XCircle, Clock, Filter, Loader2, User, Mail, Download } from 'lucide-react'; 
 import { Card, CardContent } from '../../components/ui/card';
@@ -27,6 +28,7 @@ const getErrorMessage = (error: unknown): string => {
 };
 
 export default function InterviewerApplicationsPage(): JSX.Element {
+  const navigate = useNavigate();   
   const [applications, setApplications] = useState<ApplicationListResponse[]>([]);
   const [jobs, setJobs] = useState<JobListResponse[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>('all');
@@ -77,32 +79,6 @@ export default function InterviewerApplicationsPage(): JSX.Element {
     fetchApplications();
   }, [selectedJobId, page]);
 
-  const handleStatusUpdate = async (applicationId: number, newStatus: 'APPROVED' | 'REJECTED') => {
-    try {
-      await applicationService.updateApplicationStatus(applicationId, newStatus);
-      toast.success(`Application ${newStatus.toLowerCase()} successfully`);
-      const refreshApplications = async () => {
-        setLoading(true);
-        try {
-          let data;
-          if (selectedJobId && selectedJobId !== 'all') {
-            data = await applicationService.getApplicationsForJob(Number(selectedJobId), page, pageSize);
-          } else {
-            data = await applicationService.getApplicationsForInterviewer(page, pageSize);
-          }
-          setApplications(data.content);
-          setTotalPages(data.totalPages);
-        } catch (err: unknown) {
-          toast.error(getErrorMessage(err) || 'Failed to refresh applications');
-        } finally {
-          setLoading(false);
-        }
-      };
-      refreshApplications();
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error) || 'Update failed');
-    }
-  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -178,15 +154,23 @@ export default function InterviewerApplicationsPage(): JSX.Element {
                       <div className="mt-2 text-sm">Score: {app.score || 'Not yet'}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {app.status === 'PENDING' && (
-                        <>
-                          <Button onClick={() => handleStatusUpdate(app.id, 'APPROVED')} className="bg-green-600 hover:bg-green-700">Approve</Button>
-                          <Button onClick={() => handleStatusUpdate(app.id, 'REJECTED')} variant="destructive">Reject</Button>
-                          <Button variant="outline" onClick={() => toast.info('schedule interview')}>
-                            Schedule Interview
-                          </Button>
-                        </>
-                      )}
+                        {app.hasScheduledInterview ? (
+                            <Button 
+                                variant="outline" 
+                                onClick={() => navigate(`/interviewer/applications/${app.id}/status`)}
+                            >
+                                View Status
+                            </Button>
+                        ) : (
+                            app.status === 'PENDING' && (
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => navigate(`/interviewer/schedule?intervieweeId=${app.userId}&candidateName=${encodeURIComponent(app.userName)}&applicationId=${app.id}`)}
+                                >
+                                    Schedule Interview
+                                </Button>
+                            )
+                        )}
                     </div>
                   </div>
                 </CardContent>

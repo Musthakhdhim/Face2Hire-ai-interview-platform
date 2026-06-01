@@ -44,7 +44,6 @@ public class OpenAiParserServiceImpl implements OpenAiParserService {
                 .defaultHeader("Authorization", "Bearer " + apiKey)
                 .defaultHeader("Content-Type", "application/json")
                 .build();
-        log.info("OpenAI parser initialized with model: {}", model);
     }
 
     @Override

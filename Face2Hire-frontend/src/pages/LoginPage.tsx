@@ -50,7 +50,9 @@ export default function LoginPage(): JSX.Element {
       const result = await dispatch(login({ email, password })).unwrap();
       const backendRole = result.role;
       if (backendRole.toLowerCase() !== role.toLowerCase()) {
-        toast.error(`Role mismatch. You are registered as ${backendRole}`);
+        // toast.error(`Role mismatch. You are registered as ${backendRole}`);
+        toast.error(`wrong credentials, try again`);
+
         return;
       }
       toast.success('Login successful!');

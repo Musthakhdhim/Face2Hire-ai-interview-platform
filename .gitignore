@@ -37,4 +37,5 @@ Face2Hire-frontend/*.log
 # Root level secrets
 # ====================
 .env
-*.properties.local
+*.properties.locallogs/
+*.log

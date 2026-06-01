@@ -63,9 +63,9 @@ export default function DashboardLayout(): JSX.Element | null {
         { icon: Briefcase, label: 'Browse Jobs', path: '/interviewee/jobs' }, 
         { icon: Upload, label: 'Upload CV', path: '/interviewee/upload-cv' },
               { icon: FileText, label: 'My Applications', path: '/interviewee/applications' }, 
-        { icon: Calendar, label: 'Upcoming Interviews', path: '#' },
-        { icon: FileText, label: 'History', path: '#' },
-        { icon: BarChart2, label: 'Analytics', path: '#' },
+        { icon: Calendar, label: 'Upcoming Interviews', path: '/interviewee/upcoming' },
+        { icon: FileText, label: 'History', path: '/interviewee/history' },
+        { icon: BarChart2, label: 'Analytics', path: '/interviewee/analytics' },
         { icon: Settings, label: 'Settings', path: settingsPath },
       ];
     } else if (role === 'interviewer') {
@@ -73,7 +73,8 @@ export default function DashboardLayout(): JSX.Element | null {
         { icon: Home, label: 'Dashboard', path: '/interviewer' },
         { icon: Briefcase, label: 'My Jobs', path: '/interviewer/jobs' },
         { icon: FileText, label: 'Applications', path: '/interviewer/applications' },
-        { icon: Calendar, label: 'Schedule Interview', path: '#' },
+        { icon: Calendar, label: 'Schedule Interview', path: '/interviewer/schedule' },
+        { icon: Calendar, label: 'Scheduled Interviews', path: '/interviewer/scheduled' },
         { icon: Settings, label: 'Settings', path: settingsPath },
       ];
     } else if (role === 'admin') {

@@ -26,6 +26,17 @@ import JobApplicationPage from './pages/interviewee/JobApplicationPage';
 import IntervieweeApplicationsPage from './pages/interviewee/ApplicationsPage';
 import InterviewerApplicationsPage from './pages/interviewer/ApplicationsPage';
 import ApplicationDetailPage from './pages/interviewee/ApplicationDetailPage';
+import ActiveInterviewPage from './pages/interviewee/ActiveInterviewPage';
+import InterviewSetupPage from './pages/interviewee/InterviewSetupPage';
+import HistoryPage from './pages/interviewee/HistoryPage';
+import AnalyticsPage from './pages/interviewee/AnalyticsPage';
+import UpcomingInterviewsPage from './pages/interviewee/UpcomingInterviewsPage';
+import FeedbackPage from './pages/interviewee/FeedbackPage';
+import ScheduleInterviewPage from './pages/interviewer/ScheduleInterviewPage';
+import ApplicationStatusPage from './pages/interviewer/ApplicationStatusPage';
+import ScheduledInterviewsPage from './pages/interviewer/ScheduledInterviewsPage';
+import ScheduledInterviewDetailPage from './pages/interviewer/ScheduledInterviewDetailPage';
+import InterviewLayout from './layouts/InterviewLayout';
 
 function App(): JSX.Element {
   return (
@@ -52,7 +63,21 @@ function App(): JSX.Element {
               <Route path="/interviewee/applications" element={<IntervieweeApplicationsPage />} />
               <Route path="/interviewee/applications/:id" element={<ApplicationDetailPage />} />
               <Route path="settings" element={<ProfileSettingsPage />} />
+              <Route path="interview/setup" element={<InterviewSetupPage />} />
+              {/* <Route path="interview/active/:sessionId" element={<ActiveInterviewPage />} /> */}
+
+              {/* <Route path="interview/active/:sessionId" element={<InterviewLayout />}>
+                <Route index element={<ActiveInterviewPage />} />
+              </Route> */}
+              <Route path="interview/feedback/:sessionId" element={<FeedbackPage />} /> 
+               <Route path="history" element={<HistoryPage />} /> 
+               <Route path="analytics" element={<AnalyticsPage />} /> 
+               <Route path="upcoming" element={<UpcomingInterviewsPage />} />
             </Route>
+          </Route>
+
+          <Route path="/interviewee/interview/active/:sessionId" element={<InterviewLayout />}>
+            <Route index element={<ActiveInterviewPage />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['interviewer']} />}>
@@ -61,8 +86,11 @@ function App(): JSX.Element {
               <Route path="jobs" element={<InterviewerJobsPage />} />
               <Route path="jobs/create" element={<CreateJobPage />} />
               <Route path="jobs/:jobId" element={<JobDetailPage />} />  
+              <Route path="schedule" element={<ScheduleInterviewPage />} />
               <Route path="/interviewer/applications" element={<InterviewerApplicationsPage />} />
-
+              <Route path="applications/:applicationId/status" element={<ApplicationStatusPage />} />
+              <Route path="scheduled" element={<ScheduledInterviewsPage />} />
+              <Route path="scheduled/:scheduledId" element={<ScheduledInterviewDetailPage />} />
               <Route path="settings" element={<ProfileSettingsPage />} />
             </Route>
           </Route>

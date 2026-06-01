@@ -102,4 +102,5 @@ export const jobService = {
     const response = await axiosClient.patch(API.JOBS.CLOSE(jobId));
     return response.data.data;
   },
+  
 };

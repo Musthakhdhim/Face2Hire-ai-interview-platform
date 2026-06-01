@@ -154,6 +154,25 @@
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+
+		<!-- OpenAI (use existing, but we'll add explicit client) -->
+		<dependency>
+			<groupId>com.openai</groupId>
+			<artifactId>openai-java</artifactId>
+			<version>0.12.0</version>
+		</dependency>
+
+		<!-- Apache Commons for file utilities -->
+<!--		<dependency>-->
+<!--			<groupId>commons-io</groupId>-->
+<!--			<artifactId>commons-io</artifactId>-->
+<!--			<version>2.15.0</version>-->
+<!--		</dependency>-->
 	</dependencies>
 
 	<build>

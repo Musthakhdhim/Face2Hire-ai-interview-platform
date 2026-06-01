@@ -31,7 +31,24 @@ const API = {
     FOR_INTERVIEWER: '/applications/interviewer',
     UPDATE_STATUS: (applicationId: number) => `/applications/${applicationId}/status`,
   },
-
+  INTERVIEW: {
+    START: '/interview/start',
+    SUBMIT_ANSWER: '/interview/submit-answer',
+    NEXT_QUESTION: (sessionId: number, currentQid: number) => `/interview/next-question/${sessionId}/${currentQid}`,
+    END: (sessionId: number) => `/interview/end/${sessionId}`,
+    FEEDBACK: (sessionId: number) => `/interview/feedback/${sessionId}`,
+    MY_SESSIONS: '/interview/my-sessions',
+  },
+  SCHEDULED_INTERVIEWS: {
+    CREATE: '/scheduled-interviews',
+    MY: '/scheduled-interviews/my',
+    FOR_INTERVIEWER: '/scheduled-interviews/for-interviewer',
+  },
+  AUDIO: {
+    UPLOAD_URL: '/audio/upload-url',
+    CONFIRM: '/audio/confirm',
+    TTS: '/audio/tts',
+  },
 };
 
 export default API;
