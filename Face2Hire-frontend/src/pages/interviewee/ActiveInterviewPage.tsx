@@ -9,11 +9,14 @@ import { toast } from 'react-toastify';
 import { interviewService, type QuestionResponseDto, type InterviewType, type Difficulty, type AvatarStyle } from '../../services/interviewService';
 import { audioService } from '../../services/audioService';
 import { websocketService } from '../../services/websocketService';
-import Avatar from '../../components/interview/Avatar';
+import ThreeAvatar from '../../components/interview/ThreeAvatar';
+import FaceDetector from '../../components/interview/FaceDetector';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store/store';
 import screenfull from 'screenfull';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import CustomAvatar from '../../components/interview/CustomAvatar';
+import RealisticAvatar from '../../components/interview/RealisticAvatar';
 
 interface SessionConfig {
   type: InterviewType;
@@ -65,6 +68,11 @@ export default function ActiveInterviewPage() {
   const [showFullscreenModal, setShowFullscreenModal] = useState(() => !!(sessionId && sessionConfig));
   const [showFullscreenWarningDialog, setShowFullscreenWarningDialog] = useState(false);
   const [showVisibilityWarningDialog, setShowVisibilityWarningDialog] = useState(false);
+
+  // Camera related states
+  const [faceDetected, setFaceDetected] = useState(true);
+  const [faceViolationCount, setFaceViolationCount] = useState(0);
+  const [showCameraWarningDialog, setShowCameraWarningDialog] = useState(false);
 
   const fullscreenExitCountRef = useRef(0);
   const visibilityHiddenCountRef = useRef(0);
@@ -146,7 +154,7 @@ export default function ActiveInterviewPage() {
       const handleFullscreenChange = () => {
         if (!screenfull.isFullscreen) {
           fullscreenExitCountRef.current += 1;
-          if (fullscreenExitCountRef.current === 1) {
+          if (fullscreenExitCountRef.current <= 100) {
             setShowFullscreenWarningDialog(true);
           } else {
             toast.error('You exited fullscreen again. The interview will be ended.');
@@ -158,7 +166,7 @@ export default function ActiveInterviewPage() {
       const handleVisibilityChange = () => {
         if (document.hidden) {
           visibilityHiddenCountRef.current += 1;
-          if (visibilityHiddenCountRef.current === 1) {
+          if (visibilityHiddenCountRef.current <= 100) {
             setShowVisibilityWarningDialog(true);
           } else {
             toast.error('You switched tabs again. The interview will be ended.');
@@ -326,6 +334,16 @@ export default function ActiveInterviewPage() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Camera violation handlers (just show warning, never end)
+  const handleCameraViolation = useCallback(() => {
+    setShowCameraWarningDialog(true);
+  }, []);
+
+  const handleFaceStatus = useCallback((detected: boolean, count: number) => {
+    setFaceDetected(detected);
+    setFaceViolationCount(count);
+  }, []);
+
   if (showFullscreenModal) {
     return (
       <Dialog open={showFullscreenModal} onOpenChange={setShowFullscreenModal}>
@@ -352,8 +370,31 @@ export default function ActiveInterviewPage() {
 
   return (
     <div className="h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 flex flex-col overflow-hidden">
-      <Dialog open={showFullscreenWarningDialog} onOpenChange={setShowFullscreenWarningDialog}>
+      {/* <Dialog open={showFullscreenWarningDialog} onOpenChange={setShowFullscreenWarningDialog}>
         <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>⚠️ Fullscreen Exited</DialogTitle>
+            <DialogDescription>
+              You have exited fullscreen mode. Please re-enter fullscreen immediately to continue the interview.
+              If you exit fullscreen again, the interview will be terminated.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <Button
+              onClick={() => {
+                setShowFullscreenWarningDialog(false);
+                if (screenfull.isEnabled && !screenfull.isFullscreen) {
+                  screenfull.request();
+                }
+              }}
+            >
+              Re-enter Fullscreen
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog> */}
+      <Dialog open={showFullscreenWarningDialog} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md [&>button:last-child]:hidden">
           <DialogHeader>
             <DialogTitle>⚠️ Fullscreen Exited</DialogTitle>
             <DialogDescription>
@@ -376,6 +417,7 @@ export default function ActiveInterviewPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Tab visibility warning dialog */}
       <Dialog open={showVisibilityWarningDialog} onOpenChange={setShowVisibilityWarningDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -391,13 +433,37 @@ export default function ActiveInterviewPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Camera face warning dialog */}
+      <Dialog open={showCameraWarningDialog} onOpenChange={setShowCameraWarningDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>⚠️ Face Not Detected</DialogTitle>
+            <DialogDescription>
+              Please look into the camera. Violation {faceViolationCount} of 5.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <Button onClick={() => setShowCameraWarningDialog(false)}>I'm Back</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Top bar */}
       <div className="bg-black/30 backdrop-blur-sm border-b border-white/10 p-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <Badge className="bg-red-500/20 text-red-300 border-red-500/30">
             <span className="size-2 bg-red-500 rounded-full mr-2 animate-pulse" />
             LIVE
           </Badge>
-          <div className="text-white font-mono text-lg">{formatTime(timeRemaining)}</div>
+          <div className="flex items-center gap-4">
+            <div className="text-white font-mono text-lg">{formatTime(timeRemaining)}</div>
+            <div className="flex items-center gap-2">
+              <div className={`size-2 rounded-full ${faceDetected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+              <span className="text-white text-xs">
+                {faceDetected ? 'Face OK' : `No face (${faceViolationCount}/5)`}
+              </span>
+            </div>
+          </div>
           <Badge variant="outline" className="bg-white/10 text-white border-white/20">
             Q{questionIndex}/{totalQuestions}
           </Badge>
@@ -405,10 +471,28 @@ export default function ActiveInterviewPage() {
         <Progress value={(questionIndex / totalQuestions) * 100} className="h-1 mt-2 rounded-none" />
       </div>
 
+      {/* Main content: 3D Avatar + Question Card */}
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="max-w-4xl w-full grid lg:grid-cols-2 gap-8 items-center">
-          <div className="flex justify-center">
-            <Avatar mode={sessionConfig.avatarStyle} isSpeaking={avatarState === 'speaking'} audioElement={audioElement || undefined} />
+          <div className="flex justify-center h-[60vh] lg:h-[70vh]">
+            <ThreeAvatar 
+              style={sessionConfig.avatarStyle} 
+              isSpeaking={avatarState === 'speaking'} 
+              audioElement={audioElement || undefined} 
+            />
+
+            {/* <CustomAvatar 
+              style={sessionConfig.avatarStyle} 
+              isSpeaking={avatarState === 'speaking'} 
+              audioElement={audioElement || undefined} 
+            /> */}
+
+            {/* <RealisticAvatar 
+              style={sessionConfig.avatarStyle} 
+              isSpeaking={avatarState === 'speaking'} 
+              audioElement={audioElement || undefined} 
+            /> */}
+
           </div>
           <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
             <CardContent className="p-8">
@@ -428,6 +512,50 @@ export default function ActiveInterviewPage() {
         </div>
       </div>
 
+      {/* <div className="bg-black/30 backdrop-blur-sm border-t border-white/10 p-6">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex gap-3">
+            <Button
+              size="lg"
+              variant={isMuted ? 'destructive' : 'default'}
+              className="rounded-full"
+              onClick={() => setIsMuted(!isMuted)}
+            >
+              {isMuted ? <MicOff className="size-6" /> : <Mic className="size-6" />}
+            </Button>
+            <Button
+              size="lg"
+              variant="ghost"
+              className="text-white"
+              onClick={() => {
+                if (audioElement) {
+                  if (audioElement.paused) audioElement.play();
+                  else audioElement.pause();
+                }
+              }}
+            >
+              <Volume2 className="size-6" />
+            </Button>
+          </div>
+          <div className="flex gap-3">
+            {!isRecording ? (
+              <Button size="lg" className="bg-red-600 hover:bg-red-700" onClick={startRecording} disabled={answerSubmitted || submitting}>
+                Start Recording
+              </Button>
+            ) : (
+              <Button size="lg" variant="default" onClick={stopRecordingAndSubmit} disabled={submitting}>
+                Stop & Submit
+              </Button>
+            )}
+            {!isRecording && !answerSubmitted && (
+              <Button size="lg" variant="outline" onClick={goToNextQuestion}>
+                Skip <SkipForward className="ml-2 size-5" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div> */}
+            {/* Bottom controls: Mute on left, Record/Skip centered */}
       <div className="bg-black/30 backdrop-blur-sm border-t border-white/10 p-6">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <Button
@@ -454,21 +582,17 @@ export default function ActiveInterviewPage() {
               </Button>
             )}
           </div>
-          <Button
-            size="lg"
-            variant="ghost"
-            className="text-white"
-            onClick={() => {
-              if (audioElement) {
-                if (audioElement.paused) audioElement.play();
-                else audioElement.pause();
-              }
-            }}
-          >
-            <Volume2 className="size-6" />
-          </Button>
+          <div className="w-12" /> {/* Empty spacer to balance left side */}
         </div>
       </div>
+
+      {/* Face detector component (handles camera preview + violation counting) */}
+      <FaceDetector
+        onViolation={handleCameraViolation}
+        onFaceStatus={handleFaceStatus}
+        maxViolations={5}
+        showPreview={true}
+      />
     </div>
   );
 }

@@ -4,11 +4,11 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import { Progress } from '../../components/ui/progress';
-import { Briefcase, Calendar, TrendingUp, Target, Clock, ArrowRight } from 'lucide-react';
+import { Briefcase, Calendar, TrendingUp, Target, Clock, ArrowRight, Loader2 } from 'lucide-react';
 import type { RootState } from '../../store/store';
 import type { JSX } from 'react';
 import { applicationService, type ApplicationListResponse } from '../../services/applicationService';
+import { interviewService, type InterviewSessionDto } from '../../services/interviewService';
 
 interface StatItem {
   title: string;
@@ -21,28 +21,75 @@ interface StatItem {
 export default function IntervieweeDashboard(): JSX.Element {
   const { user } = useSelector((state: RootState) => state.auth);
   const [applications, setApplications] = useState<ApplicationListResponse[]>([]);
+  const [completedSessions, setCompletedSessions] = useState<InterviewSessionDto[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Derived stats
   const [jobsAppliedCount, setJobsAppliedCount] = useState(0);
+  const [totalInterviews, setTotalInterviews] = useState(0);
+  const [avgScore, setAvgScore] = useState(0);
+  const [totalPracticeHours, setTotalPracticeHours] = useState(0);
+  const [avgDuration, setAvgDuration] = useState(0);
 
   useEffect(() => {
-    const fetchApplications = async () => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
       try {
-        const data = await applicationService.getMyApplications(0, 100);
-        setApplications(data.content);
-        setJobsAppliedCount(data.totalElements);
-      } catch (error: any) {
-        console.error('Failed to fetch applications:', error);
+        // Fetch applications
+        const appsData = await applicationService.getMyApplications(0, 100);
+        setApplications(appsData.content);
+        setJobsAppliedCount(appsData.totalElements);
+
+        // Fetch interview sessions and filter only COMPLETED with valid scores
+        const allSessions = await interviewService.getUserSessions();
+        const completed = allSessions.filter(
+          s => s.status === 'COMPLETED' && s.overallScore != null
+        );
+        setCompletedSessions(completed);
+        setTotalInterviews(completed.length);
+
+        // Calculate average score
+        if (completed.length > 0) {
+          const sum = completed.reduce((acc, s) => acc + (s.overallScore || 0), 0);
+          setAvgScore(Math.round(sum / completed.length));
+        } else {
+          setAvgScore(0);
+        }
+
+        // Calculate total practice hours (duration in minutes)
+        const totalMinutes = completed.reduce((acc, s) => acc + (s.duration || 0), 0);
+        const hours = Math.round((totalMinutes / 60) * 10) / 10;
+        setTotalPracticeHours(hours);
+
+        // Calculate average duration
+        if (completed.length > 0) {
+          setAvgDuration(Math.round(totalMinutes / completed.length));
+        } else {
+          setAvgDuration(0);
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchApplications();
+    fetchDashboardData();
   }, []);
 
+  // Last 3 applied jobs (most recent first)
+  const last3Applications = [...applications]
+    .sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime())
+    .slice(0, 3);
+
+  // Last 3 completed interviews (most recent first)
+  const last3Interviews = [...completedSessions]
+    .sort((a, b) => new Date(b.completedAt || b.createdAt).getTime() - new Date(a.completedAt || a.createdAt).getTime())
+    .slice(0, 3);
+
   const stats: StatItem[] = [
-    { title: 'Total Interviews', value: '0', change: '+0%', icon: Target, color: 'bg-blue-100 text-blue-600' },
-    { title: 'Average Score', value: '0%', change: '+0%', icon: TrendingUp, color: 'bg-green-100 text-green-600' },
-    { title: 'Practice Hours', value: '0h', change: '+0%', icon: Clock, color: 'bg-purple-100 text-purple-600' },
+    { title: 'Total Interviews', value: totalInterviews.toString(), change: totalInterviews > 0 ? `+${totalInterviews}` : '0', icon: Target, color: 'bg-blue-100 text-blue-600' },
+    { title: 'Average Score', value: `${avgScore}%`, change: avgScore > 0 ? `+${avgScore}%` : '0%', icon: TrendingUp, color: 'bg-green-100 text-green-600' },
+    { title: 'Practice Hours', value: `${totalPracticeHours}h`, change: totalPracticeHours > 0 ? `+${totalPracticeHours}h` : '0h', icon: Clock, color: 'bg-purple-100 text-purple-600' },
     { title: 'Jobs Applied', value: jobsAppliedCount.toString(), change: jobsAppliedCount > 0 ? 'New' : 'None', icon: Briefcase, color: 'bg-amber-100 text-amber-600' },
   ];
 
@@ -53,6 +100,18 @@ export default function IntervieweeDashboard(): JSX.Element {
       default: return <Badge className="bg-yellow-100 text-yellow-700">Pending</Badge>;
     }
   };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="size-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -84,7 +143,7 @@ export default function IntervieweeDashboard(): JSX.Element {
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
-        <Link to="/interviewee/interview">
+        <Link to="/interviewee/interview/setup">
           <Card className="border-2 border-indigo-500 bg-indigo-50 hover:shadow-lg transition cursor-pointer">
             <CardContent className="p-6">
               <Target className="size-12 text-indigo-600 mb-3" />
@@ -117,34 +176,32 @@ export default function IntervieweeDashboard(): JSX.Element {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Applied Jobs Card */}
+        {/* Applied Jobs Card - Last 3 */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle>Applied Jobs</CardTitle>
-            <CardDescription>Track your job applications</CardDescription>
+            <CardDescription>Your latest job applications</CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="text-center py-8 text-gray-500">Loading...</div>
-            ) : applications.length === 0 ? (
+            {last3Applications.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No applications yet. 
                 <Link to="/interviewee/jobs" className="text-indigo-600 ml-1">Browse jobs</Link> to apply.
               </div>
             ) : (
               <div className="space-y-3">
-                {applications.slice(0, 5).map((app) => (
+                {last3Applications.map((app) => (
                   <div key={app.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <div className="font-medium text-gray-900">{app.jobTitle}</div>
-                      <div className="text-sm text-gray-500">Applied on {new Date(app.appliedAt).toLocaleDateString()}</div>
+                      <div className="text-sm text-gray-500">Applied on {formatDate(app.appliedAt)}</div>
                     </div>
                     {getStatusBadge(app.status)}
                   </div>
                 ))}
-                {applications.length > 5 && (
+                {jobsAppliedCount > 3 && (
                   <Link to="/interviewee/applications">
-                    <Button variant="ghost" className="w-full mt-2">View all {applications.length} applications →</Button>
+                    <Button variant="ghost" className="w-full mt-2">View all {jobsAppliedCount} applications →</Button>
                   </Link>
                 )}
               </div>
@@ -152,37 +209,43 @@ export default function IntervieweeDashboard(): JSX.Element {
           </CardContent>
         </Card>
 
+        {/* Recent Interviews Card - Last 3 */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle>Recent Interviews</CardTitle>
-            <CardDescription>Your latest practice sessions</CardDescription>
+            <CardDescription>Your last 3 practice sessions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8 text-gray-500">
-              No interviews taken yet. 
-              <Link to="/interviewee/interview" className="text-indigo-600 ml-1">Start your first practice!</Link>
-            </div>
+            {last3Interviews.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No interviews taken yet. 
+                <Link to="/interviewee/interview/setup" className="text-indigo-600 ml-1">Start your first practice!</Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {last3Interviews.map((session) => (
+                  <div key={session.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <div className="font-medium text-gray-900 capitalize">{session.type} Interview</div>
+                      <div className="text-sm text-gray-500">
+                        {formatDate(session.completedAt || session.createdAt)} • Score: {session.overallScore ?? '—'}%
+                      </div>
+                    </div>
+                    <Link to={`/interviewee/interview/feedback/${session.id}`}>
+                      <Button size="sm" variant="outline">View Feedback</Button>
+                    </Link>
+                  </div>
+                ))}
+                {totalInterviews > 3 && (
+                  <Link to="/interviewee/history">
+                    <Button variant="ghost" className="w-full mt-2">View all {totalInterviews} sessions →</Button>
+                  </Link>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      <Card className="border-0 shadow-lg">
-        <CardHeader>
-          <CardTitle>Skill Proficiency</CardTitle>
-          <CardDescription>Your progress in different areas</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {['Technical Skills', 'Communication', 'Problem Solving', 'Leadership'].map((skill, i) => (
-            <div key={i}>
-              <div className="flex justify-between mb-1">
-                <span>{skill}</span>
-                <span>75%</span>
-              </div>
-              <Progress value={75} className="h-2" />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
     </div>
   );
 }

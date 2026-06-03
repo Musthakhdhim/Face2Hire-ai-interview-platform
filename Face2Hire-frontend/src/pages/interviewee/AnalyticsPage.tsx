@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { LineChart, Line, BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Badge } from "../../components/ui/badge";
@@ -9,27 +9,32 @@ import type { InterviewSessionDto } from "../../services/interviewService";
 import { Link } from "react-router-dom";
 
 export default function AnalyticsPage() {
-  const [sessions, setSessions] = useState<InterviewSessionDto[]>([]);
+  const [allSessions, setAllSessions] = useState<InterviewSessionDto[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     interviewService.getUserSessions()
       .then((data) => {
         const sessionsArray = Array.isArray(data) ? data : [];
-        setSessions(sessionsArray);
+        setAllSessions(sessionsArray);
       })
       .catch((error) => {
         console.error("Failed to load sessions:", error);
-        setSessions([]);
+        setAllSessions([]);
       })
       .finally(() => setLoading(false));
   }, []);
+
+  // Only completed sessions with valid overall score
+  const completedSessions = useMemo(() => {
+    return allSessions.filter(s => s.status === "COMPLETED" && s.overallScore != null);
+  }, [allSessions]);
 
   if (loading) {
     return <div className="text-center py-12">Loading analytics...</div>;
   }
 
-  if (sessions.length === 0) {
+  if (completedSessions.length === 0) {
     return (
       <div className="space-y-6">
         <div>
@@ -52,32 +57,41 @@ export default function AnalyticsPage() {
     );
   }
 
-  const scoreByDate = [...sessions].reverse().map(s => ({
-    date: new Date(s.completedAt || s.createdAt).toLocaleDateString(),
-    score: s.overallScore || 0,
-    communication: s.communicationScore || 0,
-    technical: s.technicalScore || 0,
-    confidence: s.confidenceScore || 0,
-  }));
+  // Data for line chart (chronological order)
+  const scoreByDate = [...completedSessions]
+    .sort((a, b) => new Date(a.completedAt || a.createdAt).getTime() - new Date(b.completedAt || b.createdAt).getTime())
+    .map(s => ({
+      date: new Date(s.completedAt || s.createdAt).toLocaleDateString(),
+      score: s.overallScore || 0,
+      communication: s.communicationScore || 0,
+      technical: s.technicalScore || 0,
+      confidence: s.confidenceScore || 0,
+    }));
 
-  const scoreByType = Object.values(sessions.reduce((acc, s) => {
+  // Average score per interview type
+  const scoreByType = Object.values(completedSessions.reduce((acc, s) => {
     if (!acc[s.type]) acc[s.type] = { type: s.type, total: 0, count: 0 };
     acc[s.type].total += s.overallScore || 0;
     acc[s.type].count += 1;
     return acc;
-  }, {} as Record<string, any>)).map(v => ({ type: v.type, avgScore: Math.round(v.total / v.count) }));
+  }, {} as Record<string, { type: string; total: number; count: number }>)).map(v => ({
+    type: v.type,
+    avgScore: Math.round(v.total / v.count)
+  }));
 
+  // Radar chart data – only from actual scores (no fake "Problem Solving" or "Leadership")
   const skillsData = [
-    { skill: "Communication", score: Math.round(sessions.reduce((a, s) => a + (s.communicationScore || 0), 0) / sessions.length) || 0 },
-    { skill: "Technical", score: Math.round(sessions.reduce((a, s) => a + (s.technicalScore || 0), 0) / sessions.length) || 0 },
-    { skill: "Confidence", score: Math.round(sessions.reduce((a, s) => a + (s.confidenceScore || 0), 0) / sessions.length) || 0 },
-    { skill: "Problem Solving", score: 78 },
-    { skill: "Leadership", score: 72 },
+    { skill: "Communication", score: Math.round(completedSessions.reduce((a, s) => a + (s.communicationScore || 0), 0) / completedSessions.length) || 0 },
+    { skill: "Technical", score: Math.round(completedSessions.reduce((a, s) => a + (s.technicalScore || 0), 0) / completedSessions.length) || 0 },
+    { skill: "Confidence", score: Math.round(completedSessions.reduce((a, s) => a + (s.confidenceScore || 0), 0) / completedSessions.length) || 0 },
   ];
 
-  const avgScore = Math.round(sessions.reduce((a, s) => a + (s.overallScore || 0), 0) / sessions.length);
-  const avgDuration = Math.round(sessions.reduce((a, s) => a + s.duration, 0) / sessions.length);
-  const totalHours = Math.round(sessions.reduce((a, s) => a + s.duration, 0) / 60 * 10) / 10;
+  // Summary stats
+  const avgScore = Math.round(completedSessions.reduce((a, s) => a + (s.overallScore || 0), 0) / completedSessions.length);
+  const totalInterviews = completedSessions.length;
+  const totalMinutes = completedSessions.reduce((a, s) => a + s.duration, 0);
+  const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
+  const avgDuration = Math.round(totalMinutes / totalInterviews);
 
   return (
     <div className="space-y-6">
@@ -107,8 +121,8 @@ export default function AnalyticsPage() {
                 <Target className="size-6" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">{sessions.length}</div>
-                <div className="text-sm text-gray-600">Interviews</div>
+                <div className="text-2xl font-bold text-gray-900">{totalInterviews}</div>
+                <div className="text-sm text-gray-600">Completed Interviews</div>
               </div>
             </div>
           </CardContent>

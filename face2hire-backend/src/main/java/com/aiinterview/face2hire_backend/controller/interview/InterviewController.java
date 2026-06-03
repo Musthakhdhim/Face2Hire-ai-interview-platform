@@ -4,10 +4,13 @@ import com.aiinterview.face2hire_backend.dto.ApiResponse;
 import com.aiinterview.face2hire_backend.dto.interview.*;
 import com.aiinterview.face2hire_backend.security.CustomUserDetails;
 import com.aiinterview.face2hire_backend.service.interview.InterviewOrchestrator;
+import com.aiinterview.face2hire_backend.service.interview.PdfReportService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +24,7 @@ import java.util.List;
 public class InterviewController {
 
     private final InterviewOrchestrator orchestrator;
+    private final PdfReportService pdfReportService;
 
     @PostMapping("/start")
     public ResponseEntity<ApiResponse<SessionStartedDto>> start(
@@ -133,5 +137,18 @@ public class InterviewController {
                 .time(LocalDateTime.now())
                 .build();
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/feedback/{sessionId}/pdf")
+    public ResponseEntity<byte[]> downloadFeedbackPdf(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId) throws JsonProcessingException {
+        Long userId = userDetails.getUser().getId();
+        OverallFeedbackDto feedback = orchestrator.getOverallFeedback(sessionId, userId);
+        byte[] pdfBytes = pdfReportService.generateFeedbackPdf(feedback, sessionId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=feedback-" + sessionId + ".pdf")
+                .body(pdfBytes);
     }
 }

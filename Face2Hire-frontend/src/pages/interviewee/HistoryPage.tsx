@@ -14,6 +14,7 @@ export default function HistoryPage() {
   const [sessions, setSessions] = useState<InterviewSessionDto[]>([]);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("completed"); // default: completed
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
 
@@ -34,21 +35,34 @@ export default function HistoryPage() {
 
   const filtered = useMemo(() => {
     let result = sessions;
+
+    // Filter by type
     if (filterType !== "all") {
       result = result.filter(s => s.type === filterType);
     }
+
+    // Filter by status
+    if (filterStatus === "completed") {
+      result = result.filter(s => s.status === "COMPLETED");
+    } else if (filterStatus === "incomplete") {
+      result = result.filter(s => s.status !== "COMPLETED");
+    }
+    // "all" does nothing
+
+    // Filter by search (type or difficulty)
     if (search) {
       result = result.filter(s =>
         s.type.toLowerCase().includes(search.toLowerCase()) ||
         s.difficulty.toLowerCase().includes(search.toLowerCase())
       );
     }
+
     // Sort by date descending (latest first)
     return [...result].sort((a, b) =>
       new Date(b.completedAt || b.createdAt).getTime() -
       new Date(a.completedAt || a.createdAt).getTime()
     );
-  }, [sessions, filterType, search]);
+  }, [sessions, filterType, filterStatus, search]);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -57,6 +71,11 @@ export default function HistoryPage() {
 
   const handleFilterTypeChange = (value: string) => {
     setFilterType(value);
+    setCurrentPage(0);
+  };
+
+  const handleFilterStatusChange = (value: string) => {
+    setFilterStatus(value);
     setCurrentPage(0);
   };
 
@@ -90,8 +109,8 @@ export default function HistoryPage() {
               className="flex-1"
             />
             <Select value={filterType} onValueChange={handleFilterTypeChange}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="Filter by type" />
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="Interview Type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
@@ -99,6 +118,16 @@ export default function HistoryPage() {
                 <SelectItem value="hr">HR</SelectItem>
                 <SelectItem value="behavioral">Behavioral</SelectItem>
                 <SelectItem value="salary">Salary</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={handleFilterStatusChange}>
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="incomplete">Incomplete</SelectItem>
+                <SelectItem value="all">All</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -121,6 +150,9 @@ export default function HistoryPage() {
                     <Badge className="capitalize">{session.type}</Badge>
                     <Badge variant="outline" className="capitalize">{session.difficulty}</Badge>
                     <Badge variant="secondary">{new Date(session.completedAt || session.createdAt).toLocaleDateString()}</Badge>
+                    <Badge className={session.status === "COMPLETED" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}>
+                      {session.status}
+                    </Badge>
                     {session.scheduledInterviewId && <Badge className="bg-purple-100 text-purple-700">Scheduled</Badge>}
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -154,18 +186,24 @@ export default function HistoryPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Link to={`/interviewee/interview/feedback/${session.id}`}>
-                      <Button size="sm"><Eye className="mr-2 size-4" />View Feedback</Button>
-                    </Link>
+                    {session.status === "COMPLETED" ? (
+                      <Link to={`/interviewee/interview/feedback/${session.id}`}>
+                        <Button size="sm"><Eye className="mr-2 size-4" />View Feedback</Button>
+                      </Link>
+                    ) : (
+                      <Button size="sm" variant="outline" disabled className="opacity-50 cursor-not-allowed">
+                        Feedback Not Available
+                      </Button>
+                    )}
                     {session.scheduledInterviewId ? (
                       <Button size="sm" variant="outline" disabled className="opacity-50 cursor-not-allowed">
-                          Retake Interview (Scheduled)
+                        Retake Interview (Scheduled)
                       </Button>
-                  ) : (
+                    ) : (
                       <Link to="/interviewee/interview/setup">
-                          <Button size="sm" variant="outline">Retake Interview</Button>
+                        <Button size="sm" variant="outline">Retake Interview</Button>
                       </Link>
-                  )}
+                    )}
                   </div>
                 </div>
               </div>
