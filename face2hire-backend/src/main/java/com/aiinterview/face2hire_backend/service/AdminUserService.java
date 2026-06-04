@@ -17,6 +17,10 @@ public interface AdminUserService {
 
     List<UserGrowthDto> getUserGrowth();
 
+    AdminUserDetailResponseDto getUserDetailForAdmin(Long userId);
+
+    List<InterviewVolumeDto> getInterviewVolumeByType();
+
     @PostConstruct
     void init();
 }

@@ -151,4 +151,19 @@ public class InterviewController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=feedback-" + sessionId + ".pdf")
                 .body(pdfBytes);
     }
+    @GetMapping("/session-detail/{sessionId}")
+    public ResponseEntity<ApiResponse<SessionDetailDto>> getSessionDetail(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId) {
+        Long userId = userDetails.getUser().getId();
+        SessionDetailDto detail = orchestrator.getSessionDetail(sessionId, userId);
+        ApiResponse<SessionDetailDto> response = ApiResponse.<SessionDetailDto>builder()
+                .success(true)
+                .message("Session details retrieved")
+                .data(detail)
+                .statusCode(HttpStatus.OK.value())
+                .time(LocalDateTime.now())
+                .build();
+        return ResponseEntity.ok(response);
+    }
 }

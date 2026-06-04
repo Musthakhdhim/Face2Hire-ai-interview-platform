@@ -1,3 +1,4 @@
+import type { AdminInterviewDetailResponse, AdminInterviewFilter, AdminInterviewResponse, PaginatedResponse } from '../types/admin';
 import axiosClient from './axiosClient';
 import API from './endpoints';
 
@@ -78,6 +79,41 @@ export interface InterviewSessionDto {
   scheduledInterviewId?: number; 
 }
 
+export interface SessionQuestionDetail {
+    questionId: number;
+    questionIndex: number;
+    questionText: string;
+    category: string;
+    expectedKeywords: string[];
+    transcribedText: string | null;
+    responseDuration: number | null;
+    keywordsMatched: string[] | null;
+    keywordsMissing: string[] | null;
+    grammarIssues: string[] | null;
+    score: number | null;
+    feedbackText: string | null;
+    strengths: string | null;
+    improvements: string | null;
+    suggestedAnswer: string | null;
+}
+
+export interface SessionDetail {
+    id: number;
+    type: InterviewType;
+    difficulty: Difficulty;
+    duration: number;
+    questionCount: number;
+    avatarStyle: AvatarStyle;
+    status: SessionStatus;
+    overallScore: number | null;
+    communicationScore: number | null;
+    technicalScore: number | null;
+    confidenceScore: number | null;
+    startedAt: string;
+    completedAt: string | null;
+    questions: SessionQuestionDetail[];
+}
+
 export const interviewService = {
   startSession: async (data: StartSessionRequest): Promise<SessionStartedDto> => {
     const response = await axiosClient.post(API.INTERVIEW.START, data);
@@ -111,6 +147,20 @@ export const interviewService = {
 
   getOverallFeedbackByScheduledId: async (scheduledId: number): Promise<OverallFeedbackDto> => {
     const response = await axiosClient.get(`/interview/feedback/by-scheduled/${scheduledId}`);
+    return response.data.data;
+  },
+
+  getAllInterviewsForAdmin: async (filter: AdminInterviewFilter): Promise<PaginatedResponse<AdminInterviewResponse>> => {
+    const response = await axiosClient.post(API.ADMIN.INTERVIEWS_LIST, filter);
+    return response.data.data;
+  },
+
+  getInterviewDetailForAdmin: async (interviewId: number): Promise<AdminInterviewDetailResponse> => {
+    const response = await axiosClient.get(`/admin/interviews/${interviewId}`);
+    return response.data.data;
+  },
+  getSessionDetail: async (sessionId: number): Promise<SessionDetail> => {
+    const response = await axiosClient.get(`/interview/session-detail/${sessionId}`);
     return response.data.data;
   },
 };

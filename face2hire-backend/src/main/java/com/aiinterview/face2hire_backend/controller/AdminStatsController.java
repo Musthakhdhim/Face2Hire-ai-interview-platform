@@ -2,6 +2,7 @@ package com.aiinterview.face2hire_backend.controller;
 
 import com.aiinterview.face2hire_backend.dto.AdminStatsDto;
 import com.aiinterview.face2hire_backend.dto.ApiResponse;
+import com.aiinterview.face2hire_backend.dto.InterviewVolumeDto;
 import com.aiinterview.face2hire_backend.dto.UserGrowthDto;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
@@ -50,6 +51,20 @@ public class AdminStatsController {
                 .success(true)
                 .message("User growth retrieved")
                 .data(growth)
+                .statusCode(HttpStatus.OK.value())
+                .time(LocalDateTime.now())
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/interview-volume")
+    public ResponseEntity<ApiResponse<List<InterviewVolumeDto>>> getInterviewVolume() {
+        log.info("Received request for interview volume by type");
+        List<InterviewVolumeDto> volume = adminService.getInterviewVolumeByType();
+        ApiResponse<List<InterviewVolumeDto>> response = ApiResponse.<List<InterviewVolumeDto>>builder()
+                .success(true)
+                .message("Interview volume retrieved")
+                .data(volume)
                 .statusCode(HttpStatus.OK.value())
                 .time(LocalDateTime.now())
                 .build();

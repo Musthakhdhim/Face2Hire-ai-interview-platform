@@ -81,6 +81,8 @@ public class AuthServiceImpl implements AuthService {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
             );
+            user.setLastLoginAt(LocalDateTime.now());
+            userRepository.save(user);
         } catch (Exception e) {
             throw new InvalidCredentialsException("Invalid email or password");
         }

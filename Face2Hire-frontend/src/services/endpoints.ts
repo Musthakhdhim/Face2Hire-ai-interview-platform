@@ -49,6 +49,15 @@ const API = {
     CONFIRM: '/audio/confirm',
     TTS: '/audio/tts',
   },
+  ADMIN: {
+    INTERVIEWS_LIST: '/admin/interviews/list',
+    JOBS_LIST: '/admin/jobs/list', 
+    USER_DETAIL: (userId: number) => `/admin/users/${userId}/detail`,
+    INTERVIEW_DETAIL: (id: number) => `/admin/interviews/${id}`,
+    JOB_DETAIL: (id: number) => `/admin/jobs/${id}`,
+    REPORTS: '/admin/reports',
+  },
+  
 };
 
 export default API;

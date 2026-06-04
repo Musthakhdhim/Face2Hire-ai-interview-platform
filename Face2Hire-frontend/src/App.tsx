@@ -37,6 +37,12 @@ import ApplicationStatusPage from './pages/interviewer/ApplicationStatusPage';
 import ScheduledInterviewsPage from './pages/interviewer/ScheduledInterviewsPage';
 import ScheduledInterviewDetailPage from './pages/interviewer/ScheduledInterviewDetailPage';
 import InterviewLayout from './layouts/InterviewLayout';
+import AdminInterviewsPage from './pages/admin/InterviewsPage';
+import AdminJobsPage from './pages/admin/JobsPage';
+import AdminUserDetailPage from './pages/admin/AdminUserDetailPage';
+import AdminInterviewDetailPage from './pages/admin/AdminInterviewDetailPage';
+import AdminJobDetailPage from './pages/admin/AdminJobDetailPage';
+import AdminReportsPage from './pages/admin/AdminReportsPage';
 
 function App(): JSX.Element {
   return (
@@ -100,6 +106,12 @@ function App(): JSX.Element {
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="settings" element={<ProfileSettingsPage />} />
+              <Route path="interviews" element={<AdminInterviewsPage />} />
+              <Route path="jobs" element={<AdminJobsPage />} />
+              <Route path="users/:userId" element={<AdminUserDetailPage />} />
+              <Route path="interviews/:interviewId" element={<AdminInterviewDetailPage />} />
+              <Route path="jobs/:jobId" element={<AdminJobDetailPage />} />
+              <Route path="reports" element={<AdminReportsPage />} />
             </Route>
           </Route>
 

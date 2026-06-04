@@ -62,4 +62,6 @@ public interface InterviewOrchestrator {
     OverallFeedbackDto getOverallFeedback(Long sessionId, Long userId);
 
     OverallFeedbackDto getOverallFeedbackByScheduledId(Long scheduledId, Long userId);
+
+    SessionDetailDto getSessionDetail(Long sessionId, Long userId);
 }

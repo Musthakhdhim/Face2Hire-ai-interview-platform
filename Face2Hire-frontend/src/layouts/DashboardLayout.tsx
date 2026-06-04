@@ -81,8 +81,9 @@ export default function DashboardLayout(): JSX.Element | null {
       return [
         { icon: Home, label: 'Dashboard', path: '/admin' },
         { icon: Users, label: 'Users', path: '/admin/users' },
-        { icon: Activity, label: 'Interviews', path: '#' },
-        { icon: FileBarChart, label: 'Reports', path: '#' },
+        { icon: Activity, label: 'Interviews', path: '/admin/interviews' },
+        { icon: Briefcase, label: 'Jobs', path: '/admin/jobs' },
+        { icon: FileBarChart, label: 'Reports', path: '/admin/reports' },
         { icon: Settings, label: 'Settings', path: settingsPath },
       ];
     }

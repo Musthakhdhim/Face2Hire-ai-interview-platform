@@ -1,0 +1,16 @@
+package com.aiinterview.face2hire_backend.entity;
+
+public enum ActivityAction {
+    REGISTER,
+    LOGIN,
+    PROFILE_UPDATED,
+    RESUME_UPLOADED,
+    JOB_APPLIED,
+    APPLICATION_APPROVED,
+    APPLICATION_REJECTED,
+    INTERVIEW_SCHEDULED,
+    INTERVIEW_COMPLETED,
+    INTERVIEW_ATTENDED,
+    PASSWORD_CHANGED,
+    EMAIL_UPDATED
+}

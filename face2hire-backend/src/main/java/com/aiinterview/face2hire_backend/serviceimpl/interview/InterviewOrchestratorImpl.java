@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -300,6 +301,78 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
                     .build();
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to parse suggested resources", e);
+        }
+    }
+
+    @Override
+    public SessionDetailDto getSessionDetail(Long sessionId, Long userId) {
+        InterviewSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+        if (!session.getUserId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        List<InterviewQuestion> questions = questionRepository.findBySessionIdOrderByQuestionIndexAsc(sessionId);
+        List<SessionDetailDto.QuestionDetail> questionDetails = new ArrayList<>();
+
+        for (InterviewQuestion q : questions) {
+            UserResponse response = userResponseRepository.findByQuestionId(q.getId()).orElse(null);
+            QuestionFeedback feedback = null;
+            if (response != null) {
+                feedback = questionFeedbackRepository.findByUserResponseId(response.getId()).orElse(null);
+            }
+
+            List<String> expectedKeywords = parseJsonList(q.getExpectedKeywords());
+            List<String> keywordsMatched = response != null ? parseJsonList(response.getKeywordsMatched()) : null;
+            List<String> keywordsMissing = response != null ? parseJsonList(response.getKeywordsMissing()) : null;
+            List<String> grammarIssues = response != null ? parseJsonList(response.getGrammarIssues()) : null;
+
+            SessionDetailDto.QuestionDetail qd = SessionDetailDto.QuestionDetail.builder()
+                    .questionId(q.getId())
+                    .questionIndex(q.getQuestionIndex())
+                    .questionText(q.getQuestionText())
+                    .category(q.getCategory())
+                    .expectedKeywords(expectedKeywords)
+                    .transcribedText(response != null ? response.getTranscribedText() : null)
+                    .responseDuration(response != null ? response.getResponseDuration() : null)
+                    .keywordsMatched(keywordsMatched)
+                    .keywordsMissing(keywordsMissing)
+                    .grammarIssues(grammarIssues)
+                    .score(feedback != null ? feedback.getScore() : null)
+                    .feedbackText(feedback != null ? feedback.getFeedbackText() : null)
+                    .strengths(feedback != null ? feedback.getStrengths() : null)
+                    .improvements(feedback != null ? feedback.getImprovements() : null)
+                    .suggestedAnswer(feedback != null ? feedback.getSuggestedAnswer() : null)
+                    .build();
+
+            questionDetails.add(qd);
+        }
+
+        return SessionDetailDto.builder()
+                .id(session.getId())
+                .type(session.getType())
+                .difficulty(session.getDifficulty())
+                .duration(session.getDuration())
+                .questionCount(session.getQuestionCount())
+                .avatarStyle(session.getAvatarStyle())
+                .status(session.getStatus())
+                .overallScore(session.getOverallScore())
+                .communicationScore(session.getCommunicationScore())
+                .technicalScore(session.getTechnicalScore())
+                .confidenceScore(session.getConfidenceScore())
+                .startedAt(session.getStartedAt())
+                .completedAt(session.getCompletedAt())
+                .questions(questionDetails)
+                .build();
+    }
+
+    private List<String> parseJsonList(String json) {
+        if (json == null || json.isBlank()) return List.of();
+        try {
+            return objectMapper.readValue(json, new TypeReference<List<String>>() {});
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to parse JSON list: {}", json, e);
+            return List.of();
         }
     }
 }

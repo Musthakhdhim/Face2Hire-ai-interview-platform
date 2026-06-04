@@ -1,5 +1,6 @@
 package com.aiinterview.face2hire_backend.controller;
 
+import com.aiinterview.face2hire_backend.dto.AdminUserDetailResponseDto;
 import com.aiinterview.face2hire_backend.dto.ApiResponse;
 import com.aiinterview.face2hire_backend.dto.UserFilterRequest;
 import com.aiinterview.face2hire_backend.dto.UserListResponseDto;
@@ -12,12 +13,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.*;
+
 import java.time.LocalDateTime;
 
 @RestController
@@ -72,6 +69,21 @@ public class AdminUserController {
         } else {
             log.warn("Unblock user {} failed: {}", userId, response.getMessage());
         }
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{userId}/detail")
+    public ResponseEntity<ApiResponse<AdminUserDetailResponseDto>> getUserDetail(
+            @PathVariable Long userId) {
+        log.info("Fetching user detail for admin, userId: {}", userId);
+        AdminUserDetailResponseDto userDetail = adminService.getUserDetailForAdmin(userId);
+        ApiResponse<AdminUserDetailResponseDto> response = ApiResponse.<AdminUserDetailResponseDto>builder()
+                .success(true)
+                .message("User details retrieved")
+                .data(userDetail)
+                .statusCode(HttpStatus.OK.value())
+                .time(LocalDateTime.now())
+                .build();
         return ResponseEntity.ok(response);
     }
 }

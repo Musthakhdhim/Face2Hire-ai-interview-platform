@@ -10,6 +10,7 @@ import { toast } from 'react-toastify';
 import { userService, type PaginatedResponse } from '../../services/userService';
 import type { UserListResponseDto } from '../../types/user';
 import type { AxiosError } from 'axios';
+import { Link } from 'react-router-dom';
 
 interface ErrorResponse {
   message?: string;
@@ -224,10 +225,11 @@ export default function AdminUsersPage(): JSX.Element {
                       )}
 
                       <div className="flex flex-col gap-2">
-                        <Button size="sm" variant="outline">
-                          <Eye className="mr-2 size-4" />
-                          View Details
-                        </Button>
+                        <Link to={`/admin/users/${user.id}`}>
+                          <Button size="sm" variant="outline">
+                              <Eye className="mr-2 size-4" /> View Details
+                          </Button>
+                      </Link>
                         {actionLoading === user.id ? (
                           <Button size="sm" disabled>
                             <Loader2 className="mr-2 size-4 animate-spin" />

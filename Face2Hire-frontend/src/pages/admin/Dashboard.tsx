@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Badge } from '../../components/ui/badge';
 import { Users, Activity, TrendingUp, Star } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { adminService, type AdminStats } from '../../services/userService';
+import { adminService, type AdminStats, type InterviewVolumePoint } from '../../services/userService';
 import { toast } from 'react-toastify';
 
 interface StatItem {
@@ -19,11 +19,6 @@ interface UserGrowthDataPoint {
     users: number;
 }
 
-interface InterviewVolumeDataPoint {
-    type: string;
-    count: number;
-}
-
 export default function AdminDashboard(): JSX.Element {
     const [stats, setStats] = useState<AdminStats>({
         totalUsers: 0,
@@ -33,17 +28,21 @@ export default function AdminDashboard(): JSX.Element {
     });
     const [loading, setLoading] = useState(true);
     const [userGrowthData, setUserGrowthData] = useState<UserGrowthDataPoint[]>([]);
+    const [interviewVolumeData, setInterviewVolumeData] = useState<InterviewVolumePoint[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [statsData, growthData] = await Promise.all([
+                const [statsData, growthData, volumeData] = await Promise.all([
                     adminService.getStats(),
                     adminService.getUserGrowth(),
+                    adminService.getInterviewVolume(),
                 ]);
                 setStats(statsData);
                 setUserGrowthData(growthData);
-            } catch {
+                setInterviewVolumeData(volumeData);
+            } catch (error) {
+                console.error(error);
                 toast.error('Failed to load dashboard data');
             } finally {
                 setLoading(false);
@@ -59,12 +58,11 @@ export default function AdminDashboard(): JSX.Element {
         { title: 'Premium Users', value: stats.premiumUsers.toString(), change: '+0%', icon: Star, color: 'bg-amber-100 text-amber-600' },
     ];
 
-    const interviewVolumeData: InterviewVolumeDataPoint[] = [
-        { type: 'Technical', count: 2354 },
-        { type: 'HR', count: 1308 },
-        { type: 'Behavioral', count: 1046 },
-        { type: 'Salary', count: 523 },
-    ];
+    // Capitalize first letter for display
+    const chartData = interviewVolumeData.map(item => ({
+        type: item.type.charAt(0).toUpperCase() + item.type.slice(1),
+        count: item.count,
+    }));
 
     if (loading) {
         return (
@@ -121,12 +119,12 @@ export default function AdminDashboard(): JSX.Element {
                     <CardHeader><CardTitle>Interview Volume by Type</CardTitle></CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={interviewVolumeData}>
+                            <BarChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="type" />
                                 <YAxis />
                                 <Tooltip />
-                                <Bar dataKey="count" fill="#8b5cf6" />
+                                <Bar dataKey="count" fill="#8b5cf6" name="Interviews" />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>

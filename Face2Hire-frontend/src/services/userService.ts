@@ -1,5 +1,7 @@
 import axiosClient from './axiosClient';
 import type { UserListResponseDto, UserFilterRequest } from '../types/user';
+import type { AdminReportsDto, AdminUserDetailResponse } from '../types/admin';
+import API from './endpoints';
 
 export interface PaginatedResponse<T> {
     content: T[];
@@ -29,6 +31,11 @@ export interface UserSearchResult {
     email: string;
 }
 
+export interface InterviewVolumePoint {
+    type: string;
+    count: number;
+}
+
 export const userService = {
     getUsers: async (filter: UserFilterRequest): Promise<PaginatedResponse<UserListResponseDto>> => {
         const response = await axiosClient.post('/admin/users', filter);
@@ -46,16 +53,33 @@ export const userService = {
         const response = await axiosClient.get('/users/search', { params: { email } });
         return response.data;
     },
+    getUserDetail: async (userId: number): Promise<AdminUserDetailResponse> => {
+        const response = await axiosClient.get(API.ADMIN.USER_DETAIL(userId));
+        return response.data.data;
+    },
 };
 
 export const adminService = {
-  getStats: async (): Promise<AdminStats> => {
-    const response = await axiosClient.get('/admin/stats');
-    return response.data.data;
-  },
+    getStats: async (): Promise<AdminStats> => {
+        const response = await axiosClient.get('/admin/stats');
+        return response.data.data;
+    },
 
-  getUserGrowth: async (): Promise<UserGrowthDataPoint[]> => {
+    getUserGrowth: async (): Promise<UserGrowthDataPoint[]> => {
         const response = await axiosClient.get('/admin/user-growth');
+        return response.data.data;
+    },
+
+    getInterviewVolume: async (): Promise<InterviewVolumePoint[]> => {
+        const response = await axiosClient.get('/admin/interview-volume');
+        return response.data.data;
+    },
+    
+    getReports: async (startDate?: string, endDate?: string): Promise<AdminReportsDto> => {
+        const params: Record<string, string> = {};
+        if (startDate) params.startDate = startDate;
+        if (endDate) params.endDate = endDate;
+        const response = await axiosClient.get(API.ADMIN.REPORTS, { params });
         return response.data.data;
     },
 

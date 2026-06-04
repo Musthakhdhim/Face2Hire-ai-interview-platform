@@ -1,3 +1,4 @@
+import type { AdminJobDetailResponse, AdminJobFilter, AdminJobResponse } from '../types/admin';
 import axiosClient from './axiosClient';
 import API from './endpoints';
 
@@ -100,6 +101,16 @@ export const jobService = {
 
   closeJob: async (jobId: number): Promise<JobResponse> => {
     const response = await axiosClient.patch(API.JOBS.CLOSE(jobId));
+    return response.data.data;
+  },
+
+  getAllJobsForAdmin: async (filter: AdminJobFilter): Promise<PaginatedJobs<AdminJobResponse>> => {
+    const response = await axiosClient.post(API.ADMIN.JOBS_LIST, filter);
+    return response.data.data;
+  },
+
+  getJobDetailForAdmin: async (jobId: number): Promise<AdminJobDetailResponse> => {
+    const response = await axiosClient.get(`/admin/jobs/${jobId}`);
     return response.data.data;
   },
   
