@@ -8,7 +8,9 @@ import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.*;
 import com.aiinterview.face2hire_backend.repository.interview.ScheduledInterviewRepository;
+import com.aiinterview.face2hire_backend.service.ActivityLogService;
 import com.aiinterview.face2hire_backend.service.ApplicationService;
+import com.aiinterview.face2hire_backend.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +35,8 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ExperienceRepository experienceRepository;
     private final SkillRepository skillRepository;
     private final ScheduledInterviewRepository scheduledInterviewRepository;
+    private final ActivityLogService activityLogService;
+    private final NotificationService notificationService;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
@@ -70,6 +74,19 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .build();
 
         application = applicationRepository.save(application);
+
+//        Job job1 = jobRepository.findById(request.getJobId()).orElse(null);
+        if (job.getPostedByUserId() != null) {
+            notificationService.createNotification(
+                    job.getPostedByUserId(),
+                    "New Job Application",
+                    user.getFullName() + " applied for your job: " + job.getTitle(),
+                    "JOB_APPLIED"
+            );
+        }
+
+        activityLogService.log(user, ActivityAction.JOB_APPLIED,
+                String.format("Applied for job: %s (ID: %d)", job.getTitle(), job.getId()));
 
         job.setApplicantsCount(job.getApplicantsCount() + 1);
         jobRepository.save(job);
@@ -115,6 +132,21 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setStatus(dto.getStatus());
         application = applicationRepository.save(application);
         log.info("Application {} status updated to {}", applicationId, dto.getStatus());
+
+        notificationService.createNotification(
+                application.getUserId(),
+                "Application " + dto.getStatus(),
+                "Your application for job ID " + application.getJobId() + " has been " + dto.getStatus(),
+                dto.getStatus().equals("APPROVED") ? "APPLICATION_APPROVED" : "APPLICATION_REJECTED"
+        );
+
+        User applicant = userRepository.findById(application.getUserId()).orElse(null);
+        if (applicant != null) {
+            ActivityAction action = dto.getStatus() == ApplicationStatus.APPROVED ?
+                    ActivityAction.APPLICATION_APPROVED : ActivityAction.APPLICATION_REJECTED;
+            String msg = String.format("Application for job ID %d %s", application.getJobId(), dto.getStatus());
+            activityLogService.log(applicant, action, msg);
+        }
 
         return mapToResponseDto(application);
     }

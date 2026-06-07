@@ -70,7 +70,8 @@ export default function JobApplicationPage(): JSX.Element {
               const parsed = JSON.parse(resumeData.parsedContent) as ParsedResume;
               setSkills(parsed.skills?.map(s => s.name) || []);
             } catch {
-              // ignore parsing error
+              console.log("parsing error");
+              
             }
           }
         }

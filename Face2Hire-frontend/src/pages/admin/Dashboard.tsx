@@ -3,8 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Badge } from '../../components/ui/badge';
 import { Users, Activity, TrendingUp, Star } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { adminService, type AdminStats, type InterviewVolumePoint } from '../../services/userService';
+import { activityService, adminService, type AdminStats, type InterviewVolumePoint } from '../../services/userService';
 import { toast } from 'react-toastify';
+import type { ActivityLog } from '../../types/admin';
+import { Link } from 'react-router-dom';
+import { Button } from '../../components/ui/button';
 
 interface StatItem {
     title: string;
@@ -29,6 +32,19 @@ export default function AdminDashboard(): JSX.Element {
     const [loading, setLoading] = useState(true);
     const [userGrowthData, setUserGrowthData] = useState<UserGrowthDataPoint[]>([]);
     const [interviewVolumeData, setInterviewVolumeData] = useState<InterviewVolumePoint[]>([]);
+    const [recentActivities, setRecentActivities] = useState<ActivityLog[]>([]);
+
+    useEffect(() => {
+        const fetchRecent = async () => {
+            try {
+                const data = await activityService.getRecent();
+                setRecentActivities(data);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchRecent();
+    }, []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -58,7 +74,6 @@ export default function AdminDashboard(): JSX.Element {
         { title: 'Premium Users', value: stats.premiumUsers.toString(), change: '+0%', icon: Star, color: 'bg-amber-100 text-amber-600' },
     ];
 
-    // Capitalize first letter for display
     const chartData = interviewVolumeData.map(item => ({
         type: item.type.charAt(0).toUpperCase() + item.type.slice(1),
         count: item.count,
@@ -132,13 +147,33 @@ export default function AdminDashboard(): JSX.Element {
             </div>
 
             <Card>
-                <CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                            <span className="font-semibold">System</span> is ready for data. No activity yet.
-                        </div>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <CardTitle>Recent Activity</CardTitle>
+                        <Link to="/admin/activities">
+                            <Button variant="ghost" size="sm">View All</Button>
+                        </Link>
                     </div>
+                </CardHeader>
+                <CardContent>
+                    {recentActivities.length === 0 ? (
+                        <p className="text-gray-500 text-center py-4">No recent activity</p>
+                    ) : (
+                        <div className="space-y-3">
+                            {recentActivities.map(act => (
+                                <div key={act.id} className="p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="font-medium">{act.userName}</span>
+                                        <span className="text-gray-500 text-xs">
+                                            {new Date(act.createdAt).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="text-xs text-gray-600 mt-1">{act.description}</div>
+                                    <Badge className="mt-1 text-xs">{act.action}</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>

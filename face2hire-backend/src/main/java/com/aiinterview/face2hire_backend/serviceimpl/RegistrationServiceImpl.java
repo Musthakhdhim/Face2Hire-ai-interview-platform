@@ -1,6 +1,7 @@
 package com.aiinterview.face2hire_backend.serviceimpl;
 
 import com.aiinterview.face2hire_backend.dto.*;
+import com.aiinterview.face2hire_backend.entity.ActivityAction;
 import com.aiinterview.face2hire_backend.entity.OtpType;
 import com.aiinterview.face2hire_backend.entity.Role;
 import com.aiinterview.face2hire_backend.entity.User;
@@ -11,6 +12,7 @@ import com.aiinterview.face2hire_backend.exception.UserNotFoundException;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.UserRepository;
+import com.aiinterview.face2hire_backend.service.ActivityLogService;
 import com.aiinterview.face2hire_backend.service.EmailService;
 import com.aiinterview.face2hire_backend.service.OtpService;
 import com.aiinterview.face2hire_backend.service.RegistrationService;
@@ -33,6 +35,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final ModelMapper modelMapper;
     private final OtpService otpServiceImpl;
     private final EmailService emailService;
+    private final ActivityLogService activityLogService;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
@@ -142,6 +145,11 @@ public class RegistrationServiceImpl implements RegistrationService {
         user.setVerified(true);
         user.setUpdatedAt(LocalDateTime.now());
         User savedUser = userRepository.save(user);
+
+        // After user saved
+        if (activityLogService != null) {
+            activityLogService.log(savedUser, ActivityAction.REGISTER, "User registered and verified email");
+        }
         log.info("Account verified successfully for email: {}", savedUser.getEmail());
 
         RegisterResponse response = RegisterResponse.builder()

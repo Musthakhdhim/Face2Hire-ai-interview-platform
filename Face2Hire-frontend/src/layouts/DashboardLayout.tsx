@@ -16,6 +16,7 @@ import {
 import { Badge } from '../components/ui/badge';
 import { useEffect, type JSX } from 'react';
 import type { RootState, AppDispatch } from '../store/store';
+import NotificationBell from '../components/NotificationBell';
 
 interface NavItem {
   icon: React.ElementType;
@@ -83,6 +84,7 @@ export default function DashboardLayout(): JSX.Element | null {
         { icon: Users, label: 'Users', path: '/admin/users' },
         { icon: Activity, label: 'Interviews', path: '/admin/interviews' },
         { icon: Briefcase, label: 'Jobs', path: '/admin/jobs' },
+        { icon: FileBarChart, label: 'Activities', path: '/admin/activities' },
         { icon: FileBarChart, label: 'Reports', path: '/admin/reports' },
         { icon: Settings, label: 'Settings', path: settingsPath },
       ];
@@ -162,10 +164,11 @@ export default function DashboardLayout(): JSX.Element | null {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="relative">
+            {/* <Button variant="ghost" size="icon" className="relative">
               <Bell className="size-5" />
               <Badge className="absolute -top-1 -right-1 size-5 rounded-full p-0 flex items-center justify-center bg-red-500 text-white text-xs">3</Badge>
-            </Button>
+            </Button> */}
+            <NotificationBell />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2">

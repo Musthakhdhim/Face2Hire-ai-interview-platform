@@ -109,7 +109,6 @@ public class AdminInterviewServiceImpl implements AdminInterviewService {
         InterviewSession session = sessionRepository.findById(interviewId)
                 .orElseThrow(() -> new RuntimeException("Interview not found: " + interviewId));
 
-        // Get user info
         String userName = null;
         String userEmail = null;
         Optional<User> userOpt = userRepository.findById(session.getUserId());
@@ -118,23 +117,19 @@ public class AdminInterviewServiceImpl implements AdminInterviewService {
             userEmail = userOpt.get().getEmail();
         }
 
-        // Get all questions for this session
         List<InterviewQuestion> questions = questionRepository.findBySessionIdOrderByQuestionIndexAsc(session.getId());
 
         List<AdminInterviewDetailResponseDto.QuestionDetail> questionDetails = new ArrayList<>();
         for (InterviewQuestion q : questions) {
-            // Get user response for this question
             Optional<UserResponse> responseOpt = userResponseRepository.findByQuestionId(q.getId());
             UserResponse response = responseOpt.orElse(null);
 
-            // Get feedback for that response
             QuestionFeedback feedback = null;
             if (response != null) {
                 Optional<QuestionFeedback> fbOpt = questionFeedbackRepository.findByUserResponseId(response.getId());
                 feedback = fbOpt.orElse(null);
             }
 
-            // Parse JSON fields
             List<String> expectedKeywords = parseJsonList(q.getExpectedKeywords());
             List<String> keywordsMatched = response != null ? parseJsonList(response.getKeywordsMatched()) : null;
             List<String> keywordsMissing = response != null ? parseJsonList(response.getKeywordsMissing()) : null;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Search, Briefcase, MapPin, DollarSign, Calendar, Loader2, Eye } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { jobService } from '../../services/jobService';
-import type { AdminJobResponse, AdminJobFilter, PaginatedResponse } from '../../types/admin';
+import type { AdminJobResponse, AdminJobFilter, PaginatedResponse, JobType, JobStatus } from '../../types/admin';
 import { Link } from 'react-router-dom';
 
 export default function AdminJobsPage() {
@@ -17,43 +17,40 @@ export default function AdminJobsPage() {
     const [currentPage, setCurrentPage] = useState(0);
     const pageSize = 10;
 
-    // Filters
     const [search, setSearch] = useState('');
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
 
-    const fetchJobs = useCallback(async () => {
-        setLoading(true);
-        try {
-            const filter: AdminJobFilter = {
-                search: search || undefined,
-                type: typeFilter === 'all' ? undefined : typeFilter as any,
-                status: statusFilter === 'all' ? undefined : statusFilter as any,
-                fromDate: fromDate || undefined,
-                toDate: toDate || undefined,
-                page: currentPage,
-                size: pageSize,
-            };
-            const data: PaginatedResponse<AdminJobResponse> = await jobService.getAllJobsForAdmin(filter);
-            setJobs(data.content);
-            setTotalPages(data.totalPages);
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to load jobs');
-        } finally {
-            setLoading(false);
-        }
-    }, [search, typeFilter, statusFilter, fromDate, toDate, currentPage]);
-
     useEffect(() => {
+        const fetchJobs = async () => {
+            setLoading(true);
+            try {
+                const filter: AdminJobFilter = {
+                    search: search || undefined,
+                    type: typeFilter === 'all' ? undefined : typeFilter as JobType,
+                    status: statusFilter === 'all' ? undefined : statusFilter as JobStatus,
+                    fromDate: fromDate || undefined,
+                    toDate: toDate || undefined,
+                    page: currentPage,
+                    size: pageSize,
+                };
+                const data: PaginatedResponse<AdminJobResponse> = await jobService.getAllJobsForAdmin(filter);
+                setJobs(data.content);
+                setTotalPages(data.totalPages);
+            } catch (error) {
+                console.error(error);
+                toast.error('Failed to load jobs');
+            } finally {
+                setLoading(false);
+            }
+        };
         fetchJobs();
-    }, [fetchJobs]);
+    }, [search, typeFilter, statusFilter, fromDate, toDate, currentPage, pageSize]);
 
     const handleSearch = () => {
         setCurrentPage(0);
-        fetchJobs();
     };
 
     const resetFilters = () => {

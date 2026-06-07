@@ -125,13 +125,6 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Your account is deactivated. Please contact support.");
         }
 
-//        if (user.getRole() == Role.ADMIN) {
-//            log.warn("Forgot password – admin users cannot reset password via email: {}",
-//                    forgotPasswordRequest.getEmail());
-//            throw new AuthorizationDeniedException("you don't have enough rights to " +
-//                    "perform this operation.");
-//        }
-
         if (!otpServiceImpl.canRequestOtp(user.getEmail(), OtpType.FORGOT_PASSWORD)) {
             log.warn("Forgot password – too many OTP requests for email: {}",
                     forgotPasswordRequest.getEmail());

@@ -52,7 +52,6 @@ public class AdminReportsServiceImpl implements AdminReportsService {
         Map<String, Long> usersByRole = users.stream()
                 .collect(Collectors.groupingBy(u -> u.getRole().name(), Collectors.counting()));
 
-        // User growth (last 12 months)
         List<AdminReportsDto.UserGrowthPoint> userGrowth = new ArrayList<>();
         List<Object[]> growthRaw = userRepository.countUsersByMonth();
         for (Object[] row : growthRaw) {
@@ -89,7 +88,6 @@ public class AdminReportsServiceImpl implements AdminReportsService {
             }
         }
 
-        // Interview volume by date (last 30 days)
         List<AdminReportsDto.InterviewVolumePoint> interviewVolume = new ArrayList<>();
         Map<LocalDate, Long> volumeByDate = sessions.stream()
                 .filter(s -> s.getCreatedAt() != null)
@@ -97,7 +95,6 @@ public class AdminReportsServiceImpl implements AdminReportsService {
                         s -> s.getCreatedAt().toLocalDate(),
                         Collectors.counting()
                 ));
-        // Sort by date and take last 30
         volumeByDate.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .forEach(entry -> interviewVolume.add(
@@ -126,7 +123,6 @@ public class AdminReportsServiceImpl implements AdminReportsService {
         Map<String, Long> jobsByType = jobs.stream()
                 .collect(Collectors.groupingBy(j -> j.getType().name(), Collectors.counting()));
 
-        // Job postings by month
         List<AdminReportsDto.JobPostingPoint> jobPostings = new ArrayList<>();
         Map<String, Long> postingsByMonth = jobs.stream()
                 .collect(Collectors.groupingBy(

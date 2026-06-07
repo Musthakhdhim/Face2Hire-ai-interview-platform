@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Search,  Loader2, Eye } from 'lucide-react';
+import { Search, Loader2, Eye } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { interviewService } from '../../services/interviewService';
 import type { AdminInterviewResponse, AdminInterviewFilter, PaginatedResponse } from '../../types/admin';
+import type { InterviewType, SessionStatus } from '../../types/admin';
 import { Link } from 'react-router-dom';
 
 export default function AdminInterviewsPage() {
@@ -17,43 +18,42 @@ export default function AdminInterviewsPage() {
     const [currentPage, setCurrentPage] = useState(0);
     const pageSize = 10;
 
-    // Filters
     const [search, setSearch] = useState('');
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
 
-    const fetchInterviews = useCallback(async () => {
-        setLoading(true);
-        try {
-            const filter: AdminInterviewFilter = {
-                search: search || undefined,
-                type: typeFilter === 'all' ? undefined : typeFilter as any,
-                status: statusFilter === 'all' ? undefined : statusFilter as any,
-                fromDate: fromDate || undefined,
-                toDate: toDate || undefined,
-                page: currentPage,
-                size: pageSize,
-            };
-            const data: PaginatedResponse<AdminInterviewResponse> = await interviewService.getAllInterviewsForAdmin(filter);
-            setInterviews(data.content);
-            setTotalPages(data.totalPages);
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to load interviews');
-        } finally {
-            setLoading(false);
-        }
-    }, [search, typeFilter, statusFilter, fromDate, toDate, currentPage]);
-
+    // Fetch interviews whenever filters or page change
     useEffect(() => {
+        const fetchInterviews = async () => {
+            setLoading(true);
+            try {
+                const filter: AdminInterviewFilter = {
+                    search: search || undefined,
+                    type: typeFilter === 'all' ? undefined : typeFilter as InterviewType,
+                    status: statusFilter === 'all' ? undefined : statusFilter as SessionStatus,
+                    fromDate: fromDate || undefined,
+                    toDate: toDate || undefined,
+                    page: currentPage,
+                    size: pageSize,
+                };
+                const data: PaginatedResponse<AdminInterviewResponse> = await interviewService.getAllInterviewsForAdmin(filter);
+                setInterviews(data.content);
+                setTotalPages(data.totalPages);
+            } catch (error) {
+                console.error(error);
+                toast.error('Failed to load interviews');
+            } finally {
+                setLoading(false);
+            }
+        };
         fetchInterviews();
-    }, [fetchInterviews]);
+    }, [search, typeFilter, statusFilter, fromDate, toDate, currentPage, pageSize]);
 
     const handleSearch = () => {
         setCurrentPage(0);
-        fetchInterviews();
+        // Effect will run because currentPage changed
     };
 
     const resetFilters = () => {

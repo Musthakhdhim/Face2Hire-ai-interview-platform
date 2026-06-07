@@ -55,7 +55,6 @@ export default function AdminReportsPage() {
 
     if (!reports) return <div className="text-center py-12">No report data available</div>;
 
-    // Prepare chart data
     const userRoleData = Object.entries(reports.userReport.usersByRole).map(([role, count]) => ({ name: role, value: count }));
     const interviewTypeData = Object.entries(reports.interviewReport.interviewsByType).map(([type, count]) => ({ name: type, value: count }));
     const avgScoreData = Object.entries(reports.interviewReport.averageScoreByType).map(([type, score]) => ({ type, score: Math.round(score) }));
@@ -71,7 +70,6 @@ export default function AdminReportsPage() {
                 <p className="text-gray-600 mt-1">Comprehensive platform statistics and insights</p>
             </div>
 
-            {/* Date Filter */}
             <Card className="border-0 shadow-lg">
                 <CardContent className="p-6">
                     <div className="flex flex-wrap gap-4 items-end">
@@ -97,7 +95,6 @@ export default function AdminReportsPage() {
                     <TabsTrigger value="applications">Applications</TabsTrigger>
                 </TabsList>
 
-                {/* Users Tab */}
                 <TabsContent value="users" className="space-y-6">
                     <div className="grid md:grid-cols-3 gap-6">
                         <Card><CardContent className="p-6 text-center"><Users className="size-8 mx-auto text-blue-500 mb-2" /><div className="text-3xl font-bold">{reports.userReport.totalUsers}</div><div className="text-sm text-gray-600">Total Users</div></CardContent></Card>
@@ -110,7 +107,6 @@ export default function AdminReportsPage() {
                     </div>
                 </TabsContent>
 
-                {/* Interviews Tab */}
                 <TabsContent value="interviews" className="space-y-6">
                     <div className="grid md:grid-cols-4 gap-6">
                         <Card><CardContent className="p-6 text-center"><Activity className="size-8 mx-auto text-purple-500 mb-2" /><div className="text-3xl font-bold">{reports.interviewReport.totalInterviews}</div><div className="text-sm text-gray-600">Total Interviews</div></CardContent></Card>
@@ -125,7 +121,6 @@ export default function AdminReportsPage() {
                     <Card><CardHeader><CardTitle>Interview Volume Trend</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><LineChart data={reports.interviewReport.interviewVolume}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" /><YAxis /><Tooltip /><Line type="monotone" dataKey="count" stroke="#f59e0b" name="Interviews" /></LineChart></ResponsiveContainer></CardContent></Card>
                 </TabsContent>
 
-                {/* Jobs Tab */}
                 <TabsContent value="jobs" className="space-y-6">
                     <div className="grid md:grid-cols-3 gap-6">
                         <Card><CardContent className="p-6 text-center"><Briefcase className="size-8 mx-auto text-indigo-500 mb-2" /><div className="text-3xl font-bold">{reports.jobReport.totalJobs}</div><div className="text-sm text-gray-600">Total Jobs</div></CardContent></Card>
@@ -138,7 +133,6 @@ export default function AdminReportsPage() {
                     </div>
                 </TabsContent>
 
-                {/* Applications Tab */}
                 <TabsContent value="applications" className="space-y-6">
                     <div className="grid md:grid-cols-4 gap-6">
                         <Card><CardContent className="p-6 text-center"><FileText className="size-8 mx-auto text-blue-500 mb-2" /><div className="text-3xl font-bold">{reports.applicationReport.totalApplications}</div><div className="text-sm text-gray-600">Total Applications</div></CardContent></Card>

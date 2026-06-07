@@ -2,12 +2,17 @@ package com.aiinterview.face2hire_backend.serviceimpl.interview;
 
 import com.aiinterview.face2hire_backend.dto.interview.ScheduleInterviewRequest;
 import com.aiinterview.face2hire_backend.dto.interview.ScheduledInterviewDto;
+import com.aiinterview.face2hire_backend.entity.ActivityAction;
+import com.aiinterview.face2hire_backend.entity.User;
 import com.aiinterview.face2hire_backend.entity.interview.ScheduledInterview;
 import com.aiinterview.face2hire_backend.entity.interview.SessionStatus;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
+import com.aiinterview.face2hire_backend.repository.UserRepository;
 import com.aiinterview.face2hire_backend.repository.interview.InterviewSessionRepository;
 import com.aiinterview.face2hire_backend.repository.interview.ScheduledInterviewRepository;
+import com.aiinterview.face2hire_backend.service.ActivityLogService;
+import com.aiinterview.face2hire_backend.service.NotificationService;
 import com.aiinterview.face2hire_backend.service.interview.ScheduledInterviewService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +29,9 @@ public class ScheduledInterviewServiceImpl implements ScheduledInterviewService 
 
     private final ScheduledInterviewRepository repository;
     private final InterviewSessionRepository sessionRepository;
+    private final ActivityLogService activityLogService;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
@@ -45,6 +53,20 @@ public class ScheduledInterviewServiceImpl implements ScheduledInterviewService 
                 .minimumScore(request.getMinimumScore())
                 .build();
         entity = repository.save(entity);
+
+        notificationService.createNotification(
+                request.getIntervieweeId(),
+                "Interview Scheduled",
+                "An interview has been scheduled for you by " + interviewerName + ". Type: " + request.getType() + ", Due: " + request.getDueDate(),
+                "INTERVIEW_SCHEDULED"
+        );
+
+        User interviewee = userRepository.findById(request.getIntervieweeId()).orElse(null);
+        if (interviewee != null) {
+            activityLogService.log(interviewee, ActivityAction.INTERVIEW_SCHEDULED,
+                    String.format("Interview scheduled by %s | Type: %s | Due: %s",
+                            interviewerName, request.getType(), request.getDueDate()));
+        }
         return toDto(entity);
     }
     private ScheduledInterviewDto toDto(ScheduledInterview entity) {

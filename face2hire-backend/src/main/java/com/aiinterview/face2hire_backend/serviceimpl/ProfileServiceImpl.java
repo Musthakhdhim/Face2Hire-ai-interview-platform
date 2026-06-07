@@ -41,6 +41,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final SkillRepository skillRepository;
     private final ExperienceRepository experienceRepository;
     private final S3Service s3Service;
+    private final ActivityLogService activityLogService;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
@@ -126,6 +127,9 @@ public class ProfileServiceImpl implements ProfileService {
             user.setProfileImageUrl(profileDto.getProfileImageUrl());
         }
         User savedUser = userRepository.save(user);
+
+        activityLogService.log(user, ActivityAction.PROFILE_UPDATED, "User updated profile information");
+
         ProfileResponseDto profileResponseDto = modelMapper.map(savedUser, ProfileResponseDto.class);
         log.info("Profile updated successfully for user: {}", savedUser.getEmail());
         return ApiResponse.builder()
@@ -206,6 +210,9 @@ public class ProfileServiceImpl implements ProfileService {
         userRepository.save(user);
         log.info("Email updated successfully for user: {} -> {}", user.getEmail(), emailOtpDto.getNewEmail());
 
+        activityLogService.log(user, ActivityAction.EMAIL_UPDATED,
+                String.format("Changed email to %s", emailOtpDto.getNewEmail()));
+
         return ApiResponse.builder()
                 .success(true)
                 .message("email updated successfully")
@@ -242,6 +249,8 @@ public class ProfileServiceImpl implements ProfileService {
         user.setPassword(passwordEncoder.encode(changePasswordDto.getNewPassword()));
         userRepository.save(user);
         log.info("Password changed successfully for user: {}", user.getEmail());
+
+        activityLogService.log(user, ActivityAction.PASSWORD_CHANGED, "User changed password");
 
         return ApiResponse.builder()
                 .success(true)

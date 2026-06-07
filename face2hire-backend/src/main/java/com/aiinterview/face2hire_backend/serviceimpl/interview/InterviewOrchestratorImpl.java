@@ -1,6 +1,7 @@
 package com.aiinterview.face2hire_backend.serviceimpl.interview;
 
 import com.aiinterview.face2hire_backend.dto.interview.*;
+import com.aiinterview.face2hire_backend.entity.ActivityAction;
 import com.aiinterview.face2hire_backend.entity.ApplicationStatus;
 import com.aiinterview.face2hire_backend.entity.User;
 import com.aiinterview.face2hire_backend.entity.interview.*;
@@ -9,6 +10,8 @@ import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.ApplicationRepository;
 import com.aiinterview.face2hire_backend.repository.UserRepository;
 import com.aiinterview.face2hire_backend.repository.interview.*;
+import com.aiinterview.face2hire_backend.service.ActivityLogService;
+import com.aiinterview.face2hire_backend.service.NotificationService;
 import com.aiinterview.face2hire_backend.service.interview.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -40,6 +43,8 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
     private final ScheduledInterviewRepository scheduledInterviewRepository;
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
+    private final ActivityLogService activityLogService;
+    private final NotificationService notificationService;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
@@ -221,9 +226,127 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
             }
         }
 
+        // Activity log
+        try {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user != null && overall != null && session != null) {
+                activityLogService.log(user, ActivityAction.INTERVIEW_COMPLETED,
+                        String.format("Completed interview session %d | Type: %s | Score: %.1f%%",
+                                sessionId, session.getType(), overall.getOverallScore()));
+            }
+        } catch (Exception e) {
+            log.warn("Failed to log interview completion activity: {}", e.getMessage());
+        }
+
+        // --- Send notification to interviewer if this was a scheduled interview ---
+        if (session != null && session.getScheduledInterviewId() != null && overall != null) {
+            try {
+                final Double finalOverallScore = overall.getOverallScore(); // make final for lambda
+                scheduledInterviewRepository.findById(session.getScheduledInterviewId()).ifPresent(scheduled -> {
+                    String interviewerEmail = scheduled.getScheduledByInterviewer();
+                    if (interviewerEmail != null) {
+                        User interviewer = userRepository.findByEmail(interviewerEmail);
+                        if (interviewer != null) {
+                            String candidateName = userRepository.findById(userId)
+                                    .map(u -> u.getFullName() != null ? u.getFullName() : u.getUserName())
+                                    .orElse("User");
+                            notificationService.createNotification(
+                                    interviewer.getId(),
+                                    "Interview Completed",
+                                    String.format("Candidate %s completed the scheduled interview. Score: %.1f%%", candidateName, finalOverallScore),
+                                    "INTERVIEW_COMPLETED"
+                            );
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                log.warn("Failed to send notification for interview completion: {}", e.getMessage());
+            }
+        }
+
         return overall;
     }
 
+//    @Transactional
+//    @Override
+//    public OverallFeedbackDto endSession(Long sessionId, Long userId) throws JsonProcessingException {
+//        log.info("Ending session {} for user {}", sessionId, userId);
+//        OverallFeedbackDto overall = null;
+//
+//        try {
+//            sessionManager.endSession(sessionId, userId);
+//            List<InterviewQuestion> questions = questionRepository.findBySessionIdOrderByQuestionIndexAsc(sessionId);
+//            if (!questions.isEmpty()) {
+//                List<Long> questionIds = questions.stream().map(InterviewQuestion::getId).toList();
+//                List<UserResponse> responses = userResponseRepository.findByQuestionIdIn(questionIds);
+//                if (!responses.isEmpty()) {
+//                    List<Long> responseIds = responses.stream().map(UserResponse::getId).toList();
+//                    List<QuestionFeedback> feedbacks = questionFeedbackRepository.findAllById(responseIds);
+//                    if (!feedbacks.isEmpty()) {
+//                        overall = feedbackAggregator.aggregate(sessionId, feedbacks);
+//                    }
+//                }
+//            }
+//            if (overall == null) {
+//                overall = createDefaultFeedback("Incomplete or no answers recorded.");
+//            }
+//        } catch (Exception e) {
+//            log.error("Error while ending session", e);
+//            overall = createDefaultFeedback("An error occurred while generating feedback.");
+//        }
+//
+//        InterviewFeedback feedbackEntity = InterviewFeedback.builder()
+//                .sessionId(sessionId)
+//                .overallScore(overall.getOverallScore())
+//                .strengths(overall.getStrengths())
+//                .improvements(overall.getImprovements())
+//                .detailedFeedback(overall.getDetailedFeedback())
+//                .suggestedResources(objectMapper.writeValueAsString(overall.getSuggestedResources()))
+//                .build();
+//        interviewFeedbackRepository.save(feedbackEntity);
+//
+//        InterviewSession session = sessionRepository.findById(sessionId).orElse(null);
+//        if (session != null) {
+//            session.setOverallScore(overall.getOverallScore());
+//            session.setCommunicationScore(overall.getCommunicationScore());
+//            session.setTechnicalScore(overall.getTechnicalScore());
+//            session.setConfidenceScore(overall.getConfidenceScore());
+//            sessionRepository.save(session);
+//
+//            if (session.getScheduledInterviewId() != null) {
+//                final Double finalScore = overall.getOverallScore();
+//                scheduledInterviewRepository.findById(session.getScheduledInterviewId()).ifPresent(scheduled -> {
+//                    if (scheduled.getApplicationId() != null && scheduled.getMinimumScore() != null) {
+//                        applicationRepository.findById(scheduled.getApplicationId()).ifPresent(application -> {
+//                            application.setScore(finalScore);
+//                            if (finalScore < scheduled.getMinimumScore()) {
+//                                application.setStatus(ApplicationStatus.REJECTED);
+//                                log.info("Application {} auto-rejected with score {} (below minimum {})",
+//                                        application.getId(), finalScore, scheduled.getMinimumScore());
+//                            } else {
+//                                log.info("Application {} score {} meets minimum {}, awaiting manual approval",
+//                                        application.getId(), finalScore, scheduled.getMinimumScore());
+//                            }
+//                            applicationRepository.save(application);
+//                        });
+//                    }
+//                });
+//            }
+//        }
+//
+//        try {
+//            User user = userRepository.findById(userId).orElse(null);
+//            if (user != null && overall != null && session != null) {
+//                activityLogService.log(user, ActivityAction.INTERVIEW_COMPLETED,
+//                        String.format("Completed interview session %d | Type: %s | Score: %.1f%%",
+//                                sessionId, session.getType(), overall.getOverallScore()));
+//            }
+//        } catch (Exception e) {
+//            log.warn("Failed to log interview completion activity: {}", e.getMessage());
+//        }
+//
+//        return overall;
+//    }
 
     @Override
     public List<InterviewSessionDto> getUserSessions(Long userId) {

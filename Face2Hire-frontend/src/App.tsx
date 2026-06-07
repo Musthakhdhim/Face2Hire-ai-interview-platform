@@ -43,6 +43,8 @@ import AdminUserDetailPage from './pages/admin/AdminUserDetailPage';
 import AdminInterviewDetailPage from './pages/admin/AdminInterviewDetailPage';
 import AdminJobDetailPage from './pages/admin/AdminJobDetailPage';
 import AdminReportsPage from './pages/admin/AdminReportsPage';
+import AdminActivitiesPage from './pages/admin/AdminActivitiesPage';
+import NotificationsPage from './pages/NotificationsPage';
 
 function App(): JSX.Element {
   return (
@@ -79,6 +81,7 @@ function App(): JSX.Element {
                <Route path="history" element={<HistoryPage />} /> 
                <Route path="analytics" element={<AnalyticsPage />} /> 
                <Route path="upcoming" element={<UpcomingInterviewsPage />} />
+               <Route path="notifications" element={<NotificationsPage />} />
             </Route>
           </Route>
 
@@ -98,6 +101,7 @@ function App(): JSX.Element {
               <Route path="scheduled" element={<ScheduledInterviewsPage />} />
               <Route path="scheduled/:scheduledId" element={<ScheduledInterviewDetailPage />} />
               <Route path="settings" element={<ProfileSettingsPage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
             </Route>
           </Route>
 
@@ -112,6 +116,8 @@ function App(): JSX.Element {
               <Route path="interviews/:interviewId" element={<AdminInterviewDetailPage />} />
               <Route path="jobs/:jobId" element={<AdminJobDetailPage />} />
               <Route path="reports" element={<AdminReportsPage />} />
+              <Route path="activities" element={<AdminActivitiesPage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
             </Route>
           </Route>
 

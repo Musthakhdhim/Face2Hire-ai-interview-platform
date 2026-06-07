@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Loader2, Briefcase, MapPin, DollarSign, Calendar, User, Mail, Users, Award } from 'lucide-react';
+import { Loader2, Briefcase, MapPin, DollarSign, Calendar, User, Mail, Users } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { jobService } from '../../services/jobService';
 import type { AdminJobDetailResponse } from '../../types/admin';

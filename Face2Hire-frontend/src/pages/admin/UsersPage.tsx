@@ -211,7 +211,7 @@ export default function AdminUsersPage(): JSX.Element {
                         </div>
                       </div>
 
-                      {user.role === 'INTERVIEWEE' && (
+                      {/* {user.role === 'INTERVIEWEE' && (
                         <div className="grid grid-cols-2 gap-4 lg:w-64">
                           <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 text-center">
                             <div className="text-2xl font-bold text-blue-600">0</div>
@@ -222,7 +222,7 @@ export default function AdminUsersPage(): JSX.Element {
                             <div className="text-xs text-gray-600">Avg Score</div>
                           </div>
                         </div>
-                      )}
+                      )} */}
 
                       <div className="flex flex-col gap-2">
                         <Link to={`/admin/users/${user.id}`}>

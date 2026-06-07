@@ -78,7 +78,6 @@ public class AdminJobServiceImpl implements AdminJobService {
             userEmail = userOpt.get().getEmail();
         }
 
-        // Fetch skills for this job
         java.util.List<String> skills = jobSkillRepository.findByJobId(job.getId())
                 .stream()
                 .map(js -> js.getSkillName())
@@ -111,7 +110,6 @@ public class AdminJobServiceImpl implements AdminJobService {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found: " + jobId));
 
-        // Get poster info
         String userName = null;
         String userEmail = null;
         Optional<User> userOpt = userRepository.findById(job.getPostedByUserId());
@@ -120,15 +118,12 @@ public class AdminJobServiceImpl implements AdminJobService {
             userEmail = userOpt.get().getEmail();
         }
 
-        // Get skills
         List<String> skills = jobSkillRepository.findByJobId(job.getId())
                 .stream().map(JobSkill::getSkillName).collect(Collectors.toList());
 
-        // Get applications for this job
         List<Application> applications = applicationRepository.findByJobId(jobId);
         List<AdminJobDetailResponseDto.ApplicationSummary> appSummaries = applications.stream()
                 .map(app -> {
-                    // Get user info
                     String appUserName = null;
                     String appUserEmail = null;
                     Optional<User> appUser = userRepository.findById(app.getUserId());

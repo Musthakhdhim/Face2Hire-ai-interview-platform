@@ -39,7 +39,6 @@ public class PdfReportServiceImpl implements PdfReportService {
 
             try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
 
-                // Title
                 contentStream.beginText();
                 contentStream.setFont(helveticaBold, 24);
                 contentStream.newLineAtOffset(margin, yPosition);
@@ -47,7 +46,6 @@ public class PdfReportServiceImpl implements PdfReportService {
                 contentStream.endText();
                 yPosition -= 40;
 
-                // Metadata
                 contentStream.beginText();
                 contentStream.setFont(helvetica, 10);
                 contentStream.newLineAtOffset(margin, yPosition);
@@ -58,7 +56,6 @@ public class PdfReportServiceImpl implements PdfReportService {
                 contentStream.endText();
                 yPosition -= 30;
 
-                // Overall Score
                 contentStream.beginText();
                 contentStream.setFont(helveticaBold, 36);
                 contentStream.newLineAtOffset(margin, yPosition);
@@ -66,7 +63,6 @@ public class PdfReportServiceImpl implements PdfReportService {
                 contentStream.endText();
                 yPosition -= 50;
 
-                // Sub-scores – FIXED: use %.0f for doubles and handle null
                 contentStream.beginText();
                 contentStream.setFont(helvetica, 12);
                 contentStream.newLineAtOffset(margin, yPosition);
@@ -89,7 +85,6 @@ public class PdfReportServiceImpl implements PdfReportService {
                 contentStream.endText();
                 yPosition -= 40;
 
-                // Sections
                 yPosition = addSection(contentStream, "Strengths", safeString(feedback.getStrengths()), margin, yPosition);
                 yPosition = addSection(contentStream, "Areas for Improvement", safeString(feedback.getImprovements()), margin, yPosition);
                 yPosition = addSection(contentStream, "Detailed Feedback", safeString(feedback.getDetailedFeedback()), margin, yPosition);

@@ -2,6 +2,11 @@ export type InterviewType = 'technical' | 'hr' | 'behavioral' | 'salary';
 export type SessionStatus = 'ACTIVE' | 'COMPLETED' | 'ABANDONED';
 export type JobStatus = 'ACTIVE' | 'CLOSED';
 export type JobType = 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP';
+export type ActivityAction = 
+    'REGISTER' | 'LOGIN' | 'PROFILE_UPDATED' | 'RESUME_UPLOADED' |
+    'JOB_APPLIED' | 'APPLICATION_APPROVED' | 'APPLICATION_REJECTED' |
+    'INTERVIEW_SCHEDULED' | 'INTERVIEW_COMPLETED' | 'INTERVIEW_ATTENDED' |
+    'PASSWORD_CHANGED' | 'EMAIL_UPDATED';
 
 export interface AdminInterviewResponse {
     id: number;
@@ -189,4 +194,21 @@ export interface AdminReportsDto {
         rejectedApplications: number;
         applicationsByStatus: Record<string, number>;
     };
+}
+
+export interface ActivityLog {
+    id: number;
+    userId: number;
+    userEmail: string;
+    userName: string;
+    action: ActivityAction;
+    description: string;
+    createdAt: string;
+}
+
+export interface ActivityFilter {
+    search?: string;
+    action?: ActivityAction;
+    page?: number;
+    size?: number;
 }

@@ -4,6 +4,7 @@ import com.aiinterview.face2hire_backend.dto.ParsedResumeDto;
 import com.aiinterview.face2hire_backend.entity.*;
 import com.aiinterview.face2hire_backend.exception.ValidationException;
 import com.aiinterview.face2hire_backend.repository.*;
+import com.aiinterview.face2hire_backend.service.ActivityLogService;
 import com.aiinterview.face2hire_backend.service.OpenAiParserService;
 import com.aiinterview.face2hire_backend.service.S3Service;
 import com.aiinterview.face2hire_backend.service.TextExtractionService;
@@ -26,6 +27,8 @@ public class ResumeProcessingService {
     private final ResumeRepository resumeRepository;
     private final SkillRepository skillRepository;
     private final ExperienceRepository experienceRepository;
+    private final ActivityLogService activityLogService;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
@@ -92,7 +95,14 @@ public class ResumeProcessingService {
             }
 
             resume.setStatus(ResumeStatus.COMPLETED);
-            return resumeRepository.save(resume);
+            Resume resume1= resumeRepository.save(resume);
+
+            User user = userRepository.findById(userId).orElse(null);
+            if (user != null) {
+                activityLogService.log(user, ActivityAction.RESUME_UPLOADED, "Uploaded and parsed new CV");
+            }
+
+            return resume1;
 
         } catch (Exception e) {
             resume.setStatus(ResumeStatus.FAILED);

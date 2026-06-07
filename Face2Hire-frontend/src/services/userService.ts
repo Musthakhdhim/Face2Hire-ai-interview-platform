@@ -1,6 +1,6 @@
 import axiosClient from './axiosClient';
 import type { UserListResponseDto, UserFilterRequest } from '../types/user';
-import type { AdminReportsDto, AdminUserDetailResponse } from '../types/admin';
+import type { ActivityFilter, ActivityLog, AdminReportsDto, AdminUserDetailResponse } from '../types/admin';
 import API from './endpoints';
 
 export interface PaginatedResponse<T> {
@@ -82,6 +82,16 @@ export const adminService = {
         const response = await axiosClient.get(API.ADMIN.REPORTS, { params });
         return response.data.data;
     },
+};
 
-    
+// Add to userService or create new activityService
+export const activityService = {
+    getRecent: async (): Promise<ActivityLog[]> => {
+        const response = await axiosClient.get('/admin/activities/recent');
+        return response.data.data;
+    },
+    getList: async (filter: ActivityFilter): Promise<PaginatedResponse<ActivityLog>> => {
+        const response = await axiosClient.post('/admin/activities/list', filter);
+        return response.data.data;
+    },
 };

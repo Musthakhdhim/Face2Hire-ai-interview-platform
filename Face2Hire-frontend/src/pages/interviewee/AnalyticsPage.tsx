@@ -25,7 +25,6 @@ export default function AnalyticsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Only completed sessions with valid overall score
   const completedSessions = useMemo(() => {
     return allSessions.filter(s => s.status === "COMPLETED" && s.overallScore != null);
   }, [allSessions]);
@@ -57,7 +56,6 @@ export default function AnalyticsPage() {
     );
   }
 
-  // Data for line chart (chronological order)
   const scoreByDate = [...completedSessions]
     .sort((a, b) => new Date(a.completedAt || a.createdAt).getTime() - new Date(b.completedAt || b.createdAt).getTime())
     .map(s => ({
@@ -68,7 +66,6 @@ export default function AnalyticsPage() {
       confidence: s.confidenceScore || 0,
     }));
 
-  // Average score per interview type
   const scoreByType = Object.values(completedSessions.reduce((acc, s) => {
     if (!acc[s.type]) acc[s.type] = { type: s.type, total: 0, count: 0 };
     acc[s.type].total += s.overallScore || 0;
@@ -79,14 +76,12 @@ export default function AnalyticsPage() {
     avgScore: Math.round(v.total / v.count)
   }));
 
-  // Radar chart data – only from actual scores (no fake "Problem Solving" or "Leadership")
   const skillsData = [
     { skill: "Communication", score: Math.round(completedSessions.reduce((a, s) => a + (s.communicationScore || 0), 0) / completedSessions.length) || 0 },
     { skill: "Technical", score: Math.round(completedSessions.reduce((a, s) => a + (s.technicalScore || 0), 0) / completedSessions.length) || 0 },
     { skill: "Confidence", score: Math.round(completedSessions.reduce((a, s) => a + (s.confidenceScore || 0), 0) / completedSessions.length) || 0 },
   ];
 
-  // Summary stats
   const avgScore = Math.round(completedSessions.reduce((a, s) => a + (s.overallScore || 0), 0) / completedSessions.length);
   const totalInterviews = completedSessions.length;
   const totalMinutes = completedSessions.reduce((a, s) => a + s.duration, 0);

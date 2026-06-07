@@ -24,7 +24,6 @@ export default function IntervieweeDashboard(): JSX.Element {
   const [completedSessions, setCompletedSessions] = useState<InterviewSessionDto[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Derived stats
   const [jobsAppliedCount, setJobsAppliedCount] = useState(0);
   const [totalInterviews, setTotalInterviews] = useState(0);
   const [avgScore, setAvgScore] = useState(0);
@@ -35,12 +34,10 @@ export default function IntervieweeDashboard(): JSX.Element {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        // Fetch applications
         const appsData = await applicationService.getMyApplications(0, 100);
         setApplications(appsData.content);
         setJobsAppliedCount(appsData.totalElements);
 
-        // Fetch interview sessions and filter only COMPLETED with valid scores
         const allSessions = await interviewService.getUserSessions();
         const completed = allSessions.filter(
           s => s.status === 'COMPLETED' && s.overallScore != null
@@ -48,7 +45,6 @@ export default function IntervieweeDashboard(): JSX.Element {
         setCompletedSessions(completed);
         setTotalInterviews(completed.length);
 
-        // Calculate average score
         if (completed.length > 0) {
           const sum = completed.reduce((acc, s) => acc + (s.overallScore || 0), 0);
           setAvgScore(Math.round(sum / completed.length));
@@ -56,12 +52,10 @@ export default function IntervieweeDashboard(): JSX.Element {
           setAvgScore(0);
         }
 
-        // Calculate total practice hours (duration in minutes)
         const totalMinutes = completed.reduce((acc, s) => acc + (s.duration || 0), 0);
         const hours = Math.round((totalMinutes / 60) * 10) / 10;
         setTotalPracticeHours(hours);
 
-        // Calculate average duration
         if (completed.length > 0) {
           setAvgDuration(Math.round(totalMinutes / completed.length));
         } else {
@@ -76,12 +70,10 @@ export default function IntervieweeDashboard(): JSX.Element {
     fetchDashboardData();
   }, []);
 
-  // Last 3 applied jobs (most recent first)
   const last3Applications = [...applications]
     .sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime())
     .slice(0, 3);
 
-  // Last 3 completed interviews (most recent first)
   const last3Interviews = [...completedSessions]
     .sort((a, b) => new Date(b.completedAt || b.createdAt).getTime() - new Date(a.completedAt || a.createdAt).getTime())
     .slice(0, 3);
@@ -176,7 +168,6 @@ export default function IntervieweeDashboard(): JSX.Element {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Applied Jobs Card - Last 3 */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle>Applied Jobs</CardTitle>
@@ -209,7 +200,6 @@ export default function IntervieweeDashboard(): JSX.Element {
           </CardContent>
         </Card>
 
-        {/* Recent Interviews Card - Last 3 */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle>Recent Interviews</CardTitle>

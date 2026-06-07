@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Loader2, User, Mail, Calendar, Clock, FileText, MessageSquare, Award } from 'lucide-react';
+import { Loader2, User, Mail, Calendar, Clock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { interviewService } from '../../services/interviewService';
 import type { AdminInterviewDetailResponse } from '../../types/admin';
@@ -53,7 +53,6 @@ export default function AdminInterviewDetailPage() {
                 <p className="text-gray-600 mt-1">Complete session information with question‑wise analysis</p>
             </div>
 
-            {/* Session Summary */}
             <Card className="border-0 shadow-lg">
                 <CardHeader>
                     <CardTitle>Session Overview</CardTitle>
@@ -75,7 +74,6 @@ export default function AdminInterviewDetailPage() {
                 </CardContent>
             </Card>
 
-            {/* Scores */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card><CardContent className="p-4 text-center"><div className="text-2xl font-bold text-blue-600">{detail.overallScore ?? 'N/A'}%</div><div className="text-sm text-gray-600">Overall</div></CardContent></Card>
                 <Card><CardContent className="p-4 text-center"><div className="text-2xl font-bold text-green-600">{detail.communicationScore ?? 'N/A'}%</div><div className="text-sm text-gray-600">Communication</div></CardContent></Card>
@@ -83,7 +81,6 @@ export default function AdminInterviewDetailPage() {
                 <Card><CardContent className="p-4 text-center"><div className="text-2xl font-bold text-amber-600">{detail.confidenceScore ?? 'N/A'}%</div><div className="text-sm text-gray-600">Confidence</div></CardContent></Card>
             </div>
 
-            {/* Questions Tab */}
             <Tabs defaultValue="questions" className="space-y-4">
                 <TabsList>
                     <TabsTrigger value="questions">Questions & Answers</TabsTrigger>

@@ -14,7 +14,7 @@ export default function HistoryPage() {
   const [sessions, setSessions] = useState<InterviewSessionDto[]>([]);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("completed"); // default: completed
+  const [filterStatus, setFilterStatus] = useState("completed");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
 
@@ -36,20 +36,16 @@ export default function HistoryPage() {
   const filtered = useMemo(() => {
     let result = sessions;
 
-    // Filter by type
     if (filterType !== "all") {
       result = result.filter(s => s.type === filterType);
     }
 
-    // Filter by status
     if (filterStatus === "completed") {
       result = result.filter(s => s.status === "COMPLETED");
     } else if (filterStatus === "incomplete") {
       result = result.filter(s => s.status !== "COMPLETED");
     }
-    // "all" does nothing
 
-    // Filter by search (type or difficulty)
     if (search) {
       result = result.filter(s =>
         s.type.toLowerCase().includes(search.toLowerCase()) ||
@@ -57,7 +53,6 @@ export default function HistoryPage() {
       );
     }
 
-    // Sort by date descending (latest first)
     return [...result].sort((a, b) =>
       new Date(b.completedAt || b.createdAt).getTime() -
       new Date(a.completedAt || a.createdAt).getTime()

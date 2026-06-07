@@ -5,12 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../components/ui/accordion';
-import { CheckCircle2, AlertCircle, Download, Share2, RotateCcw, ExternalLink, TrendingUp, TrendingDown, ChevronDown, MessageSquare, FileText } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Download, Share2, RotateCcw, ExternalLink, TrendingUp, TrendingDown, MessageSquare } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { interviewService } from '../../services/interviewService';
-import type { OverallFeedbackDto, SessionDetail, SessionQuestionDetail } from '../../services/interviewService';
+import type { OverallFeedbackDto, SessionDetail } from '../../services/interviewService';
 import { toast } from 'react-toastify';
 import axiosClient from '../../services/axiosClient';
 
@@ -29,7 +28,6 @@ export default function FeedbackPage() {
         if (data.overallScore >= 70) {
           confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         }
-        // Fetch session detail for question-wise analysis
         setDetailLoading(true);
         const detail = await interviewService.getSessionDetail(Number(sessionId));
         setSessionDetail(detail);
@@ -44,17 +42,55 @@ export default function FeedbackPage() {
   }, [sessionId]);
 
   const handleDownloadReport = async () => {
-    // ... unchanged
-  };
+  try {
+    const response = await axiosClient.get(`/interview/feedback/${sessionId}/pdf`, {
+      responseType: 'blob',
+    });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `interview-feedback-${sessionId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast.success('PDF report downloaded');
+  } catch (error) {
+    console.error('PDF download failed:', error);
+    toast.error('Failed to download PDF');
+  }
+};
 
   const handleShare = async () => {
-    // ... unchanged
+    const shareUrl = window.location.href;
+    const shareText = `I just completed an interview on InterviewAI and scored ${feedback?.overallScore}%! Check out my detailed feedback.`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Interview Feedback",
+          text: shareText,
+          url: shareUrl,
+        });
+        toast.success("Shared successfully");
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          toast.error("Sharing failed");
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied to clipboard! You can now share it.");
+      } catch {
+        toast.error("Failed to copy link");
+      }
+    }
   };
 
   if (loading) return <div className="text-center py-12">Loading feedback...</div>;
   if (!feedback) return <div className="text-center py-12">No feedback found</div>;
 
-  // Helper for score color
   const getScoreColor = (score: number | null | undefined) => {
     if (!score) return 'text-gray-500';
     if (score >= 80) return 'text-green-600';
@@ -70,7 +106,6 @@ export default function FeedbackPage() {
         <p className="text-gray-600">Detailed analysis of your performance</p>
       </motion.div>
 
-      {/* Overall Score Card - unchanged */}
       <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5 }}>
         <Card className="border-0 shadow-2xl bg-gradient-to-br from-indigo-50 to-purple-50">
           <CardContent className="p-12 text-center">
@@ -88,14 +123,12 @@ export default function FeedbackPage() {
         </Card>
       </motion.div>
 
-      {/* Sub-scores - unchanged */}
       <div className="grid md:grid-cols-3 gap-6">
         <Card className="border-0 shadow-lg"><CardContent className="p-6"><div className="text-center"><div className="text-4xl font-bold text-blue-600 mb-2">{feedback.communicationScore}%</div><div className="text-sm text-gray-600 mb-4">Communication</div><Progress value={feedback.communicationScore} className="h-2" /></div></CardContent></Card>
         <Card className="border-0 shadow-lg"><CardContent className="p-6"><div className="text-center"><div className="text-4xl font-bold text-purple-600 mb-2">{feedback.technicalScore}%</div><div className="text-sm text-gray-600 mb-4">Technical Skills</div><Progress value={feedback.technicalScore} className="h-2" /></div></CardContent></Card>
         <Card className="border-0 shadow-lg"><CardContent className="p-6"><div className="text-center"><div className="text-4xl font-bold text-green-600 mb-2">{feedback.confidenceScore}%</div><div className="text-sm text-gray-600 mb-4">Confidence</div><Progress value={feedback.confidenceScore} className="h-2" /></div></CardContent></Card>
       </div>
 
-      {/* Strengths & Improvements - unchanged */}
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="border-0 shadow-lg border-l-4 border-l-green-500"><CardHeader><CardTitle className="flex items-center gap-2 text-green-700"><CheckCircle2 className="size-6" />Strengths</CardTitle></CardHeader><CardContent><ul className="space-y-3">{feedback.strengths.split('\n').map((s, i) => <li key={i} className="flex items-start gap-3"><TrendingUp className="size-5 text-green-600 flex-shrink-0 mt-0.5" /><span className="text-gray-700">{s}</span></li>)}</ul></CardContent></Card>
         <Card className="border-0 shadow-lg border-l-4 border-l-amber-500"><CardHeader><CardTitle className="flex items-center gap-2 text-amber-700"><AlertCircle className="size-6" />Areas for Improvement</CardTitle></CardHeader><CardContent><ul className="space-y-3">{feedback.improvements.split('\n').map((s, i) => <li key={i} className="flex items-start gap-3"><TrendingDown className="size-5 text-amber-600 flex-shrink-0 mt-0.5" /><span className="text-gray-700">{s}</span></li>)}</ul></CardContent></Card>
@@ -105,7 +138,6 @@ export default function FeedbackPage() {
 
       <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-50 to-purple-50"><CardHeader><CardTitle>Recommended Resources</CardTitle></CardHeader><CardContent><div className="grid md:grid-cols-2 gap-4">{feedback.suggestedResources.map((resource, idx) => (<Card key={idx} className="border-0 shadow hover:shadow-lg transition-shadow cursor-pointer"><CardContent className="p-4 flex items-center justify-between"><div><h4 className="font-semibold text-gray-900">{resource}</h4><Badge variant="outline" className="mt-1">Resource</Badge></div><ExternalLink className="size-5 text-indigo-600" /></CardContent></Card>))}</div></CardContent></Card>
 
-      {/* Question-wise Analysis Section */}
       {sessionDetail && sessionDetail.questions.length > 0 && (
         <Card className="border-0 shadow-lg">
           <CardHeader>
@@ -133,7 +165,6 @@ export default function FeedbackPage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-4 pb-4">
-                    {/* Question details */}
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <p className="font-medium text-gray-900 mb-2">Question:</p>
                       <p className="text-gray-700">{q.questionText}</p>
@@ -150,7 +181,6 @@ export default function FeedbackPage() {
                       </div>
                     </div>
 
-                    {/* Your answer */}
                     {q.transcribedText && (
                       <div className="bg-blue-50 p-4 rounded-lg">
                         <p className="font-medium text-blue-900 mb-2">Your Answer:</p>
@@ -161,7 +191,6 @@ export default function FeedbackPage() {
                       </div>
                     )}
 
-                    {/* Keywords matched/missing */}
                     {q.keywordsMatched && q.keywordsMatched.length > 0 && (
                       <div className="text-sm">
                         <span className="font-medium text-green-700">✓ Keywords matched:</span>
@@ -181,7 +210,6 @@ export default function FeedbackPage() {
                       </div>
                     )}
 
-                    {/* Feedback */}
                     {q.feedbackText && (
                       <div className="bg-purple-50 p-4 rounded-lg">
                         <p className="font-medium text-purple-900 mb-2">AI Feedback:</p>
@@ -189,7 +217,6 @@ export default function FeedbackPage() {
                       </div>
                     )}
 
-                    {/* Suggested Answer */}
                     {q.suggestedAnswer && (
                       <div className="bg-green-50 p-4 rounded-lg">
                         <p className="font-medium text-green-900 mb-2">Suggested Answer:</p>
