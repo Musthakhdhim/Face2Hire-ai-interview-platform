@@ -5,6 +5,7 @@ import axiosClient from '../services/axiosClient';
 import {
   Home, FileText, Upload, BarChart2, Settings, LogOut, Bell, Search, User,
   Briefcase, Calendar, Users, Activity, FileBarChart,
+  Mail,
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -86,6 +87,7 @@ export default function DashboardLayout(): JSX.Element | null {
         { icon: Briefcase, label: 'Jobs', path: '/admin/jobs' },
         { icon: FileBarChart, label: 'Activities', path: '/admin/activities' },
         { icon: FileBarChart, label: 'Reports', path: '/admin/reports' },
+        { icon: Mail, label: 'Send Email', path: '/admin/email' },
         { icon: Settings, label: 'Settings', path: settingsPath },
       ];
     }

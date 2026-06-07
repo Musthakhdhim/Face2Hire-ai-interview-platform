@@ -45,6 +45,7 @@ import AdminJobDetailPage from './pages/admin/AdminJobDetailPage';
 import AdminReportsPage from './pages/admin/AdminReportsPage';
 import AdminActivitiesPage from './pages/admin/AdminActivitiesPage';
 import NotificationsPage from './pages/NotificationsPage';
+import AdminEmailPage from './pages/admin/EmailPage';
 
 function App(): JSX.Element {
   return (
@@ -118,6 +119,7 @@ function App(): JSX.Element {
               <Route path="reports" element={<AdminReportsPage />} />
               <Route path="activities" element={<AdminActivitiesPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="email" element={<AdminEmailPage />} />
             </Route>
           </Route>
 
