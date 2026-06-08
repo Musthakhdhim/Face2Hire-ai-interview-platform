@@ -12,6 +12,7 @@ import com.aiinterview.face2hire_backend.repository.UserRepository;
 import com.aiinterview.face2hire_backend.repository.interview.InterviewSessionRepository;
 import com.aiinterview.face2hire_backend.repository.interview.ScheduledInterviewRepository;
 import com.aiinterview.face2hire_backend.service.ActivityLogService;
+import com.aiinterview.face2hire_backend.service.BadgeService;
 import com.aiinterview.face2hire_backend.service.NotificationService;
 import com.aiinterview.face2hire_backend.service.interview.ScheduledInterviewService;
 import jakarta.annotation.PostConstruct;
@@ -31,6 +32,7 @@ public class ScheduledInterviewServiceImpl implements ScheduledInterviewService 
     private final InterviewSessionRepository sessionRepository;
     private final ActivityLogService activityLogService;
     private final UserRepository userRepository;
+    private final BadgeService badgeService;
     private final NotificationService notificationService;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
@@ -66,6 +68,15 @@ public class ScheduledInterviewServiceImpl implements ScheduledInterviewService 
             activityLogService.log(interviewee, ActivityAction.INTERVIEW_SCHEDULED,
                     String.format("Interview scheduled by %s | Type: %s | Due: %s",
                             interviewerName, request.getType(), request.getDueDate()));
+        }
+
+        User interviewer = userRepository.findByEmail(interviewerName);
+        if (interviewer != null) {
+            try {
+                badgeService.checkAndAwardBadges(interviewer.getId());
+            } catch (Exception e) {
+                log.warn("Failed to check badges for interviewer {}: {}", interviewerName, e.getMessage());
+            }
         }
         return toDto(entity);
     }

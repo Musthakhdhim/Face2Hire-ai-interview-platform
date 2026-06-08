@@ -10,6 +10,7 @@ import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.JobRepository;
 import com.aiinterview.face2hire_backend.repository.JobSkillRepository;
+import com.aiinterview.face2hire_backend.service.BadgeService;
 import com.aiinterview.face2hire_backend.service.JobService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,7 @@ public class JobServiceImpl implements JobService {
 
     private final JobRepository jobRepository;
     private final JobSkillRepository jobSkillRepository;
+    private final BadgeService badgeService;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
@@ -65,6 +67,8 @@ public class JobServiceImpl implements JobService {
                     .collect(Collectors.toList());
             jobSkillRepository.saveAll(skills);
         }
+
+        badgeService.checkAndAwardBadges(userId);
 
         log.info("Job created with id: {}", job.getId());
         return mapToResponseDto(job);

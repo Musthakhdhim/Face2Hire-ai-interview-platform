@@ -10,6 +10,7 @@ import com.aiinterview.face2hire_backend.repository.*;
 import com.aiinterview.face2hire_backend.repository.interview.ScheduledInterviewRepository;
 import com.aiinterview.face2hire_backend.service.ActivityLogService;
 import com.aiinterview.face2hire_backend.service.ApplicationService;
+import com.aiinterview.face2hire_backend.service.BadgeService;
 import com.aiinterview.face2hire_backend.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,6 +38,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ScheduledInterviewRepository scheduledInterviewRepository;
     private final ActivityLogService activityLogService;
     private final NotificationService notificationService;
+    private final BadgeService badgeService;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
@@ -117,6 +119,42 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .map(this::mapToListDto);
     }
 
+//    @Override
+//    @Transactional
+//    public ApplicationResponseDto updateApplicationStatus(Long applicationId, Long interviewerId, ApplicationStatusUpdateDto dto) throws AccessDeniedException {
+//        Application application = applicationRepository.findById(applicationId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+//
+//        Job job = jobRepository.findById(application.getJobId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+//        if (!job.getPostedByUserId().equals(interviewerId)) {
+//            throw new AccessDeniedException("You are not authorized to update this application");
+//        }
+//
+//        application.setStatus(dto.getStatus());
+//        application = applicationRepository.save(application);
+//        log.info("Application {} status updated to {}", applicationId, dto.getStatus());
+//
+//        notificationService.createNotification(
+//                application.getUserId(),
+//                "Application " + dto.getStatus(),
+//                "Your application for job ID " + application.getJobId() + " has been " + dto.getStatus(),
+//                dto.getStatus().equals("APPROVED") ? "APPLICATION_APPROVED" : "APPLICATION_REJECTED"
+//        );
+//
+//        User applicant = userRepository.findById(application.getUserId()).orElse(null);
+//        if (applicant != null) {
+//            ActivityAction action = dto.getStatus() == ApplicationStatus.APPROVED ?
+//                    ActivityAction.APPLICATION_APPROVED : ActivityAction.APPLICATION_REJECTED;
+//            String msg = String.format("Application for job ID %d %s", application.getJobId(), dto.getStatus());
+//            activityLogService.log(applicant, action, msg);
+//        }
+//
+//
+//
+//        return mapToResponseDto(application);
+//    }
+
     @Override
     @Transactional
     public ApplicationResponseDto updateApplicationStatus(Long applicationId, Long interviewerId, ApplicationStatusUpdateDto dto) throws AccessDeniedException {
@@ -146,6 +184,15 @@ public class ApplicationServiceImpl implements ApplicationService {
                     ActivityAction.APPLICATION_APPROVED : ActivityAction.APPLICATION_REJECTED;
             String msg = String.format("Application for job ID %d %s", application.getJobId(), dto.getStatus());
             activityLogService.log(applicant, action, msg);
+        }
+
+        // Check and award badges for the interviewer when an application is approved
+        if (dto.getStatus() == ApplicationStatus.APPROVED) {
+            try {
+                badgeService.checkAndAwardBadges(interviewerId);
+            } catch (Exception e) {
+                log.warn("Failed to check badges for interviewer {}: {}", interviewerId, e.getMessage());
+            }
         }
 
         return mapToResponseDto(application);

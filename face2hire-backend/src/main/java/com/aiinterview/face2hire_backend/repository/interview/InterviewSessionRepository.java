@@ -42,4 +42,9 @@ public interface InterviewSessionRepository extends JpaRepository<InterviewSessi
 
     @Query("SELECT s.type, COUNT(s) FROM InterviewSession s WHERE s.status = 'COMPLETED' GROUP BY s.type")
     List<Object[]> countCompletedInterviewsByType();
+
+    long countByUserIdAndStatus(Long userId, SessionStatus status);
+
+    @Query("SELECT AVG(s.overallScore) FROM InterviewSession s WHERE s.userId = :userId AND s.status = 'COMPLETED' AND s.overallScore IS NOT NULL")
+    Double getAverageOverallScoreByUserId(@Param("userId") Long userId);
 }

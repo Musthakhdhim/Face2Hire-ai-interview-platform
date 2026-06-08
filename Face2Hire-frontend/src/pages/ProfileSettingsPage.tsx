@@ -8,7 +8,7 @@ import type { RootState, AppDispatch } from '../store/store';
 import type { AxiosError } from 'axios';
 import {
   User, Mail, Phone, Lock, ShieldCheck,
-  Camera, Loader2
+  Camera, Loader2, Trophy
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -21,6 +21,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 import ResumeTab from '../components/profile/ResumeTab';
+import { badgeService } from '../services/badgeService';
+import type { Badge as BadgeType } from '../types/badge';
 
 const PROFILE_CACHE_KEY = 'profileSettingsCache';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -109,6 +111,7 @@ export default function ProfileSettingsPage(): JSX.Element {
   const navigate = useNavigate();
   const { user: reduxUser, token } = useSelector((state: RootState) => state.auth);
   const [loading, setLoading] = useState<boolean>(true);
+  const [badges, setBadges] = useState<BadgeType[]>([]);
 
   const [profileSaving, setProfileSaving] = useState<boolean>(false);
   const [emailSending, setEmailSending] = useState<boolean>(false);
@@ -151,6 +154,7 @@ export default function ProfileSettingsPage(): JSX.Element {
     if (showResumeTab) tabs.push('resume');
     if (showPreferences) tabs.push('preferences');
     tabs.push('notifications');
+    tabs.push('badges');
     return tabs;
   }, [showPreferences, showResumeTab]);
 
@@ -161,6 +165,7 @@ export default function ProfileSettingsPage(): JSX.Element {
       case 'resume': return 'Resume';
       case 'preferences': return 'Preferences';
       case 'notifications': return 'Notifications';
+      case 'badges': return 'Badges';
       default: return tabValue;
     }
   };
@@ -219,14 +224,23 @@ export default function ProfileSettingsPage(): JSX.Element {
     }
   }, []);
 
+  const fetchBadges = useCallback(async () => {
+    try {
+      const userBadges = await badgeService.getUserBadges();
+      setBadges(userBadges);
+    } catch (error) {
+      console.error('Failed to fetch badges', error);
+    }
+  }, []);
+
   useEffect(() => {
-  if (!token) {
-    navigate('/login');
-    return;
-  }
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  fetchProfileData();
-}, [token, navigate, fetchProfileData]);
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    fetchProfileData();
+    fetchBadges();
+  }, [token, navigate, fetchProfileData, fetchBadges]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = e.target.files?.[0];
@@ -834,6 +848,67 @@ export default function ProfileSettingsPage(): JSX.Element {
                 {notifSaving ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
                 Save Notification Settings
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="badges" className="space-y-6">
+          <Card className="border-0 shadow-lg overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 pointer-events-none" />
+            <CardHeader className="relative">
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="size-5 text-indigo-600" />
+                Earned Badges
+              </CardTitle>
+              <CardDescription>
+                Achievements you have unlocked through your activity
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="relative">
+              {badges.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Trophy className="size-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg font-medium">No badges earned yet</p>
+                  <p className="text-sm">Complete milestones to earn badges and display them here!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {badges.map((badge) => (
+                    <div
+                      key={badge.id}
+                      className="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100"
+                    >
+                      {/* Gradient top accent */}
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+                      
+                      <div className="p-5 flex flex-col items-center text-center">
+                        {/* Badge Icon */}
+                        <div className="size-16 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-4 shadow-inner group-hover:scale-110 transition-transform duration-300">
+                          {badge.iconUrl ? (
+                            <img src={badge.iconUrl} alt={badge.name} className="size-8 object-contain" />
+                          ) : (
+                            <Trophy className="size-8 text-indigo-600" />
+                          )}
+                        </div>
+
+                        {/* Badge Name */}
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">{badge.name}</h3>
+                        
+                        {/* Description */}
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{badge.description}</p>
+                        
+                        {/* Earned indicator */}
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-medium">
+                          <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                          </svg>
+                          Earned
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

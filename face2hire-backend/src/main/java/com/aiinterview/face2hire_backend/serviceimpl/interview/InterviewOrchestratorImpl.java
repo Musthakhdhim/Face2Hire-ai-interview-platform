@@ -11,6 +11,7 @@ import com.aiinterview.face2hire_backend.repository.ApplicationRepository;
 import com.aiinterview.face2hire_backend.repository.UserRepository;
 import com.aiinterview.face2hire_backend.repository.interview.*;
 import com.aiinterview.face2hire_backend.service.ActivityLogService;
+import com.aiinterview.face2hire_backend.service.BadgeService;
 import com.aiinterview.face2hire_backend.service.NotificationService;
 import com.aiinterview.face2hire_backend.service.interview.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,6 +47,7 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
     private final ActivityLogService activityLogService;
     private final NotificationService notificationService;
     private final AppLoggerFactory loggerFactory;
+    private final BadgeService badgeService;
     private AppLogger log;
 
     @PostConstruct
@@ -263,6 +265,7 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
                 log.warn("Failed to send notification for interview completion: {}", e.getMessage());
             }
         }
+        badgeService.checkAndAwardBadges(userId);
 
         return overall;
     }

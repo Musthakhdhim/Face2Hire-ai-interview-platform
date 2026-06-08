@@ -35,4 +35,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
                                  @Param("fromDate") LocalDateTime fromDate,
                                  @Param("toDate") LocalDateTime toDate,
                                  Pageable pageable);
+
+    long countByPostedByUserId(Long userId);
 }

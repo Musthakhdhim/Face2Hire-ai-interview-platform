@@ -1,21 +1,19 @@
 package com.aiinterview.face2hire_backend.controller;
 
-import com.aiinterview.face2hire_backend.dto.ApiResponse;
-import com.aiinterview.face2hire_backend.dto.ProfileDto;
-import com.aiinterview.face2hire_backend.dto.UpdateEmailDto;
-import com.aiinterview.face2hire_backend.dto.UpdateEmailOtpDto;
-import com.aiinterview.face2hire_backend.dto.ChangePasswordDto;
-import com.aiinterview.face2hire_backend.dto.PreferenceDto;
-import com.aiinterview.face2hire_backend.dto.NotificationDto;
+import com.aiinterview.face2hire_backend.dto.*;
 import com.aiinterview.face2hire_backend.exception.OtpNotValidException;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
+import com.aiinterview.face2hire_backend.security.CustomUserDetails;
+import com.aiinterview.face2hire_backend.service.BadgeService;
 import com.aiinterview.face2hire_backend.service.ProfileService;
 import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +23,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/profile")
@@ -32,6 +33,7 @@ public class ProfileController {
 
     private final ProfileService profileService;
     private final AppLoggerFactory loggerFactory;
+    private final BadgeService badgeService;
     private AppLogger log;
 
     @PostConstruct
@@ -156,6 +158,20 @@ public class ProfileController {
         } else {
             log.warn("Notification settings update failed: {}", response.getMessage());
         }
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/badges")
+    public ResponseEntity<ApiResponse<List<BadgeDto>>> getUserBadges(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
+        List<BadgeDto> badges = badgeService.getUserBadges(userId);
+        ApiResponse<List<BadgeDto>> response = ApiResponse.<List<BadgeDto>>builder()
+                .success(true)
+                .message("User badges retrieved")
+                .data(badges)
+                .statusCode(HttpStatus.OK.value())
+                .time(LocalDateTime.now())
+                .build();
         return ResponseEntity.ok(response);
     }
 }
