@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './../components/ui/card';
-import { Button } from './../components/ui/button';
-import { CheckCheck, Bell, Badge } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { CheckCheck, Bell } from 'lucide-react';
+import { Badge } from '../components/ui/badge';
 import { toast } from 'react-toastify';
-import { notificationService } from './../services/notificationService';
-import type { Notification } from './../types/notification';
+import { notificationService } from '../services/notificationService';
+import type { Notification } from '../types/notification';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function NotificationsPage() {
@@ -14,23 +15,32 @@ export default function NotificationsPage() {
     const [totalPages, setTotalPages] = useState(0);
     const pageSize = 20;
 
-    const fetchNotifications = async () => {
-        setLoading(true);
-        try {
-            const data = await notificationService.getAll(page, pageSize);
-            setNotifications(data.content);
-            setTotalPages(data.totalPages);
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to load notifications');
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    // Fetch notifications when page changes
     useEffect(() => {
+        let isMounted = true;
+
+        const fetchNotifications = async () => {
+            setLoading(true);
+            try {
+                const data = await notificationService.getAll(page, pageSize);
+                if (isMounted) {
+                    setNotifications(data.content);
+                    setTotalPages(data.totalPages);
+                }
+            } catch (error) {
+                console.error(error);
+                if (isMounted) toast.error('Failed to load notifications');
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+
         fetchNotifications();
-    }, [page]);
+
+        return () => {
+            isMounted = false;
+        };
+    }, [page, pageSize]);
 
     const handleMarkAsRead = async (id: number) => {
         try {

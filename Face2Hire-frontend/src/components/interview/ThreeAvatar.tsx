@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -20,7 +20,6 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
   const animationIdRef = useRef<number | null>(null);
   const volumeRef = useRef(0);
   const controlsRef = useRef<OrbitControls | null>(null);
-  const [audioActive, setAudioActive] = useState(false);
 
   const modelUrl = '/models/sixth.glb'; // your correctly rigged model
 
@@ -47,7 +46,7 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
       audioContextRef.current.close().catch(console.warn);
       audioContextRef.current = null;
     }
-    setAudioActive(false);
+    // removed setAudioActive(false) – no longer needed
     volumeRef.current = 0;
 
     if (!audioElement) {
@@ -57,6 +56,7 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
 
     console.log('[ThreeAvatar] New audio element, setting up analyser');
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     const ctx = new AudioCtx();
     audioContextRef.current = ctx;
@@ -74,7 +74,6 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
         sourceRef.current = source;
         console.log('[ThreeAvatar] Source connected, resuming context');
         audioContextRef.current.resume().then(() => {
-          setAudioActive(true);
           console.log('[ThreeAvatar] Audio context resumed');
         });
       } catch (err) {
@@ -155,7 +154,7 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
         model.scale.set(scale, scale, scale);
         model.position.y += 2.5;
 
-        // Find jaw bone using `instanceof THREE.Bone`
+        // Find jaw bone
         let jawFound = false;
         model.traverse((child) => {
           if (child instanceof THREE.Bone) {
@@ -278,33 +277,23 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelUrl]);
 
-  const testJaw = useCallback(() => {
-    if (jawBoneRef.current) {
-      console.log('Testing jaw rotation.x');
-      const original = jawBoneRef.current.rotation.x;
-      jawBoneRef.current.rotation.x = -0.25;
-      setTimeout(() => {
-        if (jawBoneRef.current) jawBoneRef.current.rotation.x = original;
-      }, 500);
-    } else {
-      alert('Jaw bone not found – check model');
-    }
-  }, []);
+  // Test function kept for debugging – can be temporarily uncommented as needed
+  // const testJaw = useCallback(() => {
+  //   if (jawBoneRef.current) {
+  //     console.log('Testing jaw rotation.x');
+  //     const original = jawBoneRef.current.rotation.x;
+  //     jawBoneRef.current.rotation.x = -0.25;
+  //     setTimeout(() => {
+  //       if (jawBoneRef.current) jawBoneRef.current.rotation.x = original;
+  //     }, 500);
+  //   } else {
+  //     alert('Jaw bone not found – check model');
+  //   }
+  // }, []);
 
   return (
     <div className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full rounded-xl" />
-      {/* <button
-        onClick={testJaw}
-        className="absolute bottom-4 left-4 z-50 bg-black/70 text-white px-3 py-1 rounded text-sm"
-      >
-        🧪 Test Jaw
-      </button>
-      {audioActive && (
-        <div className="absolute bottom-4 right-4 z-50 bg-green-500/80 text-black px-2 py-1 rounded text-xs">
-          🎤 Audio active
-        </div>
-      )} */}
     </div>
   );
 }

@@ -21,32 +21,33 @@ export default function AdminReportsPage() {
     const [loading, setLoading] = useState(true);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [fetchTrigger, setFetchTrigger] = useState(0);
 
-    const fetchReports = async () => {
-        setLoading(true);
-        try {
-            const data = await adminService.getReports(startDate || undefined, endDate || undefined);
-            setReports(data);
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to load reports');
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    // Fetch reports when date filters or fetchTrigger changes
     useEffect(() => {
+        const fetchReports = async () => {
+            setLoading(true);
+            try {
+                const data = await adminService.getReports(startDate || undefined, endDate || undefined);
+                setReports(data);
+            } catch (error) {
+                console.error(error);
+                toast.error('Failed to load reports');
+            } finally {
+                setLoading(false);
+            }
+        };
         fetchReports();
-    }, []);
+    }, [startDate, endDate, fetchTrigger]);
 
     const handleFilter = () => {
-        fetchReports();
+        setFetchTrigger(prev => prev + 1);
     };
 
     const resetFilters = () => {
         setStartDate('');
         setEndDate('');
-        fetchReports();
+        setFetchTrigger(prev => prev + 1);
     };
 
     if (loading) {

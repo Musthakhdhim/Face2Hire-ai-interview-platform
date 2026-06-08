@@ -26,19 +26,21 @@ export default function AdminBadgesPage() {
         requirement: '',
     });
 
-    const fetchBadges = async () => {
-        try {
-            const data = await badgeService.getAllBadges();
-            setBadges(data);
-        } catch (error) {
-            toast.error('Failed to load badges');
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    // Fetch badges inside useEffect to avoid set-state-in-effect warning
     useEffect(() => {
+        let isMounted = true;
+        const fetchBadges = async () => {
+            try {
+                const data = await badgeService.getAllBadges();
+                if (isMounted) setBadges(data);
+            } catch {
+                toast.error('Failed to load badges');
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
         fetchBadges();
+        return () => { isMounted = false; };
     }, []);
 
     const resetForm = () => {
@@ -62,9 +64,13 @@ export default function AdminBadgesPage() {
             }
             setIsDialogOpen(false);
             resetForm();
-            fetchBadges();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Operation failed');
+            // Refresh the list after operation
+            const data = await badgeService.getAllBadges();
+            setBadges(data);
+            setLoading(false);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            toast.error(err.response?.data?.message || 'Operation failed');
         }
     };
 
@@ -73,8 +79,9 @@ export default function AdminBadgesPage() {
             try {
                 await badgeService.deleteBadge(id);
                 toast.success('Badge deleted');
-                fetchBadges();
-            } catch (error) {
+                const data = await badgeService.getAllBadges();
+                setBadges(data);
+            } catch {
                 toast.error('Failed to delete badge');
             }
         }

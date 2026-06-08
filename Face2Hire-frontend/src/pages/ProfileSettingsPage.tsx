@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, type JSX } from 'react';
+import { useState, useEffect, useRef, useMemo, type JSX } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -170,78 +170,95 @@ export default function ProfileSettingsPage(): JSX.Element {
     }
   };
 
-  const fetchProfileData = useCallback(async (forceRefresh = false): Promise<void> => {
-    if (!forceRefresh) {
-      const cached = loadFromCache();
-      if (cached) {
-        setFullName(cached.profile.fullName);
-        setUserName(cached.profile.userName);
-        setEmail(cached.profile.email);
-        setPhoneNumber(cached.profile.phoneNumber);
-        setProfileImageUrl(cached.profile.profileImageUrl);
-        setDefaultInterviewType(cached.preferences.defaultInterviewType);
-        setAvatarStyle(cached.preferences.avatarStyle);
-        setLanguage(cached.preferences.language);
-        setEmailUpdates(cached.notifications.emailUpdates);
-        setInterviewReminders(cached.notifications.interviewReminders);
-        setMarketingEmails(cached.notifications.marketingEmails);
-        setLoading(false);
-        return;
-      }
-    }
-
-    setLoading(true);
-    try {
-      const profileRes = await axiosClient.get<{ data: UserProfileData }>('/profile');
-      const userData = profileRes.data.data;
-      setFullName(userData.fullName || '');
-      setUserName(userData.userName || '');
-      setEmail(userData.email || '');
-      setPhoneNumber(userData.phoneNumber || '');
-      setProfileImageUrl(userData.profileImageUrl || '');
-
-      let prefsData: PreferencesData = { defaultInterviewType: 'technical', avatarStyle: 'professional', language: 'english' };
-      try {
-        const prefsRes = await axiosClient.get<{ data: PreferencesData }>('/profile/preferences');
-        prefsData = prefsRes.data.data;
-        setDefaultInterviewType(prefsData.defaultInterviewType);
-        setAvatarStyle(prefsData.avatarStyle);
-        setLanguage(prefsData.language);
-      } catch { /* ignore */ }
-
-      const notifRes = await axiosClient.get<{ data: NotificationsData }>('/profile/notifications');
-      const notifData = notifRes.data.data;
-      setEmailUpdates(notifData.emailUpdates);
-      setInterviewReminders(notifData.interviewReminders);
-      setMarketingEmails(notifData.marketingEmails);
-
-      saveToCache(userData, prefsData, notifData);
-    } catch (err) {
-      const error = err as AxiosError<ErrorResponseData>;
-      toast.error(error.response?.data?.message || 'Failed to load profile');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchBadges = useCallback(async () => {
-    try {
-      const userBadges = await badgeService.getUserBadges();
-      setBadges(userBadges);
-    } catch (error) {
-      console.error('Failed to fetch badges', error);
-    }
-  }, []);
-
+  // --- Load profile and badges data inside useEffect (fixes set-state-in-effect) ---
   useEffect(() => {
+    let isMounted = true;
+
+    const loadProfileData = async (forceRefresh = false) => {
+      if (!forceRefresh) {
+        const cached = loadFromCache();
+        if (cached && isMounted) {
+          setFullName(cached.profile.fullName);
+          setUserName(cached.profile.userName);
+          setEmail(cached.profile.email);
+          setPhoneNumber(cached.profile.phoneNumber);
+          setProfileImageUrl(cached.profile.profileImageUrl);
+          setDefaultInterviewType(cached.preferences.defaultInterviewType);
+          setAvatarStyle(cached.preferences.avatarStyle);
+          setLanguage(cached.preferences.language);
+          setEmailUpdates(cached.notifications.emailUpdates);
+          setInterviewReminders(cached.notifications.interviewReminders);
+          setMarketingEmails(cached.notifications.marketingEmails);
+          setLoading(false);
+          return;
+        }
+      }
+
+      setLoading(true);
+      try {
+        const profileRes = await axiosClient.get<{ data: UserProfileData }>('/profile');
+        const userData = profileRes.data.data;
+        if (isMounted) {
+          setFullName(userData.fullName || '');
+          setUserName(userData.userName || '');
+          setEmail(userData.email || '');
+          setPhoneNumber(userData.phoneNumber || '');
+          setProfileImageUrl(userData.profileImageUrl || '');
+        }
+
+        let prefsData: PreferencesData = { defaultInterviewType: 'technical', avatarStyle: 'professional', language: 'english' };
+        try {
+          const prefsRes = await axiosClient.get<{ data: PreferencesData }>('/profile/preferences');
+          prefsData = prefsRes.data.data;
+          if (isMounted) {
+            setDefaultInterviewType(prefsData.defaultInterviewType);
+            setAvatarStyle(prefsData.avatarStyle);
+            setLanguage(prefsData.language);
+          }
+        } catch { /* ignore */ }
+
+        const notifRes = await axiosClient.get<{ data: NotificationsData }>('/profile/notifications');
+        const notifData = notifRes.data.data;
+        if (isMounted) {
+          setEmailUpdates(notifData.emailUpdates);
+          setInterviewReminders(notifData.interviewReminders);
+          setMarketingEmails(notifData.marketingEmails);
+        }
+
+        if (isMounted) {
+          saveToCache(userData, prefsData, notifData);
+          setLoading(false);
+        }
+      } catch (err) {
+        const error = err as AxiosError<ErrorResponseData>;
+        if (isMounted) toast.error(error.response?.data?.message || 'Failed to load profile');
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    const loadBadges = async () => {
+      try {
+        const userBadges = await badgeService.getUserBadges();
+        if (isMounted) setBadges(userBadges);
+      } catch (error) {
+        if (isMounted) console.error('Failed to fetch badges', error);
+      }
+    };
+
     if (!token) {
       navigate('/login');
       return;
     }
-    fetchProfileData();
-    fetchBadges();
-  }, [token, navigate, fetchProfileData, fetchBadges]);
 
+    loadProfileData();
+    loadBadges();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token, navigate]);
+
+  // --- All handlers (photo upload, save profile, etc.) remain exactly the same as before ---
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -509,7 +526,7 @@ export default function ProfileSettingsPage(): JSX.Element {
           ))}
         </TabsList>
 
-        {/* Profile Tab */}
+        {/* Profile Tab (unchanged) */}
         <TabsContent value="profile" className="space-y-6">
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -517,6 +534,7 @@ export default function ProfileSettingsPage(): JSX.Element {
               <CardDescription>Update your personal details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* ... photo upload, form fields – unchanged ... */}
               <div className="flex items-center gap-6">
                 <div className="relative">
                   <Avatar className="size-24">
@@ -616,6 +634,7 @@ export default function ProfileSettingsPage(): JSX.Element {
               <CardDescription>Verify your identity with OTP codes sent to both emails</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* ... email update form – unchanged ... */}
               {emailUpdateStep === 'idle' ? (
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -694,6 +713,7 @@ export default function ProfileSettingsPage(): JSX.Element {
           </Card>
         </TabsContent>
 
+        {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -754,12 +774,14 @@ export default function ProfileSettingsPage(): JSX.Element {
           </Card>
         </TabsContent>
 
+        {/* Resume Tab */}
         {showResumeTab && (
           <TabsContent value="resume" className="space-y-6">
             <ResumeTab />
           </TabsContent>
         )}
 
+        {/* Preferences Tab */}
         {showPreferences && (
           <TabsContent value="preferences" className="space-y-6">
             <Card className="border-0 shadow-lg">
@@ -814,6 +836,7 @@ export default function ProfileSettingsPage(): JSX.Element {
           </TabsContent>
         )}
 
+        {/* Notifications Tab */}
         <TabsContent value="notifications" className="space-y-6">
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -852,6 +875,7 @@ export default function ProfileSettingsPage(): JSX.Element {
           </Card>
         </TabsContent>
 
+        {/* Badges Tab – Fixed overlay issue */}
         <TabsContent value="badges" className="space-y-6">
           <Card className="border-0 shadow-lg overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 pointer-events-none" />
@@ -878,11 +902,8 @@ export default function ProfileSettingsPage(): JSX.Element {
                       key={badge.id}
                       className="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100"
                     >
-                      {/* Gradient top accent */}
                       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
-                      
                       <div className="p-5 flex flex-col items-center text-center">
-                        {/* Badge Icon */}
                         <div className="size-16 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-4 shadow-inner group-hover:scale-110 transition-transform duration-300">
                           {badge.iconUrl ? (
                             <img src={badge.iconUrl} alt={badge.name} className="size-8 object-contain" />
@@ -890,14 +911,8 @@ export default function ProfileSettingsPage(): JSX.Element {
                             <Trophy className="size-8 text-indigo-600" />
                           )}
                         </div>
-
-                        {/* Badge Name */}
                         <h3 className="text-lg font-bold text-gray-900 mb-1">{badge.name}</h3>
-                        
-                        {/* Description */}
                         <p className="text-sm text-gray-600 mb-3 line-clamp-2">{badge.description}</p>
-                        
-                        {/* Earned indicator */}
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-medium">
                           <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />

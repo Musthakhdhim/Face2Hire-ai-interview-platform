@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { notificationService } from './../services/notificationService';
-import type { Notification } from './../types/notification';
+import { notificationService } from '../services/notificationService';
+import type { Notification } from '../types/notification';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -13,23 +13,30 @@ export default function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const fetchData = async () => {
-        try {
-            const [count, unread] = await Promise.all([
-                notificationService.getUnreadCount(),
-                notificationService.getUnread(),
-            ]);
-            setUnreadCount(count);
-            setRecentNotifications(unread.slice(0, 5));
-        } catch (error) {
-            console.error('Failed to fetch notifications', error);
-        }
-    };
-
     useEffect(() => {
+        let isMounted = true;
+
+        const fetchData = async () => {
+            try {
+                const [count, unread] = await Promise.all([
+                    notificationService.getUnreadCount(),
+                    notificationService.getUnread(),
+                ]);
+                if (isMounted) {
+                    setUnreadCount(count);
+                    setRecentNotifications(unread.slice(0, 5));
+                }
+            } catch (error) {
+                console.error('Failed to fetch notifications', error);
+            }
+        };
+
         fetchData();
-        const interval = setInterval(fetchData, 30000); // refresh every 30 sec
-        return () => clearInterval(interval);
+        const interval = setInterval(() => fetchData(), 30000);
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
     }, []);
 
     useEffect(() => {
@@ -44,12 +51,31 @@ export default function NotificationBell() {
 
     const handleMarkAsRead = async (id: number) => {
         await notificationService.markAsRead(id);
-        fetchData();
+        // Refresh data after marking as read
+        try {
+            const [count, unread] = await Promise.all([
+                notificationService.getUnreadCount(),
+                notificationService.getUnread(),
+            ]);
+            setUnreadCount(count);
+            setRecentNotifications(unread.slice(0, 5));
+        } catch (error) {
+            console.error('Failed to refresh notifications', error);
+        }
     };
 
     const handleMarkAllRead = async () => {
         await notificationService.markAllAsRead();
-        fetchData();
+        try {
+            const [count, unread] = await Promise.all([
+                notificationService.getUnreadCount(),
+                notificationService.getUnread(),
+            ]);
+            setUnreadCount(count);
+            setRecentNotifications(unread.slice(0, 5));
+        } catch (error) {
+            console.error('Failed to refresh notifications', error);
+        }
     };
 
     return (
