@@ -23,7 +23,6 @@ export default function AdminReportsPage() {
     const [endDate, setEndDate] = useState('');
     const [fetchTrigger, setFetchTrigger] = useState(0);
 
-    // Fetch reports when date filters or fetchTrigger changes
     useEffect(() => {
         const fetchReports = async () => {
             setLoading(true);
@@ -104,7 +103,7 @@ export default function AdminReportsPage() {
                     </div>
                     <div className="grid lg:grid-cols-2 gap-6">
                         <Card><CardHeader><CardTitle>User Growth Trend</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><LineChart data={reports.userReport.userGrowth}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis /><Tooltip /><Line type="monotone" dataKey="count" stroke="#6366f1" name="Users" /></LineChart></ResponsiveContainer></CardContent></Card>
-                        <Card><CardHeader><CardTitle>Users by Role</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><RePieChart><Pie data={userRoleData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>{userRoleData.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie><Tooltip /></RePieChart></ResponsiveContainer></CardContent></Card>
+                        <Card><CardHeader><CardTitle>Users by Role</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><RePieChart><Pie data={userRoleData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>{userRoleData.map((_, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie><Tooltip /></RePieChart></ResponsiveContainer></CardContent></Card>
                     </div>
                 </TabsContent>
 
@@ -116,7 +115,7 @@ export default function AdminReportsPage() {
                         <Card><CardContent className="p-6 text-center"><Clock className="size-8 mx-auto text-blue-500 mb-2" /><div className="text-3xl font-bold">{reports.interviewReport.activeInterviews}</div><div className="text-sm text-gray-600">In Progress</div></CardContent></Card>
                     </div>
                     <div className="grid lg:grid-cols-2 gap-6">
-                        <Card><CardHeader><CardTitle>Interviews by Type</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><RePieChart><Pie data={interviewTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>{interviewTypeData.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie><Tooltip /></RePieChart></ResponsiveContainer></CardContent></Card>
+                        <Card><CardHeader><CardTitle>Interviews by Type</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><RePieChart><Pie data={interviewTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>{interviewTypeData.map((_, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie><Tooltip /></RePieChart></ResponsiveContainer></CardContent></Card>
                         <Card><CardHeader><CardTitle>Average Score by Type</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><BarChart data={avgScoreData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="type" /><YAxis domain={[0, 100]} /><Tooltip /><Bar dataKey="score" fill="#8b5cf6" name="Avg Score (%)" /></BarChart></ResponsiveContainer></CardContent></Card>
                     </div>
                     <Card><CardHeader><CardTitle>Interview Volume Trend</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><LineChart data={reports.interviewReport.interviewVolume}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" /><YAxis /><Tooltip /><Line type="monotone" dataKey="count" stroke="#f59e0b" name="Interviews" /></LineChart></ResponsiveContainer></CardContent></Card>
@@ -129,7 +128,7 @@ export default function AdminReportsPage() {
                         <Card><CardContent className="p-6 text-center"><XCircle className="size-8 mx-auto text-red-500 mb-2" /><div className="text-3xl font-bold">{reports.jobReport.closedJobs}</div><div className="text-sm text-gray-600">Closed Jobs</div></CardContent></Card>
                     </div>
                     <div className="grid lg:grid-cols-2 gap-6">
-                        <Card><CardHeader><CardTitle>Jobs by Type</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><RePieChart><Pie data={jobTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>{jobTypeData.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie><Tooltip /></RePieChart></ResponsiveContainer></CardContent></Card>
+                        <Card><CardHeader><CardTitle>Jobs by Type</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><RePieChart><Pie data={jobTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>{jobTypeData.map((_, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie><Tooltip /></RePieChart></ResponsiveContainer></CardContent></Card>
                         <Card><CardHeader><CardTitle>Job Postings Trend</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><LineChart data={reports.jobReport.jobPostings}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis /><Tooltip /><Line type="monotone" dataKey="count" stroke="#10b981" name="Jobs Posted" /></LineChart></ResponsiveContainer></CardContent></Card>
                     </div>
                 </TabsContent>
@@ -141,7 +140,7 @@ export default function AdminReportsPage() {
                         <Card><CardContent className="p-6 text-center"><CheckCircle2 className="size-8 mx-auto text-green-500 mb-2" /><div className="text-3xl font-bold">{reports.applicationReport.approvedApplications}</div><div className="text-sm text-gray-600">Approved</div></CardContent></Card>
                         <Card><CardContent className="p-6 text-center"><XCircle className="size-8 mx-auto text-red-500 mb-2" /><div className="text-3xl font-bold">{reports.applicationReport.rejectedApplications}</div><div className="text-sm text-gray-600">Rejected</div></CardContent></Card>
                     </div>
-                    <Card><CardHeader><CardTitle>Applications by Status</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><RePieChart><Pie data={appStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>{appStatusData.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie><Tooltip /></RePieChart></ResponsiveContainer></CardContent></Card>
+                    <Card><CardHeader><CardTitle>Applications by Status</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={300}><RePieChart><Pie data={appStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>{appStatusData.map((_, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie><Tooltip /></RePieChart></ResponsiveContainer></CardContent></Card>
                 </TabsContent>
             </Tabs>
         </div>

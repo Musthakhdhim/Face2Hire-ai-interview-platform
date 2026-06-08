@@ -28,7 +28,7 @@ export default function IntervieweeDashboard(): JSX.Element {
   const [totalInterviews, setTotalInterviews] = useState(0);
   const [avgScore, setAvgScore] = useState(0);
   const [totalPracticeHours, setTotalPracticeHours] = useState(0);
-  const [avgDuration, setAvgDuration] = useState(0);
+  const [_avgDuration, setAvgDuration] = useState(0);
 
   useEffect(() => {
     const fetchDashboardData = async () => {

@@ -28,10 +28,6 @@ interface SessionConfig {
   scheduledInterviewId?: number;
 }
 
-interface TimerMessage {
-  remainingSeconds: number;
-}
-
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;

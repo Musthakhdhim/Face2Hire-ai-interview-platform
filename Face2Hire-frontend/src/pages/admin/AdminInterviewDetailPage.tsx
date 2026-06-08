@@ -87,7 +87,7 @@ export default function AdminInterviewDetailPage() {
                     <TabsTrigger value="feedback">Detailed Feedback</TabsTrigger>
                 </TabsList>
                 <TabsContent value="questions" className="space-y-6">
-                    {detail.questions.map((q, idx) => (
+                    {detail.questions.map((q, _) => (
                         <Card key={q.questionId} className="border-0 shadow-lg">
                             <CardHeader>
                                 <div className="flex justify-between items-start">

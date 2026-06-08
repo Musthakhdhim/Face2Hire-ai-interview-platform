@@ -18,7 +18,7 @@ export default function FeedbackPage() {
   const [feedback, setFeedback] = useState<OverallFeedbackDto | null>(null);
   const [sessionDetail, setSessionDetail] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const [_detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
@@ -91,12 +91,12 @@ export default function FeedbackPage() {
   if (loading) return <div className="text-center py-12">Loading feedback...</div>;
   if (!feedback) return <div className="text-center py-12">No feedback found</div>;
 
-  const getScoreColor = (score: number | null | undefined) => {
-    if (!score) return 'text-gray-500';
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-amber-600';
-    return 'text-red-600';
-  };
+  // const _getScoreColor = (score: number | null | undefined) => {
+  //   if (!score) return 'text-gray-500';
+  //   if (score >= 80) return 'text-green-600';
+  //   if (score >= 60) return 'text-amber-600';
+  //   return 'text-red-600';
+  // };
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
@@ -149,7 +149,7 @@ export default function FeedbackPage() {
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible className="space-y-4">
-              {sessionDetail.questions.map((q, idx) => (
+              {sessionDetail.questions.map((q, _idx) => (
                 <AccordionItem key={q.questionId} value={`q-${q.questionId}`} className="border rounded-lg px-4">
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex items-center justify-between w-full pr-4">

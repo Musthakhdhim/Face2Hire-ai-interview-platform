@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logout, updateUser } from '../store/slices/authSlice';
 import axiosClient from '../services/axiosClient';
 import {
-  Home, FileText, Upload, BarChart2, Settings, LogOut, Bell, Search, User,
+  Home, FileText, Upload, BarChart2, Settings, LogOut, Search, User,
   Briefcase, Calendar, Users, Activity, FileBarChart,
   Mail,
   Trophy,

@@ -42,7 +42,6 @@ export default function FaceDetector({
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<FaceDetectionInstance | null>(null);
   const hiddenVideoRef = useRef<HTMLVideoElement | null>(null);
-  const animationIdRef = useRef<number | null>(null);
   const enabledRef = useRef(false);
 
   // Report status to parent
@@ -76,7 +75,7 @@ export default function FaceDetector({
       });
     };
 
-    const startDetectionLoop = (video: HTMLVideoElement) => {
+    const startDetectionLoop = () => {
       if (!localDetector) return;
       const detect = async () => {
         if (!localDetector || !hiddenVideoRef.current) return;
@@ -138,7 +137,7 @@ export default function FaceDetector({
         localDetector = faceDetection;
         detectorRef.current = faceDetection;
         setCameraEnabled(true);
-        startDetectionLoop(hiddenVideo);
+        startDetectionLoop();
       } catch (err) {
         const error = err as Error;
         setPermissionError(error.message || 'Camera error');
@@ -158,7 +157,7 @@ export default function FaceDetector({
         hiddenVideoRef.current.remove();
       }
     };
-  }, [maxViolations, onViolation]); // only depends on stable props
+  }, [maxViolations, onViolation]);
 
   // Attach stream to preview video
   useEffect(() => {
