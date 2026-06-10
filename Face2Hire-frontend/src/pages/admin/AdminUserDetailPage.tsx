@@ -19,7 +19,6 @@ export default function AdminUserDetailPage() {
         const fetchDetail = async () => {
             try {
                 const data = await userService.getUserDetail(Number(userId));
-                // console.log('User detail:', data);
                 setUserDetail(data);
             } catch (error) {
                 console.error(error);

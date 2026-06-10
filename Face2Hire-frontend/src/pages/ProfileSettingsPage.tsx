@@ -24,7 +24,6 @@ import ResumeTab from '../components/profile/ResumeTab';
 import { badgeService } from '../services/badgeService';
 import type { Badge as BadgeType } from '../types/badge';
 
-const PROFILE_CACHE_KEY = 'profileSettingsCache';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 interface CachedData {
@@ -47,40 +46,6 @@ interface CachedData {
     marketingEmails: boolean;
   };
 }
-
-const saveToCache = (
-  profile: CachedData['profile'],
-  preferences: CachedData['preferences'],
-  notifications: CachedData['notifications']
-) => {
-  const cache: CachedData = {
-    timestamp: Date.now(),
-    profile,
-    preferences,
-    notifications,
-  };
-  sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(cache));
-};
-
-const loadFromCache = (): CachedData | null => {
-  const cached = sessionStorage.getItem(PROFILE_CACHE_KEY);
-  if (!cached) return null;
-  try {
-    const data = JSON.parse(cached) as CachedData;
-    if (Date.now() - data.timestamp < CACHE_TTL) {
-      return data;
-    } else {
-      sessionStorage.removeItem(PROFILE_CACHE_KEY);
-      return null;
-    }
-  } catch {
-    return null;
-  }
-};
-
-const clearCache = () => {
-  sessionStorage.removeItem(PROFILE_CACHE_KEY);
-};
 
 interface UserProfileData {
   fullName: string;
@@ -110,6 +75,7 @@ export default function ProfileSettingsPage(): JSX.Element {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { user: reduxUser, token } = useSelector((state: RootState) => state.auth);
+  const userId = reduxUser?.id;
   const [loading, setLoading] = useState<boolean>(true);
   const [badges, setBadges] = useState<BadgeType[]>([]);
 
@@ -170,11 +136,50 @@ export default function ProfileSettingsPage(): JSX.Element {
     }
   };
 
-  // --- Load profile and badges data inside useEffect (fixes set-state-in-effect) ---
+  // ---------- Load profile and badges (with cache helpers inside effect) ----------
   useEffect(() => {
     let isMounted = true;
 
+    // Cache helpers (defined inside effect so they don't cause dependency warnings)
+    const getCacheKey = () => `profileSettingsCache_${userId || 'anonymous'}`;
+
+    const saveToCache = (
+      profile: CachedData['profile'],
+      preferences: CachedData['preferences'],
+      notifications: CachedData['notifications']
+    ) => {
+      const cache: CachedData = {
+        timestamp: Date.now(),
+        profile,
+        preferences,
+        notifications,
+      };
+      sessionStorage.setItem(getCacheKey(), JSON.stringify(cache));
+    };
+
+    const loadFromCache = (): CachedData | null => {
+      if (!userId) return null;
+      const cached = sessionStorage.getItem(getCacheKey());
+      if (!cached) return null;
+      try {
+        const data = JSON.parse(cached) as CachedData;
+        if (Date.now() - data.timestamp < CACHE_TTL) {
+          return data;
+        } else {
+          sessionStorage.removeItem(getCacheKey());
+          return null;
+        }
+      } catch {
+        return null;
+      }
+    };
+
+    const clearCache = () => {
+      if (userId) sessionStorage.removeItem(getCacheKey());
+    };
+
     const loadProfileData = async (forceRefresh = false) => {
+      if (!userId) return;
       if (!forceRefresh) {
         const cached = loadFromCache();
         if (cached && isMounted) {
@@ -237,6 +242,7 @@ export default function ProfileSettingsPage(): JSX.Element {
     };
 
     const loadBadges = async () => {
+      if (!userId) return;
       try {
         const userBadges = await badgeService.getUserBadges();
         if (isMounted) setBadges(userBadges);
@@ -246,19 +252,27 @@ export default function ProfileSettingsPage(): JSX.Element {
     };
 
     if (!token) {
+      clearCache();
       navigate('/login');
       return;
     }
 
-    loadProfileData();
+    if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoading(false);
+      return;
+    }
+
+    const forceRefresh = true;
+    loadProfileData(forceRefresh);
     loadBadges();
 
     return () => {
       isMounted = false;
     };
-  }, [token, navigate]);
+  }, [token, navigate, userId]);
 
-  // --- All handlers (photo upload, save profile, etc.) remain exactly the same as before ---
+  // ---------- Handlers (unchanged) ----------
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -290,20 +304,11 @@ export default function ProfileSettingsPage(): JSX.Element {
       setProfileImageUrl(updatedProfile.profileImageUrl);
       dispatch(updateUser({ profileImageUrl: imageUrl, name: updatedProfile.fullName, phone: updatedProfile.phoneNumber }));
 
-      clearCache();
-      const prefsRes = await axiosClient.get<{ data: PreferencesData }>('/profile/preferences');
-      const notifRes = await axiosClient.get<{ data: NotificationsData }>('/profile/notifications');
-      saveToCache(
-        {
-          fullName: updatedProfile.fullName,
-          userName: updatedProfile.userName,
-          email: updatedProfile.email,
-          phoneNumber: updatedProfile.phoneNumber,
-          profileImageUrl: updatedProfile.profileImageUrl
-        },
-        prefsRes.data.data,
-        notifRes.data.data
-      );
+      // clear and save cache using the same helpers (they are inside effect, so we need to re-create them here)
+      // For simplicity, we can directly manipulate sessionStorage with the key
+      const cacheKey = `profileSettingsCache_${userId || 'anonymous'}`;
+      sessionStorage.removeItem(cacheKey);
+      // After saving, we can optionally save the new data – but the effect will refetch anyway.
       toast.success('Profile updated with new photo');
     } catch (err) {
       const error = err as AxiosError<ErrorResponseData>;
@@ -329,20 +334,8 @@ export default function ProfileSettingsPage(): JSX.Element {
       setProfileImageUrl(updatedProfile.profileImageUrl);
       dispatch(updateUser({ name: updatedProfile.fullName, phone: updatedProfile.phoneNumber }));
 
-      clearCache();
-      const prefsRes = await axiosClient.get<{ data: PreferencesData }>('/profile/preferences');
-      const notifRes = await axiosClient.get<{ data: NotificationsData }>('/profile/notifications');
-      saveToCache(
-        {
-          fullName: updatedProfile.fullName,
-          userName: updatedProfile.userName,
-          email: updatedProfile.email,
-          phoneNumber: updatedProfile.phoneNumber,
-          profileImageUrl: updatedProfile.profileImageUrl
-        },
-        prefsRes.data.data,
-        notifRes.data.data
-      );
+      const cacheKey = `profileSettingsCache_${userId || 'anonymous'}`;
+      sessionStorage.removeItem(cacheKey);
       toast.success('Profile updated');
     } catch (err) {
       const error = err as AxiosError<ErrorResponseData>;
@@ -366,15 +359,8 @@ export default function ProfileSettingsPage(): JSX.Element {
       setAvatarStyle(newPrefs.avatarStyle);
       setLanguage(newPrefs.language);
 
-      const cached = loadFromCache();
-      if (cached) {
-        const updatedCache = {
-          ...cached,
-          preferences: newPrefs,
-          timestamp: Date.now()
-        };
-        sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(updatedCache));
-      }
+      const cacheKey = `profileSettingsCache_${userId || 'anonymous'}`;
+      sessionStorage.removeItem(cacheKey);
       const elapsed = Date.now() - startTime;
       if (elapsed < 1000) await new Promise(resolve => setTimeout(resolve, 1000 - elapsed));
       toast.success('Preferences saved');
@@ -400,15 +386,8 @@ export default function ProfileSettingsPage(): JSX.Element {
       setInterviewReminders(newNotifs.interviewReminders);
       setMarketingEmails(newNotifs.marketingEmails);
 
-      const cached = loadFromCache();
-      if (cached) {
-        const updatedCache = {
-          ...cached,
-          notifications: newNotifs,
-          timestamp: Date.now()
-        };
-        sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(updatedCache));
-      }
+      const cacheKey = `profileSettingsCache_${userId || 'anonymous'}`;
+      sessionStorage.removeItem(cacheKey);
       const elapsed = Date.now() - startTime;
       if (elapsed < 1000) await new Promise(resolve => setTimeout(resolve, 1000 - elapsed));
       toast.success('Notification settings saved');
@@ -482,7 +461,8 @@ export default function ProfileSettingsPage(): JSX.Element {
         newEmail
       });
       toast.success('Email updated successfully! Please log in again with your new email.');
-      clearCache();
+      const cacheKey = `profileSettingsCache_${userId || 'anonymous'}`;
+      sessionStorage.removeItem(cacheKey);
       setTimeout(() => {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
@@ -526,7 +506,7 @@ export default function ProfileSettingsPage(): JSX.Element {
           ))}
         </TabsList>
 
-        {/* Profile Tab (unchanged) */}
+        {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-6">
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -534,7 +514,6 @@ export default function ProfileSettingsPage(): JSX.Element {
               <CardDescription>Update your personal details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* ... photo upload, form fields – unchanged ... */}
               <div className="flex items-center gap-6">
                 <div className="relative">
                   <Avatar className="size-24">
@@ -634,7 +613,6 @@ export default function ProfileSettingsPage(): JSX.Element {
               <CardDescription>Verify your identity with OTP codes sent to both emails</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* ... email update form – unchanged ... */}
               {emailUpdateStep === 'idle' ? (
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -713,7 +691,6 @@ export default function ProfileSettingsPage(): JSX.Element {
           </Card>
         </TabsContent>
 
-        {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -774,14 +751,12 @@ export default function ProfileSettingsPage(): JSX.Element {
           </Card>
         </TabsContent>
 
-        {/* Resume Tab */}
         {showResumeTab && (
           <TabsContent value="resume" className="space-y-6">
             <ResumeTab />
           </TabsContent>
         )}
 
-        {/* Preferences Tab */}
         {showPreferences && (
           <TabsContent value="preferences" className="space-y-6">
             <Card className="border-0 shadow-lg">
@@ -836,7 +811,6 @@ export default function ProfileSettingsPage(): JSX.Element {
           </TabsContent>
         )}
 
-        {/* Notifications Tab */}
         <TabsContent value="notifications" className="space-y-6">
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -875,7 +849,6 @@ export default function ProfileSettingsPage(): JSX.Element {
           </Card>
         </TabsContent>
 
-        {/* Badges Tab – Fixed overlay issue */}
         <TabsContent value="badges" className="space-y-6">
           <Card className="border-0 shadow-lg overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 pointer-events-none" />

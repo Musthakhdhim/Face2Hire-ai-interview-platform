@@ -91,13 +91,6 @@ export default function FeedbackPage() {
   if (loading) return <div className="text-center py-12">Loading feedback...</div>;
   if (!feedback) return <div className="text-center py-12">No feedback found</div>;
 
-  // const _getScoreColor = (score: number | null | undefined) => {
-  //   if (!score) return 'text-gray-500';
-  //   if (score >= 80) return 'text-green-600';
-  //   if (score >= 60) return 'text-amber-600';
-  //   return 'text-red-600';
-  // };
-
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>

@@ -211,19 +211,6 @@ export default function AdminUsersPage(): JSX.Element {
                         </div>
                       </div>
 
-                      {/* {user.role === 'INTERVIEWEE' && (
-                        <div className="grid grid-cols-2 gap-4 lg:w-64">
-                          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 text-center">
-                            <div className="text-2xl font-bold text-blue-600">0</div>
-                            <div className="text-xs text-gray-600">Interviews</div>
-                          </div>
-                          <div className="p-3 bg-green-50 rounded-lg border border-green-200 text-center">
-                            <div className="text-2xl font-bold text-green-600">0%</div>
-                            <div className="text-xs text-gray-600">Avg Score</div>
-                          </div>
-                        </div>
-                      )} */}
-
                       <div className="flex flex-col gap-2">
                         <Link to={`/admin/users/${user.id}`}>
                           <Button size="sm" variant="outline">

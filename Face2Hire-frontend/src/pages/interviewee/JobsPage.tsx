@@ -310,7 +310,6 @@ export default function JobsPage(): JSX.Element {
         </div>
       )}
 
-      {/* Pagination */}
       {!loading && totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 py-4">
           <Button variant="outline" size="sm" onClick={() => setCurrentPage(currentPage - 1)} disabled={!canPrevious}>

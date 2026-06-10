@@ -24,7 +24,6 @@ export default function AdminInterviewsPage() {
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
 
-    // Fetch interviews whenever filters or page change
     useEffect(() => {
         const fetchInterviews = async () => {
             setLoading(true);
@@ -53,7 +52,6 @@ export default function AdminInterviewsPage() {
 
     const handleSearch = () => {
         setCurrentPage(0);
-        // Effect will run because currentPage changed
     };
 
     const resetFilters = () => {

@@ -3,13 +3,13 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logout, updateUser } from '../store/slices/authSlice';
 import axiosClient from '../services/axiosClient';
 import {
-  Home, FileText, Upload, BarChart2, Settings, LogOut, Search, User,
+  Home, FileText, Upload, BarChart2, Settings, LogOut,  User,
   Briefcase, Calendar, Users, Activity, FileBarChart,
   Mail,
   Trophy,
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
+// import { Input } from '../components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -162,16 +162,12 @@ export default function DashboardLayout(): JSX.Element | null {
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
           <div className="flex items-center gap-4 flex-1 max-w-2xl">
-            <div className="relative flex-1">
+            {/* <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
               <Input placeholder="Search..." className="pl-10 bg-gray-50 border-gray-200" />
-            </div>
+            </div> */}
           </div>
           <div className="flex items-center gap-4">
-            {/* <Button variant="ghost" size="icon" className="relative">
-              <Bell className="size-5" />
-              <Badge className="absolute -top-1 -right-1 size-5 rounded-full p-0 flex items-center justify-center bg-red-500 text-white text-xs">3</Badge>
-            </Button> */}
             <NotificationBell />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

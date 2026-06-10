@@ -51,7 +51,6 @@ export default function NotificationBell() {
 
     const handleMarkAsRead = async (id: number) => {
         await notificationService.markAsRead(id);
-        // Refresh data after marking as read
         try {
             const [count, unread] = await Promise.all([
                 notificationService.getUnreadCount(),

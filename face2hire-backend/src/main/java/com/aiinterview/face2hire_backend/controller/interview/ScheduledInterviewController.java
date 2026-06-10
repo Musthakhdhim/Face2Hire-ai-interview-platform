@@ -18,16 +18,6 @@ public class ScheduledInterviewController {
 
     private final ScheduledInterviewService service;
 
-//    @PostMapping
-//    public ResponseEntity<ScheduledInterviewDto> schedule(
-//            @AuthenticationPrincipal CustomUserDetails userDetails,
-//            @Valid @RequestBody ScheduleInterviewRequest request) {
-//        String interviewerName = userDetails.getUser().getFullName();
-//        if (interviewerName == null || interviewerName.isBlank()) {
-//            interviewerName = userDetails.getUsername();
-//        }
-//        return ResponseEntity.ok(service.schedule(interviewerName, request));
-//    }
 
     @PostMapping
     public ResponseEntity<ScheduledInterviewDto> schedule(
@@ -45,12 +35,6 @@ public class ScheduledInterviewController {
         return ResponseEntity.ok(service.getForUser(userId));
     }
 
-//    @GetMapping("/for-interviewer")
-//    public ResponseEntity<List<ScheduledInterviewDto>> getByInterviewer(
-//            @AuthenticationPrincipal CustomUserDetails userDetails) {
-//        String interviewerName = userDetails.getUser().getFullName();
-//        return ResponseEntity.ok(service.getByInterviewer(interviewerName));
-//    }
     @GetMapping("/for-interviewer")
     public ResponseEntity<List<ScheduledInterviewDto>> getByInterviewer(
             @AuthenticationPrincipal CustomUserDetails userDetails) {

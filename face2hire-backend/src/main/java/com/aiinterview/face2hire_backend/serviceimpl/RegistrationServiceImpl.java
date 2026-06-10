@@ -54,7 +54,6 @@ public class RegistrationServiceImpl implements RegistrationService {
             if (existingUser.isVerified()) {
                 throw new AlreadyExistsException("user with this email: " + registerRequest.getEmail() + " already exists");
             } else {
-                // resend OTP for unverified existing user
                 existingUser.setUserName(registerRequest.getUserName());
                 existingUser.setUpdatedAt(LocalDateTime.now());
                 userRepository.save(existingUser);
@@ -146,7 +145,6 @@ public class RegistrationServiceImpl implements RegistrationService {
         user.setUpdatedAt(LocalDateTime.now());
         User savedUser = userRepository.save(user);
 
-        // After user saved
         if (activityLogService != null) {
             activityLogService.log(savedUser, ActivityAction.REGISTER, "User registered and verified email");
         }

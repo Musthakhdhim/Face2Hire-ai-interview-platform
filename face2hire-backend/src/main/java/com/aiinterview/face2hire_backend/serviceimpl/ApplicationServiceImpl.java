@@ -77,7 +77,6 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         application = applicationRepository.save(application);
 
-//        Job job1 = jobRepository.findById(request.getJobId()).orElse(null);
         if (job.getPostedByUserId() != null) {
             notificationService.createNotification(
                     job.getPostedByUserId(),
@@ -119,41 +118,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .map(this::mapToListDto);
     }
 
-//    @Override
-//    @Transactional
-//    public ApplicationResponseDto updateApplicationStatus(Long applicationId, Long interviewerId, ApplicationStatusUpdateDto dto) throws AccessDeniedException {
-//        Application application = applicationRepository.findById(applicationId)
-//                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
-//
-//        Job job = jobRepository.findById(application.getJobId())
-//                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
-//        if (!job.getPostedByUserId().equals(interviewerId)) {
-//            throw new AccessDeniedException("You are not authorized to update this application");
-//        }
-//
-//        application.setStatus(dto.getStatus());
-//        application = applicationRepository.save(application);
-//        log.info("Application {} status updated to {}", applicationId, dto.getStatus());
-//
-//        notificationService.createNotification(
-//                application.getUserId(),
-//                "Application " + dto.getStatus(),
-//                "Your application for job ID " + application.getJobId() + " has been " + dto.getStatus(),
-//                dto.getStatus().equals("APPROVED") ? "APPLICATION_APPROVED" : "APPLICATION_REJECTED"
-//        );
-//
-//        User applicant = userRepository.findById(application.getUserId()).orElse(null);
-//        if (applicant != null) {
-//            ActivityAction action = dto.getStatus() == ApplicationStatus.APPROVED ?
-//                    ActivityAction.APPLICATION_APPROVED : ActivityAction.APPLICATION_REJECTED;
-//            String msg = String.format("Application for job ID %d %s", application.getJobId(), dto.getStatus());
-//            activityLogService.log(applicant, action, msg);
-//        }
-//
-//
-//
-//        return mapToResponseDto(application);
-//    }
 
     @Override
     @Transactional
@@ -186,7 +150,6 @@ public class ApplicationServiceImpl implements ApplicationService {
             activityLogService.log(applicant, action, msg);
         }
 
-        // Check and award badges for the interviewer when an application is approved
         if (dto.getStatus() == ApplicationStatus.APPROVED) {
             try {
                 badgeService.checkAndAwardBadges(interviewerId);

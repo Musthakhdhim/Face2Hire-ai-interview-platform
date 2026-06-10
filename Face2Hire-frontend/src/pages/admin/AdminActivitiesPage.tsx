@@ -19,7 +19,6 @@ export default function AdminActivitiesPage() {
     const [search, setSearch] = useState('');
     const [actionFilter, setActionFilter] = useState<string>('all');
 
-    // Fetch activities whenever filters or page change
     useEffect(() => {
         const fetchActivities = async () => {
             setLoading(true);
@@ -46,7 +45,6 @@ export default function AdminActivitiesPage() {
 
     const handleSearch = () => {
         setCurrentPage(0);
-        // The useEffect will trigger because currentPage becomes 0
     };
 
     const resetFilters = () => {

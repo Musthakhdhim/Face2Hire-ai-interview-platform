@@ -51,7 +51,7 @@ public class ScheduledInterviewServiceImpl implements ScheduledInterviewService 
                 .avatarStyle(request.getAvatarStyle())
                 .scheduledByInterviewer(interviewerName)
                 .dueDate(request.getDueDate().atTime(LocalTime.MAX))
-                .applicationId(request.getApplicationId())      // new
+                .applicationId(request.getApplicationId())
                 .minimumScore(request.getMinimumScore())
                 .build();
         entity = repository.save(entity);

@@ -125,13 +125,11 @@ public class BadgeServiceImpl implements BadgeService {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return;
 
-        // Gather user stats based on role
         long completedInterviews = interviewSessionRepository.countByUserIdAndStatus(userId, SessionStatus.COMPLETED);
         double avgScore = interviewSessionRepository.getAverageOverallScoreByUserId(userId); // new method needed
         long jobsPosted = jobRepository.countByPostedByUserId(userId);
         long hiredCount = applicationRepository.countApprovedByInterviewerId(userId); // for interviewer badge
 
-        // Get all badges applicable to this user's role (or GENERAL)
         List<Badge> badges = badgeRepository.findAll();
         for (Badge badge : badges) {
             if (badge.getType() == BadgeType.GENERAL ||
@@ -150,9 +148,7 @@ public class BadgeServiceImpl implements BadgeService {
     private boolean evaluateRequirement(String requirement, long completedInterviews, double avgScore, long jobsPosted, long hiredCount) {
         if (requirement == null || requirement.isBlank()) return false;
 
-        // Simple parser: look for "completed_interviews >= X"
         if (requirement.contains("completed_interviews")) {
-            // Extract number after >= or > or = etc.
             Pattern pattern = Pattern.compile("completed_interviews\\s*(>=|>|<=|<|=)\\s*(\\d+)");
             Matcher matcher = pattern.matcher(requirement);
             if (matcher.find()) {

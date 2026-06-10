@@ -56,7 +56,6 @@ public class JobServiceImpl implements JobService {
 
         job = jobRepository.save(job);
 
-        // Save skills
         if (request.getSkills() != null && !request.getSkills().isEmpty()) {
             Job finalJob = job;
             List<JobSkill> skills = request.getSkills().stream()

@@ -4,10 +4,12 @@ import com.aiinterview.face2hire_backend.entity.OtpType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @Builder
+@NoArgsConstructor
 public class OtpData {
     private String otp;
     private long generatedAt;

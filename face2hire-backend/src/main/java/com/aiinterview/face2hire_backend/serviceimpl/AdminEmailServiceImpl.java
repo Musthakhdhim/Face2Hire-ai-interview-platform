@@ -34,8 +34,6 @@ public class AdminEmailServiceImpl implements AdminEmailService {
         int failCount = 0;
         for (User user : recipients) {
             try {
-                // Use the existing EmailService method that accepts user and custom subject/body
-                // We'll add a new method in EmailService for custom emails, or reuse existing.
                 sendCustomEmail(user, request.getSubject(), request.getBody());
                 successCount++;
             } catch (MessagingException e) {
@@ -55,11 +53,10 @@ public class AdminEmailServiceImpl implements AdminEmailService {
         List<User> filtered = new ArrayList<>();
 
         for (User user : allUsers) {
-            if (!user.isActive() || !user.isVerified()) continue; // only active verified users
+            if (!user.isActive() || !user.isVerified()) continue;
 
             UserNotifications notif = user.getNotifications();
             if (notif == null) {
-                // If no notification preferences exist, treat as no consent (skip)
                 continue;
             }
 
@@ -81,7 +78,6 @@ public class AdminEmailServiceImpl implements AdminEmailService {
     }
 
     private void sendCustomEmail(User user, String subject, String body) throws MessagingException {
-        // Use a simple HTML wrapper for nicer formatting
         String htmlMessage = String.format("""
             <html>
             <body style="font-family: Arial, sans-serif;">

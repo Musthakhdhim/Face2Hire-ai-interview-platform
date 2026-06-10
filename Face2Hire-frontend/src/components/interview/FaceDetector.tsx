@@ -7,7 +7,6 @@ interface FaceDetectorProps {
   showPreview?: boolean;
 }
 
-// MediaPipe Face Detection types
 interface FaceDetectionResults {
   detections: Array<unknown>;
 }

@@ -13,9 +13,9 @@ export default function NotificationsPage() {
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
     const pageSize = 20;
 
-    // Fetch notifications when page changes
     useEffect(() => {
         let isMounted = true;
 
@@ -43,23 +43,53 @@ export default function NotificationsPage() {
     }, [page, pageSize]);
 
     const handleMarkAsRead = async (id: number) => {
+        // Prevent duplicate requests
+        if (processingIds.has(id)) return;
+
+        // Check if already read (optimistic update might have already set it)
+        const notification = notifications.find(n => n.id === id);
+        if (notification?.read) return;
+
+        setProcessingIds(prev => new Set(prev).add(id));
+        const previousNotifications = [...notifications];
+
+        // Optimistic update
+        setNotifications(prev =>
+            prev.map(n => n.id === id ? { ...n, read: true } : n)
+        );
+
         try {
             await notificationService.markAsRead(id);
-            setNotifications(prev =>
-                prev.map(n => n.id === id ? { ...n, read: true } : n)
-            );
-        } catch {
+        } catch (error) {
+            // Rollback on failure
+            setNotifications(previousNotifications);
             toast.error('Failed to mark as read');
+        } finally {
+            setProcessingIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(id);
+                return newSet;
+            });
         }
     };
 
     const handleMarkAllRead = async () => {
+        if (processingIds.size > 0) return;
+
+        const allIds = notifications.map(n => n.id);
+        setProcessingIds(new Set(allIds));
+        const previousNotifications = [...notifications];
+
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+
         try {
             await notificationService.markAllAsRead();
-            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
             toast.success('All notifications marked as read');
-        } catch {
+        } catch (error) {
+            setNotifications(previousNotifications);
             toast.error('Failed to mark all as read');
+        } finally {
+            setProcessingIds(new Set());
         }
     };
 
@@ -70,7 +100,12 @@ export default function NotificationsPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
                     <p className="text-gray-600 mt-1">View and manage your notifications</p>
                 </div>
-                <Button onClick={handleMarkAllRead} variant="outline" className="gap-2">
+                <Button
+                    onClick={handleMarkAllRead}
+                    variant="outline"
+                    className="gap-2"
+                    disabled={processingIds.size > 0 || notifications.length === 0}
+                >
                     <CheckCheck className="size-4" /> Mark all as read
                 </Button>
             </div>
@@ -91,10 +126,12 @@ export default function NotificationsPage() {
                         {notifications.map(notif => (
                             <div
                                 key={notif.id}
-                                className={`p-4 rounded-lg border transition-colors cursor-pointer hover:bg-gray-50 ${
-                                    !notif.read ? 'bg-indigo-50 border-indigo-200' : 'bg-white'
+                                className={`p-4 rounded-lg border transition-colors ${
+                                    !notif.read && !processingIds.has(notif.id)
+                                        ? 'bg-indigo-50 border-indigo-200 cursor-pointer hover:bg-indigo-100'
+                                        : 'bg-white cursor-default'
                                 }`}
-                                onClick={() => !notif.read && handleMarkAsRead(notif.id)}
+                                onClick={() => !notif.read && !processingIds.has(notif.id) && handleMarkAsRead(notif.id)}
                             >
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">

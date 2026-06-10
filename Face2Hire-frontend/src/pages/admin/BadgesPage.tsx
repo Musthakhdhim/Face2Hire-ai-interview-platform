@@ -26,7 +26,6 @@ export default function AdminBadgesPage() {
         requirement: '',
     });
 
-    // Fetch badges inside useEffect to avoid set-state-in-effect warning
     useEffect(() => {
         let isMounted = true;
         const fetchBadges = async () => {

@@ -84,7 +84,6 @@ export const adminService = {
     },
 };
 
-// Add to userService or create new activityService
 export const activityService = {
     getRecent: async (): Promise<ActivityLog[]> => {
         const response = await axiosClient.get('/admin/activities/recent');

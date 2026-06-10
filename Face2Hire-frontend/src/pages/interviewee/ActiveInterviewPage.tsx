@@ -8,15 +8,15 @@ import { Mic, MicOff, SkipForward, CheckCircle, Maximize2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { interviewService, type QuestionResponseDto, type InterviewType, type Difficulty, type AvatarStyle } from '../../services/interviewService';
 import { audioService } from '../../services/audioService';
-// import { websocketService } from '../../services/websocketService';  // WebSocket service – temporarily disabled
+// import { websocketService } from '../../services/websocketService'; 
 import ThreeAvatar from '../../components/interview/ThreeAvatar';
 import FaceDetector from '../../components/interview/FaceDetector';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store/store';
 import screenfull from 'screenfull';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-// import CustomAvatar from '../../components/interview/CustomAvatar';   // alternative avatar – disabled
-// import RealisticAvatar from '../../components/interview/RealisticAvatar'; // alternative avatar – disabled
+// import CustomAvatar from '../../components/interview/CustomAvatar';  
+// import RealisticAvatar from '../../components/interview/RealisticAvatar'; 
 
 interface SessionConfig {
   type: InterviewType;
@@ -90,6 +90,7 @@ export default function ActiveInterviewPage() {
     }
     setAudioElement(null);
   }, []);
+  
 
   const speakQuestion = useCallback(async (text: string) => {
     stopCurrentAudio();
@@ -129,7 +130,14 @@ export default function ActiveInterviewPage() {
     await endInterview();
   }, [endInterview]);
 
-  // Client‑side countdown timer (WebSocket is disabled, but we keep the interval)
+  useEffect(() => {
+  if (faceViolationCount >= 5) {
+    toast.error('Maximum face violations reached. Ending interview.');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    endInterview();
+  }
+}, [faceViolationCount, endInterview]);
+
   useEffect(() => {
     if (loading || answerSubmitted) return;
     const interval = setInterval(() => {
@@ -209,16 +217,14 @@ export default function ActiveInterviewPage() {
       setQuestionIndex(1);
       setLoading(false);
 
-      // ========== WebSocket timer – DISABLED ==========
-      // The backend may still push timer events, but we ignore them.
-      // We keep the client‑side interval (above) for the countdown.
+      //  WebSocket timer
       // websocketService.connect(Number(sessionId), token!, () => {
       //   websocketService.on('timer', (data) => {
       //     const timerData = data as TimerMessage;
       //     setTimeRemaining(timerData.remainingSeconds);
       //   });
       // });
-      // ==============================================
+      // 
 
       await speakQuestion(firstQuestion.questionText);
     } catch {
@@ -301,7 +307,8 @@ export default function ActiveInterviewPage() {
         responseDuration,
       });
       setAnswerSubmitted(true);
-      toast.success(`Score: ${feedback.score}%`);
+      // toast.success(`Score: ${feedback.score}%`);
+      console.log(`Score: ${feedback.score}%`)
       setTimeout(() => {
         setAnswerSubmitted(false);
         goToNextQuestion();
