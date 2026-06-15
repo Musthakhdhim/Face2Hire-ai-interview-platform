@@ -126,7 +126,7 @@ public class BadgeServiceImpl implements BadgeService {
         if (user == null) return;
 
         long completedInterviews = interviewSessionRepository.countByUserIdAndStatus(userId, SessionStatus.COMPLETED);
-        double avgScore = interviewSessionRepository.getAverageOverallScoreByUserId(userId); // new method needed
+//        double avgScore = interviewSessionRepository.getAverageOverallScoreByUserId(userId); // new method needed
         long jobsPosted = jobRepository.countByPostedByUserId(userId);
         long hiredCount = applicationRepository.countApprovedByInterviewerId(userId); // for interviewer badge
 
@@ -138,14 +138,19 @@ public class BadgeServiceImpl implements BadgeService {
 
                 if (userBadgeRepository.existsByUserIdAndBadgeId(userId, badge.getId())) continue;
 
-                if (evaluateRequirement(badge.getRequirement(), completedInterviews, avgScore, jobsPosted, hiredCount)) {
+//                if (evaluateRequirement(badge.getRequirement(), completedInterviews, avgScore, jobsPosted, hiredCount)) {
+
+                if (evaluateRequirement(badge.getRequirement(), completedInterviews,  jobsPosted, hiredCount)) {
                     awardBadgeToUser(userId, badge.getId());
                 }
             }
         }
     }
 
-    private boolean evaluateRequirement(String requirement, long completedInterviews, double avgScore, long jobsPosted, long hiredCount) {
+//    private boolean evaluateRequirement(String requirement, long completedInterviews, double avgScore, long jobsPosted, long hiredCount) {
+
+
+        private boolean evaluateRequirement(String requirement, long completedInterviews, long jobsPosted, long hiredCount) {
         if (requirement == null || requirement.isBlank()) return false;
 
         if (requirement.contains("completed_interviews")) {
@@ -162,21 +167,23 @@ public class BadgeServiceImpl implements BadgeService {
                     case "=": return completedInterviews == threshold;
                 }
             }
-        } else if (requirement.contains("avg_score")) {
-            Pattern pattern = Pattern.compile("avg_score\\s*(>=|>|<=|<|=)\\s*(\\d+)");
-            Matcher matcher = pattern.matcher(requirement);
-            if (matcher.find()) {
-                String op = matcher.group(1);
-                int threshold = Integer.parseInt(matcher.group(2));
-                switch (op) {
-                    case ">=": return avgScore >= threshold;
-                    case ">": return avgScore > threshold;
-                    case "<=": return avgScore <= threshold;
-                    case "<": return avgScore < threshold;
-                    case "=": return avgScore == threshold;
-                }
-            }
-        } else if (requirement.contains("jobs_posted")) {
+        }
+//        else if (requirement.contains("avg_score")) {
+//            Pattern pattern = Pattern.compile("avg_score\\s*(>=|>|<=|<|=)\\s*(\\d+)");
+//            Matcher matcher = pattern.matcher(requirement);
+//            if (matcher.find()) {
+//                String op = matcher.group(1);
+//                int threshold = Integer.parseInt(matcher.group(2));
+//                switch (op) {
+//                    case ">=": return avgScore >= threshold;
+//                    case ">": return avgScore > threshold;
+//                    case "<=": return avgScore <= threshold;
+//                    case "<": return avgScore < threshold;
+//                    case "=": return avgScore == threshold;
+//                }
+//            }
+//        }
+        else if (requirement.contains("jobs_posted")) {
             Pattern pattern = Pattern.compile("jobs_posted\\s*(>=|>|<=|<|=)\\s*(\\d+)");
             Matcher matcher = pattern.matcher(requirement);
             if (matcher.find()) {

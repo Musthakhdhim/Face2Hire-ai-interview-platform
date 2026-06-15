@@ -24,7 +24,7 @@ import ResumeTab from '../components/profile/ResumeTab';
 import { badgeService } from '../services/badgeService';
 import type { Badge as BadgeType } from '../types/badge';
 
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 5 * 60 * 1000;
 
 interface CachedData {
   timestamp: number;
@@ -114,15 +114,18 @@ export default function ProfileSettingsPage(): JSX.Element {
   const role = reduxUser?.role?.toLowerCase();
   const showPreferences = role === 'interviewee';
   const showResumeTab = role === 'interviewee';
+  const isAdmin = role === 'admin';
 
   const tabList = useMemo(() => {
     const tabs = ['profile', 'security'];
     if (showResumeTab) tabs.push('resume');
     if (showPreferences) tabs.push('preferences');
-    tabs.push('notifications');
-    tabs.push('badges');
+    if (!isAdmin) {
+      tabs.push('notifications');
+      tabs.push('badges');
+    }
     return tabs;
-  }, [showPreferences, showResumeTab]);
+  }, [showPreferences, showResumeTab, isAdmin]);
 
   const getTabLabel = (tabValue: string): string => {
     switch (tabValue) {
@@ -136,11 +139,9 @@ export default function ProfileSettingsPage(): JSX.Element {
     }
   };
 
-  // ---------- Load profile and badges (with cache helpers inside effect) ----------
   useEffect(() => {
     let isMounted = true;
 
-    // Cache helpers (defined inside effect so they don't cause dependency warnings)
     const getCacheKey = () => `profileSettingsCache_${userId || 'anonymous'}`;
 
     const saveToCache = (
@@ -242,7 +243,7 @@ export default function ProfileSettingsPage(): JSX.Element {
     };
 
     const loadBadges = async () => {
-      if (!userId) return;
+      if (!userId || isAdmin) return;
       try {
         const userBadges = await badgeService.getUserBadges();
         if (isMounted) setBadges(userBadges);
@@ -270,9 +271,8 @@ export default function ProfileSettingsPage(): JSX.Element {
     return () => {
       isMounted = false;
     };
-  }, [token, navigate, userId]);
+  }, [token, navigate, userId, isAdmin]);
 
-  // ---------- Handlers (unchanged) ----------
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -304,11 +304,8 @@ export default function ProfileSettingsPage(): JSX.Element {
       setProfileImageUrl(updatedProfile.profileImageUrl);
       dispatch(updateUser({ profileImageUrl: imageUrl, name: updatedProfile.fullName, phone: updatedProfile.phoneNumber }));
 
-      // clear and save cache using the same helpers (they are inside effect, so we need to re-create them here)
-      // For simplicity, we can directly manipulate sessionStorage with the key
       const cacheKey = `profileSettingsCache_${userId || 'anonymous'}`;
       sessionStorage.removeItem(cacheKey);
-      // After saving, we can optionally save the new data – but the effect will refetch anyway.
       toast.success('Profile updated with new photo');
     } catch (err) {
       const error = err as AxiosError<ErrorResponseData>;
@@ -506,7 +503,6 @@ export default function ProfileSettingsPage(): JSX.Element {
           ))}
         </TabsList>
 
-        {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-6">
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -811,95 +807,99 @@ export default function ProfileSettingsPage(): JSX.Element {
           </TabsContent>
         )}
 
-        <TabsContent value="notifications" className="space-y-6">
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>Manage how you receive updates</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Email Notifications</Label>
-                  <p className="text-sm text-gray-500">Receive email updates about your account</p>
+        {!isAdmin && (
+          <TabsContent value="notifications" className="space-y-6">
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle>Notification Preferences</CardTitle>
+                <CardDescription>Manage how you receive updates</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label>Email Notifications</Label>
+                    <p className="text-sm text-gray-500">Receive email updates about your account</p>
+                  </div>
+                  <Switch checked={emailUpdates} onCheckedChange={setEmailUpdates} />
                 </div>
-                <Switch checked={emailUpdates} onCheckedChange={setEmailUpdates} />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Interview Reminders</Label>
-                  <p className="text-sm text-gray-500">Get reminders for scheduled interviews</p>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label>Interview Reminders</Label>
+                    <p className="text-sm text-gray-500">Get reminders for scheduled interviews</p>
+                  </div>
+                  <Switch checked={interviewReminders} onCheckedChange={setInterviewReminders} />
                 </div>
-                <Switch checked={interviewReminders} onCheckedChange={setInterviewReminders} />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Marketing Emails</Label>
-                  <p className="text-sm text-gray-500">Receive tips and promotional content</p>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label>Marketing Emails</Label>
+                    <p className="text-sm text-gray-500">Receive tips and promotional content</p>
+                  </div>
+                  <Switch checked={marketingEmails} onCheckedChange={setMarketingEmails} />
                 </div>
-                <Switch checked={marketingEmails} onCheckedChange={setMarketingEmails} />
-              </div>
-              <Button type="button" onClick={handleSaveNotifications} disabled={notifSaving}>
-                {notifSaving ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-                Save Notification Settings
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                <Button type="button" onClick={handleSaveNotifications} disabled={notifSaving}>
+                  {notifSaving ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                  Save Notification Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
-        <TabsContent value="badges" className="space-y-6">
-          <Card className="border-0 shadow-lg overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 pointer-events-none" />
-            <CardHeader className="relative">
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="size-5 text-indigo-600" />
-                Earned Badges
-              </CardTitle>
-              <CardDescription>
-                Achievements you have unlocked through your activity
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="relative">
-              {badges.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <Trophy className="size-16 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg font-medium">No badges earned yet</p>
-                  <p className="text-sm">Complete milestones to earn badges and display them here!</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {badges.map((badge) => (
-                    <div
-                      key={badge.id}
-                      className="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100"
-                    >
-                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
-                      <div className="p-5 flex flex-col items-center text-center">
-                        <div className="size-16 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-4 shadow-inner group-hover:scale-110 transition-transform duration-300">
-                          {badge.iconUrl ? (
-                            <img src={badge.iconUrl} alt={badge.name} className="size-8 object-contain" />
-                          ) : (
-                            <Trophy className="size-8 text-indigo-600" />
-                          )}
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">{badge.name}</h3>
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{badge.description}</p>
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-medium">
-                          <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                          </svg>
-                          Earned
+        {!isAdmin && (
+          <TabsContent value="badges" className="space-y-6">
+            <Card className="border-0 shadow-lg overflow-hidden relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 pointer-events-none" />
+              <CardHeader className="relative">
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="size-5 text-indigo-600" />
+                  Earned Badges
+                </CardTitle>
+                <CardDescription>
+                  Achievements you have unlocked through your activity
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="relative">
+                {badges.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <Trophy className="size-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-medium">No badges earned yet</p>
+                    <p className="text-sm">Complete milestones to earn badges and display them here!</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {badges.map((badge) => (
+                      <div
+                        key={badge.id}
+                        className="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100"
+                      >
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+                        <div className="p-5 flex flex-col items-center text-center">
+                          <div className="size-16 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-4 shadow-inner group-hover:scale-110 transition-transform duration-300">
+                            {badge.iconUrl ? (
+                              <img src={badge.iconUrl} alt={badge.name} className="size-8 object-contain" />
+                            ) : (
+                              <Trophy className="size-8 text-indigo-600" />
+                            )}
+                          </div>
+                          <h3 className="text-lg font-bold text-gray-900 mb-1">{badge.name}</h3>
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{badge.description}</p>
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-medium">
+                            <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Earned
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

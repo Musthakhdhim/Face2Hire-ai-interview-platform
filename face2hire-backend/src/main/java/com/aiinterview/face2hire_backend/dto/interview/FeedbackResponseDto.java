@@ -13,8 +13,8 @@ import java.util.List;
 public class FeedbackResponseDto {
     private Double score;
     private String feedbackText;
-    private String strengths;      // String, not List
-    private String improvements;   // String, not List
+    private String strengths;
+    private String improvements;
     private String suggestedAnswer;
     private List<String> keywordsMatched;
     private List<String> keywordsMissing;

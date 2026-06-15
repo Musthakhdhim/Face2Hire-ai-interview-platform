@@ -2,13 +2,18 @@ package com.aiinterview.face2hire_backend.dto;
 
 import com.aiinterview.face2hire_backend.entity.JobStatus;
 import com.aiinterview.face2hire_backend.entity.JobType;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class JobResponseDto {
     private Long id;
     private String title;
