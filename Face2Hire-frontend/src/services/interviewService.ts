@@ -21,6 +21,8 @@ export interface SessionStartedDto {
   firstQuestionId: number;
   totalQuestions: number;
   durationSeconds: number;
+  originalQuestionCount: number;   
+  originalDurationMinutes: number;
 }
 
 export interface QuestionResponseDto {
@@ -114,6 +116,16 @@ export interface SessionDetail {
     questions: SessionQuestionDetail[];
 }
 
+export interface SessionStateDto {
+  sessionId: number;
+  totalQuestions: number;
+  remainingTimeSeconds: number;
+  status: SessionStatus;
+  originalQuestionCount: number;    
+  originalDurationMinutes: number;
+  avatarStyle?: AvatarStyle;
+}
+
 export const interviewService = {
   startSession: async (data: StartSessionRequest): Promise<SessionStartedDto> => {
     const response = await axiosClient.post(API.INTERVIEW.START, data);
@@ -161,6 +173,14 @@ export const interviewService = {
   },
   getSessionDetail: async (sessionId: number): Promise<SessionDetail> => {
     const response = await axiosClient.get(`/interview/session-detail/${sessionId}`);
+    return response.data.data;
+  },
+  getActiveSession: async (): Promise<SessionStateDto | null> => {
+    const response = await axiosClient.get('/interview/active');
+    return response.data.data;
+  },
+  getCurrentQuestionForSession: async (sessionId: number): Promise<QuestionResponseDto> => {
+    const response = await axiosClient.get(`/interview/active/${sessionId}/current-question`);
     return response.data.data;
   },
 };

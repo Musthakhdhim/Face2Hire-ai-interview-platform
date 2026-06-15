@@ -62,6 +62,12 @@ public class InterviewSession {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "original_question_count")
+    private Integer originalQuestionCount;
+
+    @Column(name = "original_duration_minutes")
+    private Integer originalDurationMinutes;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

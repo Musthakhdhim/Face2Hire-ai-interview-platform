@@ -47,6 +47,8 @@ public class InterviewSessionManagerImpl implements InterviewSessionManager {
                 .avatarStyle(request.getAvatarStyle())
                 .isScheduled(request.getScheduledInterviewId() != null)
                 .scheduledInterviewId(request.getScheduledInterviewId())
+                .originalQuestionCount(request.getQuestionCount())
+                .originalDurationMinutes(request.getDuration())
                 .build();
         session = sessionRepository.save(session);
         log.info("Created interview session with id={}", session.getId());

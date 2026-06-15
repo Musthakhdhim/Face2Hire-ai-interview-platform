@@ -8,5 +8,6 @@ import java.util.Optional;
 public interface UserResponseRepository extends JpaRepository<UserResponse, Long> {
     Optional<UserResponse> findByQuestionId(Long questionId);
     List<UserResponse> findByQuestionIdIn(List<Long> questionIds);
+    boolean existsByQuestionId(Long questionId);
 
 }

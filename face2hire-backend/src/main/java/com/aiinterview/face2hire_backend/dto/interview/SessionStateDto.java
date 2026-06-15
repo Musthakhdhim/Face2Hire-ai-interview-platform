@@ -17,4 +17,6 @@ public class SessionStateDto {
     private Integer totalQuestions;
     private Integer remainingTimeSeconds;
     private SessionStatus status;
+    private Integer originalQuestionCount;
+    private Integer originalDurationMinutes;
 }

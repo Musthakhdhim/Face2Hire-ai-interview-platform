@@ -14,10 +14,12 @@ import java.util.List;
 import java.util.Optional;
 
 public interface InterviewSessionRepository extends JpaRepository<InterviewSession, Long> {
-    Optional<InterviewSession> findByUserIdAndStatus(Long userId, SessionStatus status);
+    List<InterviewSession> findByUserIdAndStatus(Long userId, SessionStatus status);
     List<InterviewSession> findByUserId(Long userId);
     boolean existsByScheduledInterviewIdAndStatus(Long scheduledInterviewId, SessionStatus status);
     Optional<InterviewSession> findByScheduledInterviewId(Long scheduledInterviewId);
+    List<InterviewSession> findByStatusAndStartedAtBefore(SessionStatus status, LocalDateTime time);
+
 
     @Query("SELECT s FROM InterviewSession s " +
             "LEFT JOIN User u ON s.userId = u.id " +
@@ -47,4 +49,5 @@ public interface InterviewSessionRepository extends JpaRepository<InterviewSessi
 
     @Query("SELECT AVG(s.overallScore) FROM InterviewSession s WHERE s.userId = :userId AND s.status = 'COMPLETED' AND s.overallScore IS NOT NULL")
     Double getAverageOverallScoreByUserId(@Param("userId") Long userId);
+
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
@@ -11,6 +11,7 @@ import type { InterviewSessionDto } from "../../services/interviewService";
 import { toast } from "react-toastify";
 
 export default function HistoryPage() {
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState<InterviewSessionDto[]>([]);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -33,31 +34,60 @@ export default function HistoryPage() {
     fetch();
   }, []);
 
+  // const filtered = useMemo(() => {
+  //   let result = sessions;
+
+  //   if (filterType !== "all") {
+  //     result = result.filter(s => s.type === filterType);
+  //   }
+
+  //   if (filterStatus === "completed") {
+  //     result = result.filter(s => s.status === "COMPLETED");
+  //   } else if (filterStatus === "incomplete") {
+  //     result = result.filter(s => s.status !== "COMPLETED");
+  //   }
+
+  //   if (search) {
+  //     result = result.filter(s =>
+  //       s.type.toLowerCase().includes(search.toLowerCase()) ||
+  //       s.difficulty.toLowerCase().includes(search.toLowerCase())
+  //     );
+  //   }
+
+  //   return [...result].sort((a, b) =>
+  //     new Date(b.completedAt || b.createdAt).getTime() -
+  //     new Date(a.completedAt || a.createdAt).getTime()
+  //   );
+  // }, [sessions, filterType, filterStatus, search]);
+
+
   const filtered = useMemo(() => {
     let result = sessions;
 
     if (filterType !== "all") {
-      result = result.filter(s => s.type === filterType);
+        result = result.filter(s => s.type === filterType);
     }
 
     if (filterStatus === "completed") {
-      result = result.filter(s => s.status === "COMPLETED");
+        result = result.filter(s => s.status === "COMPLETED");
+    } else if (filterStatus === "active") {
+        result = result.filter(s => s.status === "ACTIVE");
     } else if (filterStatus === "incomplete") {
-      result = result.filter(s => s.status !== "COMPLETED");
+        result = result.filter(s => s.status !== "COMPLETED" && s.status !== "ACTIVE");
     }
 
     if (search) {
-      result = result.filter(s =>
-        s.type.toLowerCase().includes(search.toLowerCase()) ||
-        s.difficulty.toLowerCase().includes(search.toLowerCase())
-      );
+        result = result.filter(s =>
+            s.type.toLowerCase().includes(search.toLowerCase()) ||
+            s.difficulty.toLowerCase().includes(search.toLowerCase())
+        );
     }
 
     return [...result].sort((a, b) =>
-      new Date(b.completedAt || b.createdAt).getTime() -
-      new Date(a.completedAt || a.createdAt).getTime()
+        new Date(b.completedAt || b.createdAt).getTime() -
+        new Date(a.completedAt || a.createdAt).getTime()
     );
-  }, [sessions, filterType, filterStatus, search]);
+}, [sessions, filterType, filterStatus, search]);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -85,6 +115,25 @@ export default function HistoryPage() {
     if (score >= 70) return "bg-blue-100 text-blue-700";
     if (score >= 60) return "bg-amber-100 text-amber-700";
     return "bg-red-100 text-red-700";
+  };
+
+  const handleResume = async (sessionId: number) => {
+    try {
+        const currentQuestion = await interviewService.getCurrentQuestionForSession(sessionId);
+        const storedConfig = localStorage.getItem(`interview_config_${sessionId}`);
+        let config = storedConfig ? JSON.parse(storedConfig) : {};
+        
+        navigate(`/interviewee/interview/active/${sessionId}`, {
+            state: {
+                ...config,
+                firstQuestionId: currentQuestion.questionId,
+                currentQuestion: currentQuestion,
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        toast.error("Unable to resume interview");
+    }
   };
 
   return (
@@ -117,14 +166,15 @@ export default function HistoryPage() {
             </Select>
             <Select value={filterStatus} onValueChange={handleFilterStatusChange}>
               <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Status" />
+                  <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="incomplete">Incomplete</SelectItem>
-                <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="incomplete">Incomplete</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
               </SelectContent>
-            </Select>
+          </Select>
           </div>
         </CardContent>
       </Card>
@@ -190,7 +240,16 @@ export default function HistoryPage() {
                         Feedback Not Available
                       </Button>
                     )}
-                    {session.scheduledInterviewId ? (
+                    {session.status === "ACTIVE" ? (
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="bg-amber-600 hover:bg-amber-700"
+                        onClick={() => handleResume(session.id)}
+                      >
+                        Resume Interview
+                      </Button>
+                    ) : session.scheduledInterviewId ? (
                       <Button size="sm" variant="outline" disabled className="opacity-50 cursor-not-allowed">
                         Retake Interview (Scheduled)
                       </Button>

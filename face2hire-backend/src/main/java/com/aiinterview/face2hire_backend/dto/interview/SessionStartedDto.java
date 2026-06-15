@@ -14,4 +14,6 @@ public class SessionStartedDto {
     private Long firstQuestionId;
     private Integer totalQuestions;
     private Integer durationSeconds;
+    private Integer originalQuestionCount;
+    private Integer originalDurationMinutes;
 }

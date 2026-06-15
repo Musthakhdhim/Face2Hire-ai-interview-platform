@@ -166,4 +166,43 @@ public class InterviewController {
                 .build();
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/active")
+    public ResponseEntity<ApiResponse<SessionStateDto>> getActiveSession(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
+        SessionStateDto active = orchestrator.getActiveSession(userId);
+        if (active == null) {
+            return ResponseEntity.ok(ApiResponse.<SessionStateDto>builder()
+                    .success(true)
+                    .message("No active session")
+                    .data(null)
+                    .statusCode(HttpStatus.OK.value())
+                    .time(LocalDateTime.now())
+                    .build());
+        }
+        return ResponseEntity.ok(ApiResponse.<SessionStateDto>builder()
+                .success(true)
+                .message("Active session found")
+                .data(active)
+                .statusCode(HttpStatus.OK.value())
+                .time(LocalDateTime.now())
+                .build());
+    }
+
+    @GetMapping("/active/{sessionId}/current-question")
+    public ResponseEntity<ApiResponse<QuestionResponseDto>> getCurrentQuestionForActiveSession(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId) {
+        Long userId = userDetails.getUser().getId();
+        QuestionResponseDto currentQuestion = orchestrator.getCurrentQuestionForSession(sessionId, userId);
+        ApiResponse<QuestionResponseDto> response = ApiResponse.<QuestionResponseDto>builder()
+                .success(true)
+                .message("Current question retrieved")
+                .data(currentQuestion)
+                .statusCode(HttpStatus.OK.value())
+                .time(LocalDateTime.now())
+                .build();
+        return ResponseEntity.ok(response);
+    }
 }

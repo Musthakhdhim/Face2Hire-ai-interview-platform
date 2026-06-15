@@ -24,6 +24,8 @@ public interface InterviewOrchestrator {
     @Transactional
     OverallFeedbackDto endSession(Long sessionId, Long userId) throws JsonProcessingException;
 
+    QuestionResponseDto getCurrentQuestionForSession(Long sessionId, Long userId);
+
     default OverallFeedbackDto createDefaultFeedback(String reason) {
         return OverallFeedbackDto.builder()
                 .overallScore(0.0)
@@ -62,6 +64,8 @@ public interface InterviewOrchestrator {
     OverallFeedbackDto getOverallFeedback(Long sessionId, Long userId);
 
     OverallFeedbackDto getOverallFeedbackByScheduledId(Long scheduledId, Long userId);
+
+    SessionStateDto getActiveSession(Long userId);
 
     SessionDetailDto getSessionDetail(Long sessionId, Long userId);
 }

@@ -19,9 +19,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,6 +63,12 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
     @Transactional
     @Override
     public SessionStartedDto start(Long userId, StartSessionRequest request) throws JsonProcessingException {
+        List<InterviewSession> activeSessions = sessionRepository.findByUserIdAndStatus(userId, SessionStatus.ACTIVE);
+        for (InterviewSession active : activeSessions) {
+            active.setStatus(SessionStatus.ABANDONED);
+            sessionRepository.save(active);
+            log.info("Abandoned previous active session {} for user {}", active.getId(), userId);
+        }
         log.info("Orchestrator: starting interview for user {}", userId);
         return sessionManager.startSession(userId, request);
     }
@@ -345,6 +355,70 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
                     .build();
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to parse suggested resources", e);
+        }
+    }
+
+    @Override
+    public SessionStateDto getActiveSession(Long userId) {
+        List<InterviewSession> active = sessionRepository.findByUserIdAndStatus(userId, SessionStatus.ACTIVE);
+        if (active.isEmpty()) {
+            return null;
+        }
+        InterviewSession session = active.get(0);
+        long startedEpoch = session.getStartedAt().toEpochSecond(ZoneOffset.UTC);
+        long durationSeconds = session.getDuration() * 60L;
+        long now = Instant.now().getEpochSecond();
+        long remaining = Math.max(0, durationSeconds - (now - startedEpoch));
+        return SessionStateDto.builder()
+                .sessionId(session.getId())
+                .totalQuestions(session.getQuestionCount())
+                .remainingTimeSeconds((int) remaining)
+                .status(session.getStatus())
+                .originalQuestionCount(session.getOriginalQuestionCount())
+                .originalDurationMinutes(session.getOriginalDurationMinutes())
+                .build();
+    }
+
+    @Override
+    public QuestionResponseDto getCurrentQuestionForSession(Long sessionId, Long userId) {
+        InterviewSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+        if (!session.getUserId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        List<InterviewQuestion> questions = questionRepository.findBySessionIdOrderByQuestionIndexAsc(sessionId);
+        for (InterviewQuestion q : questions) {
+            boolean answered = userResponseRepository.existsByQuestionId(q.getId());
+            if (!answered) {
+                try {
+                    List<String> keywords = objectMapper.readValue(q.getExpectedKeywords(), new TypeReference<List<String>>() {});
+                    return QuestionResponseDto.builder()
+                            .questionId(q.getId())
+                            .questionIndex(q.getQuestionIndex())
+                            .questionText(q.getQuestionText())
+                            .category(q.getCategory())
+                            .expectedKeywords(keywords)
+                            .build();
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException("Failed to parse expected keywords", e);
+                }
+            }
+        }
+        throw new RuntimeException("No unanswered questions found");
+    }
+
+    @Scheduled(fixedDelay = 60000)
+    @Transactional
+    public void expireStaleSessions() {
+        System.out.println("running timer expiry check for 5 minute active");
+        LocalDateTime expiryTime = LocalDateTime.now().minusMinutes(5);
+        List<InterviewSession> stale = sessionRepository.findByStatusAndStartedAtBefore(SessionStatus.ACTIVE, expiryTime);
+        for (InterviewSession session : stale) {
+            session.setStatus(SessionStatus.ABANDONED);
+            System.out.println("marled as abandoned");
+            sessionRepository.save(session);
+            log.info("Session {} marked as ABANDONED due to inactivity", session.getId());
         }
     }
 
