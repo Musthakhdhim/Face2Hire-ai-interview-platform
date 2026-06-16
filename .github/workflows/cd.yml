@@ -1,28 +1,116 @@
-# .github/workflows/cd.yml (Part of the deploy-backend job)
-- name: Deploy to EC2 with Docker
-  run: |
-    ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ secrets.EC2_HOST }} "
-      docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/face2hire-backend:${{ github.sha }}
-      docker stop face2hire-backend || true
-      docker rm face2hire-backend || true
-      docker run -d --name face2hire-backend -p 8080:8080 \
-        -e SPRING_PROFILES_ACTIVE=prod \
-        -e DB_URL=jdbc:mysql://${{ secrets.RDS_HOST }}:3306/${{ secrets.RDS_DATABASE }}?createDatabaseIfNotExist=true\&useSSL=false\&allowPublicKeyRetrieval=true \
-        -e DB_USERNAME=${{ secrets.RDS_USERNAME }} \
-        -e DB_PASSWORD=${{ secrets.RDS_PASSWORD }} \
-        -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-        -e EMAIL_USERNAME=${{ secrets.EMAIL_USERNAME }} \
-        -e EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }} \
-        -e APP_FRONTEND_URL=${{ secrets.APP_FRONTEND_URL }} \
-        -e APP_BACKEND_URL=${{ secrets.APP_BACKEND_URL }} \
-        -e GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
-        -e GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} \
-        -e OAUTH_GITHUB_CLIENT_ID=${{ secrets.OAUTH_GITHUB_CLIENT_ID }} \
-        -e OAUTH_GITHUB_CLIENT_SECRET=${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }} \
-        -e AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }} \
-        -e AWS_REGION=${{ secrets.AWS_REGION }} \
-        -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-        -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-        -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
-        ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/face2hire-backend:${{ github.sha }}
-    "
+name: CD
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build JAR with Maven
+        run: |
+          cd face2hire-backend
+          mvn clean package -DskipTests
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy JAR to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "face2hire-backend/target/*.jar"
+          target: "/home/ec2-user/app/"
+          strip_components: 1
+
+      - name: Run application on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/ec2-user/app
+            # Stop old process
+            pkill -f "face2hire-backend" || true
+            # Run new version
+            nohup java -jar *.jar \
+              --spring.profiles.active=prod \
+              --RDS_HOST=${{ secrets.RDS_HOST }} \
+              --RDS_DATABASE=${{ secrets.RDS_DATABASE }} \
+              --RDS_USERNAME=${{ secrets.RDS_USERNAME }} \
+              --RDS_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+              --JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              --EMAIL_USERNAME=${{ secrets.EMAIL_USERNAME }} \
+              --EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }} \
+              --APP_FRONTEND_URL=${{ secrets.APP_FRONTEND_URL }} \
+              --APP_BACKEND_URL=${{ secrets.APP_BACKEND_URL }} \
+              --GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
+              --GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} \
+              --OAUTH_GITHUB_CLIENT_ID=${{ secrets.OAUTH_GITHUB_CLIENT_ID }} \
+              --OAUTH_GITHUB_CLIENT_SECRET=${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }} \
+              --AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }} \
+              --AWS_REGION=${{ secrets.AWS_REGION }} \
+              --AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+              --AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+              --OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+              > app.log 2>&1 &
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        run: |
+          cd Face2Hire-frontend
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd Face2Hire-frontend
+          echo "VITE_API_BASE_URL=${{ secrets.APP_BACKEND_URL }}/api/v1" > .env.production
+          npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy frontend to S3
+        run: |
+          cd Face2Hire-frontend
+          aws s3 sync dist/ s3://${{ secrets.FRONTEND_S3_BUCKET_NAME }} --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
