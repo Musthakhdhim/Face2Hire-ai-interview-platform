@@ -43,14 +43,12 @@ export default function FaceDetector({
   const hiddenVideoRef = useRef<HTMLVideoElement | null>(null);
   const enabledRef = useRef(false);
 
-  // Report status to parent
   useEffect(() => {
     if (onFaceStatus && faceDetected !== null) {
       onFaceStatus(faceDetected, violationCount);
     }
   }, [faceDetected, violationCount, onFaceStatus]);
 
-  // Camera initialisation and detection loop
   useEffect(() => {
     if (enabledRef.current) return;
     enabledRef.current = true;
@@ -81,7 +79,7 @@ export default function FaceDetector({
         try {
           await localDetector.send({ image: hiddenVideoRef.current });
         } catch {
-          // ignore detection errors
+          // ignore
         }
         localAnimationId = requestAnimationFrame(detect);
       };
@@ -105,13 +103,11 @@ export default function FaceDetector({
         await hiddenVideo.play();
         hiddenVideoRef.current = hiddenVideo;
 
-        // wait for video dimensions
         await new Promise<void>((resolve) => {
           if (hiddenVideo.videoWidth > 0 && hiddenVideo.videoHeight > 0) resolve();
           else hiddenVideo.onloadedmetadata = () => resolve();
         });
 
-        // load MediaPipe script if not present
         if (!window.FaceDetection) {
           await new Promise<void>((resolve) => {
             const script = document.createElement('script');
@@ -158,13 +154,12 @@ export default function FaceDetector({
     };
   }, [maxViolations, onViolation]);
 
-  // Attach stream to preview video
   useEffect(() => {
     if (cameraEnabled && showPreview && previewRef.current && streamRef.current) {
       if (previewRef.current.srcObject !== streamRef.current) {
         previewRef.current.srcObject = streamRef.current;
         previewRef.current.play().catch(() => {
-          // ignore play errors (user interaction may be required)
+          // ignore 
         });
       }
     }

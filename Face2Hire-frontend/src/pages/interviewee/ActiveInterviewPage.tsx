@@ -11,12 +11,13 @@ import { audioService } from '../../services/audioService';
 // import { websocketService } from '../../services/websocketService'; 
 import ThreeAvatar from '../../components/interview/ThreeAvatar';
 import FaceDetector from '../../components/interview/FaceDetector';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../../store/store';
+// import { useSelector } from 'react-redux';
+// import type { RootState } from '../../store/store';
 import screenfull from 'screenfull';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 // import CustomAvatar from '../../components/interview/CustomAvatar';  
 // import RealisticAvatar from '../../components/interview/RealisticAvatar'; 
+
 
 interface SessionConfig {
   type: InterviewType;
@@ -47,7 +48,7 @@ export default function ActiveInterviewPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { token } = useSelector((state: RootState) => state.auth);
+  // const { token } = useSelector((state: RootState) => state.auth);
   const sessionConfig = location.state as SessionConfig;
 
   const [currentQuestion, setCurrentQuestion] = useState<QuestionResponseDto | null>(null);
@@ -81,40 +82,38 @@ export default function ActiveInterviewPage() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
-  // If sessionConfig is missing but we have a sessionId, try to load from localStorage
   if (!sessionConfig && sessionId) {
     const stored = localStorage.getItem(`interview_config_${sessionId}`);
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
-        // Merge with current location state – but we can't modify location.state directly.
-        // Instead, we can store it in a ref or state and use it.
-        // For simplicity, we can navigate to setup if config not found, or set a local state.
-        // Here we'll just set the config from localStorage into a component state.
-        // But to keep it simple, we'll assume the user should start over if config is missing.
+        // const parsed = JSON.parse(stored);
+       
         console.log('Found stored config for session', sessionId);
-        // We can set a local state and use it, but that requires refactoring.
-        // For now, just log; the startInterview will attempt to resume using the stored config
-        // because sessionConfig?.firstQuestionId will be false? Actually we need to pass it.
-        // Better approach: create a state variable `resumeConfig` and use it.
-      } catch (e) {}
+      
+      } catch (e) {
+        console.log();
+        
+      }
     }
   }
 }, [sessionConfig, sessionId]);
 
   useEffect(() => {
     const checkActive = async () => {
-        try {
-            const active = await interviewService.getActiveSession();
-            if (active && active.status === 'ACTIVE') {
-                setActiveSession(active);
-            }
-        } catch (error) {
-            console.error('Failed to check active session', error);
+      try {
+        const active = await interviewService.getActiveSession();
+        if (active && active.status === 'ACTIVE') {
+          setActiveSession(active);
+          setTotalQuestions(active.totalQuestions);
+          setTimeRemaining(active.remainingTimeSeconds);
+      
         }
+      } catch (error) {
+        console.error('Failed to check active session', error);
+      }
     };
     checkActive();
-}, []);
+  }, []);
 
   const stopCurrentAudio = useCallback(() => {
     if (currentAudioRef.current) {
@@ -161,7 +160,6 @@ export default function ActiveInterviewPage() {
     try {
       const overallFeedback = await interviewService.endSession(Number(sessionId));
       
-      // Remove stored config on successful end
       localStorage.removeItem(`interview_config_${sessionId}`);
       
       if (screenfull.isFullscreen) {
@@ -172,7 +170,6 @@ export default function ActiveInterviewPage() {
     } catch (error) {
       console.error('Failed to end interview:', error);
       toast.error('Error ending interview');
-      // Still navigate to feedback page even if API fails? Better to stay or navigate?
       navigate(`/interviewee/interview/feedback/${sessionId}`);
     }
   }, [sessionId, navigate, stopCurrentAudio]);
@@ -247,53 +244,49 @@ export default function ActiveInterviewPage() {
 
   const startInterview = useCallback(async () => {
     try {
-        let firstQuestion: QuestionResponseDto;
-        
-        // Check if we are resuming an existing session (firstQuestionId provided in config)
-        if (sessionConfig?.firstQuestionId) {
-            // Resume – the question ID is the current unanswered question
-            // We can either use the question passed in state, or fetch it.
-            if (sessionConfig.currentQuestion) {
-                firstQuestion = sessionConfig.currentQuestion;
-            } else {
-                // Fallback: fetch the current question from backend
-                firstQuestion = await interviewService.getCurrentQuestionForSession(Number(sessionId));
-            }
-            // We also need to know totalQuestions and timeRemaining? They should already be in the config or we can fetch.
-            // The config should already contain totalQuestions and durationSeconds when first created.
-            // Ensure when starting a new session we save those as well.
-        } else {
-            // New session
-            const started = await interviewService.startSession({
-                type: sessionConfig.type,
-                difficulty: sessionConfig.difficulty,
-                duration: sessionConfig.duration,
-                questionCount: sessionConfig.questionCount,
-                avatarStyle: sessionConfig.avatarStyle,
-                scheduledInterviewId: sessionConfig.scheduledInterviewId,
-            });
-            setTotalQuestions(started.totalQuestions);
-            setTimeRemaining(started.durationSeconds);
-            // Store config for resume
-            localStorage.setItem(`interview_config_${started.sessionId}`, JSON.stringify({
-                ...sessionConfig,
-                totalQuestions: started.totalQuestions,
-                durationSeconds: started.durationSeconds,
-            }));
-            const q = await interviewService.getNextQuestion(started.sessionId, 0);
-            firstQuestion = q;
+      let firstQuestion: QuestionResponseDto;
+
+      if (sessionConfig?.firstQuestionId) {
+      
+        if (activeSession && activeSession.sessionId === Number(sessionId)) {
+          setTotalQuestions(activeSession.totalQuestions);
+          setTimeRemaining(activeSession.remainingTimeSeconds);
         }
-        
-        setCurrentQuestion(firstQuestion);
+        if (sessionConfig.currentQuestion) {
+          firstQuestion = sessionConfig.currentQuestion;
+        } else {
+          firstQuestion = await interviewService.getCurrentQuestionForSession(Number(sessionId));
+        }
         setQuestionIndex(firstQuestion.questionIndex);
-        setLoading(false);
-        
-        await speakQuestion(firstQuestion.questionText);
-    } catch {
-        toast.error('Failed to start interview');
-        navigate('/interviewee/interview/setup');
+      } else {
+        const started = await interviewService.startSession({
+          type: sessionConfig.type,
+          difficulty: sessionConfig.difficulty,
+          duration: sessionConfig.duration,
+          questionCount: sessionConfig.questionCount,
+          avatarStyle: sessionConfig.avatarStyle,
+          scheduledInterviewId: sessionConfig.scheduledInterviewId,
+        });
+        setTotalQuestions(started.totalQuestions);
+        setTimeRemaining(started.durationSeconds);
+        localStorage.setItem(`interview_config_${started.sessionId}`, JSON.stringify({
+          ...sessionConfig,
+          totalQuestions: started.totalQuestions,
+          durationSeconds: started.durationSeconds,
+        }));
+        const q = await interviewService.getNextQuestion(started.sessionId, 0);
+        firstQuestion = q;
+        setQuestionIndex(firstQuestion.questionIndex);
+      }
+
+      setCurrentQuestion(firstQuestion);
+      setLoading(false);
+      await speakQuestion(firstQuestion.questionText);
+    } catch (error) {
+      toast.error('Failed to start interview');
+      navigate('/interviewee/interview/setup');
     }
-}, [sessionId, sessionConfig, navigate, speakQuestion]);
+  }, [sessionId, sessionConfig, activeSession, navigate, speakQuestion]);
 
   const enableFullscreenAndStart = async () => {
     if (screenfull.isEnabled) {
@@ -369,7 +362,6 @@ export default function ActiveInterviewPage() {
         responseDuration,
       });
       setAnswerSubmitted(true);
-      // toast.success(`Score: ${feedback.score}%`);
       console.log(`Score: ${feedback.score}%`)
       setTimeout(() => {
         setAnswerSubmitted(false);

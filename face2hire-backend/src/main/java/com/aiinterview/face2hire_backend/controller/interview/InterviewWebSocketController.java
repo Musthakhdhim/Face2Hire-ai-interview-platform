@@ -16,7 +16,7 @@ import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 
-@Controller
+//@Controller
 @RequiredArgsConstructor
 public class InterviewWebSocketController {
 

@@ -57,6 +57,10 @@ export default function UpcomingInterviewsPage() {
     }
   };
 
+  const isExpired = (dueDate: string): boolean => {
+    return new Date(dueDate) < new Date();
+  };
+
   if (loading) {
     return <div className="text-center py-12">Loading...</div>;
   }
@@ -118,141 +122,168 @@ export default function UpcomingInterviewsPage() {
           </Card>
 
           <div className="grid gap-6">
-            {interviewList.map((interview, index) => (
-              <motion.div
-                key={interview.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-              >
-                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col lg:flex-row gap-6">
-                      <div className="flex items-start gap-4 flex-1">
-                        <div className="size-16 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                          <Calendar className="size-8 text-white" />
+            {interviewList.map((interview, index) => {
+              const expired = isExpired(interview.dueDate);
+              
+              return (
+                <motion.div
+                  key={interview.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                >
+                  <Card className={`border-0 shadow-lg hover:shadow-xl transition-shadow ${expired ? 'opacity-75' : ''}`}>
+                    <CardContent className="p-6">
+                      <div className="flex flex-col lg:flex-row gap-6">
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className="size-16 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                            <Calendar className="size-8 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-3">
+                              <h3 className="text-xl font-bold text-gray-900 capitalize">
+                                {interview.type} Interview
+                              </h3>
+                              <Badge className={getTypeColor(interview.type)}>
+                                {interview.type}
+                              </Badge>
+                              {expired && (
+                                <Badge className="bg-red-100 text-red-700 border-red-200">
+                                  Expired
+                                </Badge>
+                              )}
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-3 mb-4">
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <User className="size-4" />
+                                <span className="text-sm">
+                                  Scheduled by:{" "}
+                                  <span className="font-medium">
+                                    {interview.scheduledByInterviewer}
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <Clock className="size-4" />
+                                <span className="text-sm">
+                                  Due:{" "}
+                                  <span className="font-medium">
+                                    {new Date(interview.dueDate).toLocaleDateString()}
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <Award className="size-4" />
+                                <span className="text-sm">
+                                  Difficulty:{" "}
+                                  <span className="font-medium capitalize">
+                                    {interview.difficulty}
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <Timer className="size-4" />
+                                <span className="text-sm">
+                                  Duration:{" "}
+                                  <span className="font-medium">
+                                    {interview.duration} min
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <ListChecks className="size-4" />
+                                <span className="text-sm">
+                                  Questions:{" "}
+                                  <span className="font-medium">
+                                    {interview.questionCount}
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <span className="text-lg">
+                                  {interview.avatarStyle === "professional"
+                                    ? "👔"
+                                    : interview.avatarStyle === "friendly"
+                                    ? "😊"
+                                    : "🧐"}
+                                </span>
+                                <span className="text-sm">
+                                  Avatar:{" "}
+                                  <span className="font-medium capitalize">
+                                    {interview.avatarStyle}
+                                  </span>
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500">
+                                Difficulty:
+                              </span>
+                              <div className="flex-1 max-w-xs h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full ${getDifficultyColor(
+                                    interview.difficulty
+                                  )}`}
+                                  style={{
+                                    width:
+                                      interview.difficulty === "beginner"
+                                        ? "33%"
+                                        : interview.difficulty === "intermediate"
+                                        ? "66%"
+                                        : "100%",
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-3">
-                            <h3 className="text-xl font-bold text-gray-900 capitalize">
-                              {interview.type} Interview
-                            </h3>
-                            <Badge className={getTypeColor(interview.type)}>
-                              {interview.type}
-                            </Badge>
-                          </div>
 
-                          <div className="grid md:grid-cols-2 gap-3 mb-4">
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <User className="size-4" />
-                              <span className="text-sm">
-                                Scheduled by:{" "}
-                                <span className="font-medium">
-                                  {interview.scheduledByInterviewer}
-                                </span>
+                        <div className="flex flex-col gap-2 lg:w-48">
+                          <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 text-center">
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                              <AlertCircle className="size-4 text-amber-600" />
+                              <span className="text-xs font-medium text-amber-700">
+                                LOCKED SETTINGS
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <Clock className="size-4" />
-                              <span className="text-sm">
-                                Due:{" "}
-                                <span className="font-medium">
-                                  {new Date(interview.dueDate).toLocaleDateString()}
-                                </span>
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <Award className="size-4" />
-                              <span className="text-sm">
-                                Difficulty:{" "}
-                                <span className="font-medium capitalize">
-                                  {interview.difficulty}
-                                </span>
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <Timer className="size-4" />
-                              <span className="text-sm">
-                                Duration:{" "}
-                                <span className="font-medium">
-                                  {interview.duration} min
-                                </span>
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <ListChecks className="size-4" />
-                              <span className="text-sm">
-                                Questions:{" "}
-                                <span className="font-medium">
-                                  {interview.questionCount}
-                                </span>
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <span className="text-lg">
-                                {interview.avatarStyle === "professional"
-                                  ? "👔"
-                                  : interview.avatarStyle === "friendly"
-                                  ? "😊"
-                                  : "🧐"}
-                              </span>
-                              <span className="text-sm">
-                                Avatar:{" "}
-                                <span className="font-medium capitalize">
-                                  {interview.avatarStyle}
-                                </span>
-                              </span>
-                            </div>
+                            <p className="text-xs text-gray-600">
+                              Cannot be modified
+                            </p>
                           </div>
-
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">
-                              Difficulty:
-                            </span>
-                            <div className="flex-1 max-w-xs h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full ${getDifficultyColor(
-                                  interview.difficulty
-                                )}`}
-                                style={{
-                                  width:
-                                    interview.difficulty === "beginner"
-                                      ? "33%"
-                                      : interview.difficulty === "intermediate"
-                                      ? "66%"
-                                      : "100%",
-                                }}
-                              />
+                          
+                          {expired ? (
+                            <div className="space-y-2">
+                              <div className="p-3 bg-red-50 rounded-lg border border-red-200 text-center">
+                                <div className="flex items-center justify-center gap-2 mb-1">
+                                  <AlertCircle className="size-4 text-red-600" />
+                                  <span className="text-xs font-medium text-red-700">
+                                    TIME HAS EXPIRED
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-600">
+                                  This interview is no longer available.
+                                </p>
+                              </div>
+                              <Button disabled className="w-full bg-gray-400 cursor-not-allowed">
+                                Start Interview
+                              </Button>
                             </div>
-                          </div>
+                          ) : (
+                            <Link to={`/interviewee/interview/setup?scheduled=${interview.id}`}>
+                              <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600">
+                                Start Interview
+                              </Button>
+                            </Link>
+                          )}
                         </div>
                       </div>
-
-                      <div className="flex flex-col gap-2 lg:w-48">
-                        <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 text-center">
-                          <div className="flex items-center justify-center gap-2 mb-1">
-                            <AlertCircle className="size-4 text-amber-600" />
-                            <span className="text-xs font-medium text-amber-700">
-                              LOCKED SETTINGS
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-600">
-                            Cannot be modified
-                          </p>
-                        </div>
-                        <Link
-                          to={`/interviewee/interview/setup?scheduled=${interview.id}`}
-                        >
-                          <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600">
-                            Start Interview
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
         </>
       )}

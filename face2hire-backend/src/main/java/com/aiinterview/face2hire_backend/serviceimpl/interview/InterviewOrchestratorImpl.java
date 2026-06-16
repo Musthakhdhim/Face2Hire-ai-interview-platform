@@ -23,9 +23,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -365,10 +363,31 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
             return null;
         }
         InterviewSession session = active.get(0);
-        long startedEpoch = session.getStartedAt().toEpochSecond(ZoneOffset.UTC);
-        long durationSeconds = session.getDuration() * 60L;
+
+//        long startedEpoch = session.getStartedAt().toEpochSecond(ZoneOffset.UTC);
+//        long durationSeconds = session.getDuration() * 60L;
+//        long now = Instant.now().getEpochSecond();
+//        long remaining = Math.max(0, durationSeconds - (now - startedEpoch));
+
+        ZoneId systemZone = ZoneId.systemDefault();
+        ZonedDateTime startedZoned = session.getStartedAt().atZone(systemZone);
+        long startedEpoch = startedZoned.toInstant().getEpochSecond();
+        long durationSeconds = session.getOriginalDurationMinutes() * 60L; // Use original duration, not session.getDuration()
         long now = Instant.now().getEpochSecond();
         long remaining = Math.max(0, durationSeconds - (now - startedEpoch));
+
+        // Safety clamp to original duration (in case of timezone issues)
+        long maxAllowed = session.getOriginalDurationMinutes() * 60L;
+        if (remaining > maxAllowed) {
+            log.warn("Remaining {}s > {}s for session {}, clamping to max", remaining, maxAllowed, session.getId());
+            remaining = maxAllowed;
+        }
+
+//        System.out.println("====================");
+//        System.out.println("question count"+session.getOriginalQuestionCount());
+//        System.out.println("time in munites "+session.getOriginalDurationMinutes());
+//        System.out.println("remaining tim eseconds"+(int)remaining);
+//        System.out.println("=======================");
         return SessionStateDto.builder()
                 .sessionId(session.getId())
                 .totalQuestions(session.getQuestionCount())

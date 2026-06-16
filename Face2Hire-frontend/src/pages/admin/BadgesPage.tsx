@@ -63,7 +63,6 @@ export default function AdminBadgesPage() {
             }
             setIsDialogOpen(false);
             resetForm();
-            // Refresh the list after operation
             const data = await badgeService.getAllBadges();
             setBadges(data);
             setLoading(false);

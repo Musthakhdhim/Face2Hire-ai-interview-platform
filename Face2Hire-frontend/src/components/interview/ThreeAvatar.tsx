@@ -21,11 +21,9 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
   const volumeRef = useRef(0);
   const controlsRef = useRef<OrbitControls | null>(null);
 
-  const modelUrl = '/models/sixth.glb'; // your correctly rigged model
+  const modelUrl = '/models/sixth.glb'; 
 
-  // --- Setup audio analyser whenever audioElement changes ---
   useEffect(() => {
-    // Clean up previous audio connections
     if (sourceRef.current) {
       try {
         sourceRef.current.disconnect();
@@ -98,7 +96,6 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
     };
   }, [audioElement]);
 
-  // --- 3D Scene setup ---
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -123,7 +120,6 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
     controls.target.set(0, 2.5, 0);
     controlsRef.current = controls;
 
-    // Lighting
     const ambient = new THREE.AmbientLight(0x707090);
     scene.add(ambient);
     const mainLight = new THREE.DirectionalLight(0xffffff, 1.8);
@@ -154,7 +150,6 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
         model.scale.set(scale, scale, scale);
         model.position.y += 2.5;
 
-        // Find jaw bone
         let jawFound = false;
         model.traverse((child) => {
           if (child instanceof THREE.Bone) {
@@ -171,7 +166,6 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
 
         scene.add(model);
 
-        // Optional: play idle animation if present
         if (gltf.animations && gltf.animations.length > 0) {
           const mixer = new THREE.AnimationMixer(model);
           mixerRef.current = mixer;
@@ -189,7 +183,6 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
       undefined,
       (error) => {
         console.error('Error loading 3D model:', error);
-        // Fallback sphere with manual jaw control
         const headGeo = new THREE.SphereGeometry(1.5, 64, 64);
         const headMat = new THREE.MeshStandardMaterial({ color: 0xddbb99 });
         const head = new THREE.Mesh(headGeo, headMat);
@@ -216,7 +209,6 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
       if (mixerRef.current) mixerRef.current.update(delta);
       if (controlsRef.current) controlsRef.current.update();
 
-      // Lip sync: drive jaw bone rotation based on audio volume
       if (analyserRef.current && jawBoneRef.current) {
         const data = new Uint8Array(analyserRef.current.frequencyBinCount);
         analyserRef.current.getByteFrequencyData(data);
@@ -241,7 +233,6 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
         if (jawBoneRef.current instanceof THREE.Bone) {
           jawBoneRef.current.rotation.x = jawRotationX;
         } else {
-          // Fallback for mesh jaw
           (jawBoneRef.current as unknown as THREE.Mesh).scale.y = 1 + jawOpen * 0.8;
           (jawBoneRef.current as unknown as THREE.Mesh).position.z = 0.5 + jawOpen * 0.2;
         }
@@ -277,19 +268,7 @@ export default function ThreeAvatar({ style: _style, isSpeaking: _isSpeaking, au
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelUrl]);
 
-  // Test function kept for debugging – can be temporarily uncommented as needed
-  // const testJaw = useCallback(() => {
-  //   if (jawBoneRef.current) {
-  //     console.log('Testing jaw rotation.x');
-  //     const original = jawBoneRef.current.rotation.x;
-  //     jawBoneRef.current.rotation.x = -0.25;
-  //     setTimeout(() => {
-  //       if (jawBoneRef.current) jawBoneRef.current.rotation.x = original;
-  //     }, 500);
-  //   } else {
-  //     alert('Jaw bone not found – check model');
-  //   }
-  // }, []);
+
 
   return (
     <div className="relative w-full h-full">

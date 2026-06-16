@@ -34,33 +34,6 @@ export default function HistoryPage() {
     fetch();
   }, []);
 
-  // const filtered = useMemo(() => {
-  //   let result = sessions;
-
-  //   if (filterType !== "all") {
-  //     result = result.filter(s => s.type === filterType);
-  //   }
-
-  //   if (filterStatus === "completed") {
-  //     result = result.filter(s => s.status === "COMPLETED");
-  //   } else if (filterStatus === "incomplete") {
-  //     result = result.filter(s => s.status !== "COMPLETED");
-  //   }
-
-  //   if (search) {
-  //     result = result.filter(s =>
-  //       s.type.toLowerCase().includes(search.toLowerCase()) ||
-  //       s.difficulty.toLowerCase().includes(search.toLowerCase())
-  //     );
-  //   }
-
-  //   return [...result].sort((a, b) =>
-  //     new Date(b.completedAt || b.createdAt).getTime() -
-  //     new Date(a.completedAt || a.createdAt).getTime()
-  //   );
-  // }, [sessions, filterType, filterStatus, search]);
-
-
   const filtered = useMemo(() => {
     let result = sessions;
 
@@ -121,7 +94,7 @@ export default function HistoryPage() {
     try {
         const currentQuestion = await interviewService.getCurrentQuestionForSession(sessionId);
         const storedConfig = localStorage.getItem(`interview_config_${sessionId}`);
-        let config = storedConfig ? JSON.parse(storedConfig) : {};
+        const config = storedConfig ? JSON.parse(storedConfig) : {};
         
         navigate(`/interviewee/interview/active/${sessionId}`, {
             state: {

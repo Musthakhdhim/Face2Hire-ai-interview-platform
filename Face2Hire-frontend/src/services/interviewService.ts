@@ -177,6 +177,8 @@ export const interviewService = {
   },
   getActiveSession: async (): Promise<SessionStateDto | null> => {
     const response = await axiosClient.get('/interview/active');
+    console.log(response.data);
+    
     return response.data.data;
   },
   getCurrentQuestionForSession: async (sessionId: number): Promise<QuestionResponseDto> => {

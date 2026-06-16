@@ -1,0 +1,28 @@
+# .github/workflows/cd.yml (Part of the deploy-backend job)
+- name: Deploy to EC2 with Docker
+  run: |
+    ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ secrets.EC2_HOST }} "
+      docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/face2hire-backend:${{ github.sha }}
+      docker stop face2hire-backend || true
+      docker rm face2hire-backend || true
+      docker run -d --name face2hire-backend -p 8080:8080 \
+        -e SPRING_PROFILES_ACTIVE=prod \
+        -e DB_URL=jdbc:mysql://${{ secrets.RDS_HOST }}:3306/${{ secrets.RDS_DATABASE }}?createDatabaseIfNotExist=true\&useSSL=false\&allowPublicKeyRetrieval=true \
+        -e DB_USERNAME=${{ secrets.RDS_USERNAME }} \
+        -e DB_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+        -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+        -e EMAIL_USERNAME=${{ secrets.EMAIL_USERNAME }} \
+        -e EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }} \
+        -e APP_FRONTEND_URL=${{ secrets.APP_FRONTEND_URL }} \
+        -e APP_BACKEND_URL=${{ secrets.APP_BACKEND_URL }} \
+        -e GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
+        -e GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} \
+        -e OAUTH_GITHUB_CLIENT_ID=${{ secrets.OAUTH_GITHUB_CLIENT_ID }} \
+        -e OAUTH_GITHUB_CLIENT_SECRET=${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }} \
+        -e AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }} \
+        -e AWS_REGION=${{ secrets.AWS_REGION }} \
+        -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+        -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+        -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+        ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/face2hire-backend:${{ github.sha }}
+    "
