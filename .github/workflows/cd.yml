@@ -13,10 +13,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '17'
           distribution: 'temurin'
 
       - name: Build JAR with Maven
@@ -31,48 +31,77 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Deploy JAR to EC2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          source: "face2hire-backend/target/*.jar"
-          target: "/home/ec2-user/app/"
-          strip_components: 1
+      - name: Deploy to EC2 using native SSH
+        run: |
+          # Create key file from secret
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > /tmp/key.pem
+          chmod 600 /tmp/key.pem
+          
+          # Create deployment script
+          cat > /tmp/deploy.sh << 'DEPLOY_EOF'
+          #!/bin/bash
+          cd /home/ec2-user/app
+          pkill -f 'face2hire-backend' || true
+          sleep 2
+          nohup java -jar face2hire-backend.jar \
+            --spring.profiles.active=prod \
+            --RDS_HOST=$1 \
+            --RDS_DATABASE=$2 \
+            --RDS_USERNAME=$3 \
+            --RDS_PASSWORD=$4 \
+            --JWT_SECRET=$5 \
+            --EMAIL_USERNAME=$6 \
+            --EMAIL_PASSWORD=$7 \
+            --APP_FRONTEND_URL=$8 \
+            --APP_BACKEND_URL=$9 \
+            --GOOGLE_CLIENT_ID=${10} \
+            --GOOGLE_CLIENT_SECRET=${11} \
+            --OAUTH_GITHUB_CLIENT_ID=${12} \
+            --OAUTH_GITHUB_CLIENT_SECRET=${13} \
+            --AWS_S3_BUCKET_NAME=${14} \
+            --AWS_REGION=${15} \
+            --AWS_ACCESS_KEY_ID=${16} \
+            --AWS_SECRET_ACCESS_KEY=${17} \
+            --OPENAI_API_KEY=${18} \
+            > app.log 2>&1 &
+          DEPLOY_EOF
+          
+          chmod +x /tmp/deploy.sh
+          
+          # Copy JAR to EC2
+          scp -o StrictHostKeyChecking=no -i /tmp/key.pem face2hire-backend/target/*.jar ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/app/face2hire-backend.jar
+          
+          # Copy deploy script to EC2
+          scp -o StrictHostKeyChecking=no -i /tmp/key.pem /tmp/deploy.sh ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/app/deploy.sh
+          
+          # Run deploy script on EC2
+          ssh -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@${{ secrets.EC2_HOST }} "chmod +x /home/ec2-user/app/deploy.sh && /home/ec2-user/app/deploy.sh \
+            '${{ secrets.RDS_HOST }}' \
+            '${{ secrets.RDS_DATABASE }}' \
+            '${{ secrets.RDS_USERNAME }}' \
+            '${{ secrets.RDS_PASSWORD }}' \
+            '${{ secrets.JWT_SECRET }}' \
+            '${{ secrets.EMAIL_USERNAME }}' \
+            '${{ secrets.EMAIL_PASSWORD }}' \
+            '${{ secrets.APP_FRONTEND_URL }}' \
+            '${{ secrets.APP_BACKEND_URL }}' \
+            '${{ secrets.GOOGLE_CLIENT_ID }}' \
+            '${{ secrets.GOOGLE_CLIENT_SECRET }}' \
+            '${{ secrets.OAUTH_GITHUB_CLIENT_ID }}' \
+            '${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}' \
+            '${{ secrets.AWS_S3_BUCKET_NAME }}' \
+            '${{ secrets.AWS_REGION }}' \
+            '${{ secrets.AWS_ACCESS_KEY_ID }}' \
+            '${{ secrets.AWS_SECRET_ACCESS_KEY }}' \
+            '${{ secrets.OPENAI_API_KEY }}'"
+          
+          # Clean up
+          rm -f /tmp/key.pem /tmp/deploy.sh
 
-      - name: Run application on EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script: |
-            cd /home/ec2-user/app
-            # Stop old process
-            pkill -f "face2hire-backend" || true
-            # Run new version
-            nohup java -jar *.jar \
-              --spring.profiles.active=prod \
-              --RDS_HOST=${{ secrets.RDS_HOST }} \
-              --RDS_DATABASE=${{ secrets.RDS_DATABASE }} \
-              --RDS_USERNAME=${{ secrets.RDS_USERNAME }} \
-              --RDS_PASSWORD=${{ secrets.RDS_PASSWORD }} \
-              --JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              --EMAIL_USERNAME=${{ secrets.EMAIL_USERNAME }} \
-              --EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }} \
-              --APP_FRONTEND_URL=${{ secrets.APP_FRONTEND_URL }} \
-              --APP_BACKEND_URL=${{ secrets.APP_BACKEND_URL }} \
-              --GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
-              --GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} \
-              --OAUTH_GITHUB_CLIENT_ID=${{ secrets.OAUTH_GITHUB_CLIENT_ID }} \
-              --OAUTH_GITHUB_CLIENT_SECRET=${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }} \
-              --AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }} \
-              --AWS_REGION=${{ secrets.AWS_REGION }} \
-              --AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-              --AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-              --OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
-              > app.log 2>&1 &
+      - name: Check deployment status
+        run: |
+          sleep 15
+          curl -s http://${{ secrets.EC2_HOST }}:8080/actuator/health || echo "App starting..."
 
   deploy-frontend:
     runs-on: ubuntu-latest
