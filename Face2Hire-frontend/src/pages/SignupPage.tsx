@@ -63,7 +63,7 @@ export default function SignupPage(): JSX.Element {
   };
 
   const handleSocialAuth = (provider: string): void => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/${provider.toLowerCase()}`;
+    window.location.href = `https://api.face2hire.shop:8443/oauth2/authorization/${provider.toLowerCase()}`;
   };
 
   return (

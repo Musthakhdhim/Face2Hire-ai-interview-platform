@@ -70,7 +70,7 @@ export default function LoginPage(): JSX.Element {
   };
 
   const handleSocialLogin = (provider: string): void => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/${provider.toLowerCase()}`;
+    window.location.href = `https://api.face2hire.shop:8443/oauth2/authorization/${provider.toLowerCase()}`;
   };
 
   return (
