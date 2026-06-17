@@ -113,7 +113,9 @@ public class WebSecurityConfig {
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000",
-                "https://uucvt-103-78-16-217.run.pinggy-free.link"
+                "https://face2hire.shop",
+                "https://www.face2hire.shop",
+                "https://api.face2hire.shop"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
