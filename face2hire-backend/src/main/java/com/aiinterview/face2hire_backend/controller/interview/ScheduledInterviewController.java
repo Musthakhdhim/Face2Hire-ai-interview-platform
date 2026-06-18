@@ -23,7 +23,6 @@ public class ScheduledInterviewController {
     public ResponseEntity<ScheduledInterviewDto> schedule(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ScheduleInterviewRequest request) {
-        // Use email (always present, never null)
         String interviewerName = userDetails.getUsername();
         return ResponseEntity.ok(service.schedule(interviewerName, request));
     }
