@@ -4,20 +4,14 @@ import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
-import { Mic, MicOff, SkipForward, CheckCircle, Maximize2 } from 'lucide-react';
+import { Mic, MicOff, SkipForward, CheckCircle, Maximize2, Send } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { interviewService, type QuestionResponseDto, type InterviewType, type Difficulty, type AvatarStyle, type SessionStateDto } from '../../services/interviewService';
 import { audioService } from '../../services/audioService';
-// import { websocketService } from '../../services/websocketService'; 
 import ThreeAvatar from '../../components/interview/ThreeAvatar';
 import FaceDetector from '../../components/interview/FaceDetector';
-// import { useSelector } from 'react-redux';
-// import type { RootState } from '../../store/store';
 import screenfull from 'screenfull';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-// import CustomAvatar from '../../components/interview/CustomAvatar';  
-// import RealisticAvatar from '../../components/interview/RealisticAvatar'; 
-
 
 interface SessionConfig {
   type: InterviewType;
@@ -48,7 +42,6 @@ export default function ActiveInterviewPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  // const { token } = useSelector((state: RootState) => state.auth);
   const sessionConfig = location.state as SessionConfig;
 
   const [currentQuestion, setCurrentQuestion] = useState<QuestionResponseDto | null>(null);
@@ -68,7 +61,6 @@ export default function ActiveInterviewPage() {
   const [showVisibilityWarningDialog, setShowVisibilityWarningDialog] = useState(false);
   const [activeSession, setActiveSession] = useState<SessionStateDto | null>(null);
 
-
   const [faceDetected, setFaceDetected] = useState(true);
   const [faceViolationCount, setFaceViolationCount] = useState(0);
   const [showCameraWarningDialog, setShowCameraWarningDialog] = useState(false);
@@ -81,22 +73,20 @@ export default function ActiveInterviewPage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
+  const isLastQuestion = questionIndex >= totalQuestions;
+
   useEffect(() => {
-  if (!sessionConfig && sessionId) {
-    const stored = localStorage.getItem(`interview_config_${sessionId}`);
-    if (stored) {
-      try {
-        // const parsed = JSON.parse(stored);
-       
-        console.log('Found stored config for session', sessionId);
-      
-      } catch (e) {
-        console.log();
-        
+    if (!sessionConfig && sessionId) {
+      const stored = localStorage.getItem(`interview_config_${sessionId}`);
+      if (stored) {
+        try {
+          console.log('Found stored config for session', sessionId);
+        } catch (e) {
+          console.log();
+        }
       }
     }
-  }
-}, [sessionConfig, sessionId]);
+  }, [sessionConfig, sessionId]);
 
   useEffect(() => {
     const checkActive = async () => {
@@ -106,7 +96,6 @@ export default function ActiveInterviewPage() {
           setActiveSession(active);
           setTotalQuestions(active.totalQuestions);
           setTimeRemaining(active.remainingTimeSeconds);
-      
         }
       } catch (error) {
         console.error('Failed to check active session', error);
@@ -128,7 +117,6 @@ export default function ActiveInterviewPage() {
     }
     setAudioElement(null);
   }, []);
-  
 
   const speakQuestion = useCallback(async (text: string) => {
     stopCurrentAudio();
@@ -180,12 +168,11 @@ export default function ActiveInterviewPage() {
   }, [endInterview]);
 
   useEffect(() => {
-  if (faceViolationCount >= 5) {
-    toast.error('Maximum face violations reached. Ending interview.');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    endInterview();
-  }
-}, [faceViolationCount, endInterview]);
+    if (faceViolationCount >= 5) {
+      toast.error('Maximum face violations reached. Ending interview.');
+      endInterview();
+    }
+  }, [faceViolationCount, endInterview]);
 
   useEffect(() => {
     if (loading || answerSubmitted) return;
@@ -247,7 +234,6 @@ export default function ActiveInterviewPage() {
       let firstQuestion: QuestionResponseDto;
 
       if (sessionConfig?.firstQuestionId) {
-      
         if (activeSession && activeSession.sessionId === Number(sessionId)) {
           setTotalQuestions(activeSession.totalQuestions);
           setTimeRemaining(activeSession.remainingTimeSeconds);
@@ -362,11 +348,18 @@ export default function ActiveInterviewPage() {
         responseDuration,
       });
       setAnswerSubmitted(true);
-      console.log(`Score: ${feedback.score}%`)
-      setTimeout(() => {
-        setAnswerSubmitted(false);
-        goToNextQuestion();
-      }, 2000);
+      console.log(`Score: ${feedback.score}%`);
+      
+      if (isLastQuestion) {
+        setTimeout(() => {
+          endInterview();
+        }, 2000);
+      } else {
+        setTimeout(() => {
+          setAnswerSubmitted(false);
+          goToNextQuestion();
+        }, 2000);
+      }
     } catch {
       toast.error('Failed to submit answer');
     } finally {
@@ -374,14 +367,46 @@ export default function ActiveInterviewPage() {
     }
   };
 
+  const handleSubmitLastQuestion = async () => {
+    if (transcript.trim()) {
+      toast.info('Please record your answer first using the Start Recording button');
+      return;
+    }
+    
+    const confirmSubmit = window.confirm('You haven\'t recorded an answer for the last question. Are you sure you want to submit without an answer?');
+    if (confirmSubmit) {
+      await endInterview();
+    }
+  };
+
+  // const goToNextQuestion = async () => {
+  //   if (isLastQuestion) {
+  //     await endInterview();
+  //     return;
+  //   }
+  //   stopCurrentAudio();
+  //   try {
+  //     const next = await interviewService.getNextQuestion(Number(sessionId), currentQuestion!.questionId);
+  //     setCurrentQuestion(next);
+  //     setQuestionIndex(prev => prev + 1);
+  //     setTranscript('');
+  //     await speakQuestion(next.questionText);
+  //   } catch {
+  //     toast.error('Failed to load next question');
+  //   }
+  // };
+
   const goToNextQuestion = async () => {
-    if (questionIndex >= totalQuestions) {
+    if (isLastQuestion) {
       await endInterview();
       return;
     }
     stopCurrentAudio();
     try {
-      const next = await interviewService.getNextQuestion(Number(sessionId), currentQuestion!.questionId);
+      const next = await interviewService.getNextQuestion(
+        Number(sessionId), 
+        currentQuestion!.questionId  
+      );
       setCurrentQuestion(next);
       setQuestionIndex(prev => prev + 1);
       setTranscript('');
@@ -432,6 +457,7 @@ export default function ActiveInterviewPage() {
 
   return (
     <div className="h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 flex flex-col overflow-hidden">
+      {/* Dialogs */}
       <Dialog open={showFullscreenWarningDialog} onOpenChange={() => {}}>
         <DialogContent className="sm:max-w-md [&>button:last-child]:hidden">
           <DialogHeader>
@@ -515,19 +541,6 @@ export default function ActiveInterviewPage() {
               isSpeaking={avatarState === 'speaking'} 
               audioElement={audioElement || undefined} 
             />
-
-            {/* <CustomAvatar 
-              style={sessionConfig.avatarStyle} 
-              isSpeaking={avatarState === 'speaking'} 
-              audioElement={audioElement || undefined} 
-            /> */}
-
-            {/* <RealisticAvatar 
-              style={sessionConfig.avatarStyle} 
-              isSpeaking={avatarState === 'speaking'} 
-              audioElement={audioElement || undefined} 
-            /> */}
-
           </div>
           <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
             <CardContent className="p-8">
@@ -540,6 +553,11 @@ export default function ActiveInterviewPage() {
               {answerSubmitted && (
                 <div className="mt-6 p-4 bg-green-500/20 rounded-lg text-center">
                   <CheckCircle className="inline size-6 mr-2" /> Answer submitted! Moving to next question...
+                </div>
+              )}
+              {isLastQuestion && (
+                <div className="mt-4 p-2 bg-amber-500/20 rounded-lg border border-amber-400/30 text-center">
+                  <span className="text-amber-300 text-sm font-medium">📌 Last Question</span>
                 </div>
               )}
             </CardContent>
@@ -567,9 +585,19 @@ export default function ActiveInterviewPage() {
                 Stop & Submit
               </Button>
             )}
-            {!isRecording && !answerSubmitted && (
+            {!isRecording && !answerSubmitted && !isLastQuestion && (
               <Button size="lg" variant="outline" onClick={goToNextQuestion}>
                 Skip <SkipForward className="ml-2 size-5" />
+              </Button>
+            )}
+            {!isRecording && !answerSubmitted && isLastQuestion && (
+              <Button 
+                size="lg" 
+                variant="default" 
+                onClick={handleSubmitLastQuestion}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Submit <Send className="ml-2 size-5" />
               </Button>
             )}
           </div>

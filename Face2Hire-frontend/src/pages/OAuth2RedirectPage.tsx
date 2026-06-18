@@ -18,6 +18,7 @@ export default function OAuth2RedirectPage(): JSX.Element {
     const role = searchParams.get('role') as Role | null;
     const email = searchParams.get('email') ?? undefined;
     const name = searchParams.get('name') ?? undefined;
+    const id = searchParams.get('id') ? Number(searchParams.get('id')) : undefined; 
     const error = searchParams.get('error');
 
     if (error) {
@@ -36,7 +37,7 @@ export default function OAuth2RedirectPage(): JSX.Element {
       return;
     }
 
-    dispatch(setOAuthUser({ token, refreshToken, role, email, name }));
+    dispatch(setOAuthUser({ token, refreshToken, role, email, name, id }));
     toast.success('Logged in successfully!');
 
     const destination: Record<Role, string> = {

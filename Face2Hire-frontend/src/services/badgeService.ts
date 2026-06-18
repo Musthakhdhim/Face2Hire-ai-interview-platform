@@ -25,9 +25,16 @@ export const badgeService = {
     awardBadge: async (userId: number, badgeId: number): Promise<void> => {
         await axiosClient.post('/admin/badges/award', null, { params: { userId, badgeId } });
     },
-    // User endpoint
     getUserBadges: async (): Promise<Badge[]> => {
         const response = await axiosClient.get('/profile/badges');
         return response.data.data;
+    },
+
+    checkForNewBadges: async (previousBadges: Badge[]): Promise<Badge[]> => {
+        const currentBadges = await badgeService.getUserBadges();
+        const newBadges = currentBadges.filter(
+            current => !previousBadges.some(prev => prev.id === current.id)
+        );
+        return newBadges;
     },
 };

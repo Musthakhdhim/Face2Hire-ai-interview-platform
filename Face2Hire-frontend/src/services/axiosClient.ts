@@ -25,7 +25,7 @@ const clearAuthAndRedirect = () => {
 };
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: 'https://api.face2hire.shop:8443/api/v1',
   headers: {
     'Content-Type': 'application/json',
     'ngrok-skip-browser-warning': 'true',
@@ -33,7 +33,7 @@ const axiosClient = axios.create({
 });
 
 const refreshAxios = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: 'https://api.face2hire.shop:8443/api/v1',
   headers: {
     'Content-Type': 'application/json',
     'ngrok-skip-browser-warning': 'true',

@@ -3,20 +3,18 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logout, updateUser } from '../store/slices/authSlice';
 import axiosClient from '../services/axiosClient';
 import {
-  Home, FileText, Upload, BarChart2, Settings, LogOut,  User,
+  Home, FileText, Upload, BarChart2, Settings, LogOut, User,
   Briefcase, Calendar, Users, Activity, FileBarChart,
-  Mail,
-  Trophy,
+  Mail, Trophy, Menu, X
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-// import { Input } from '../components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 import { Badge } from '../components/ui/badge';
-import { useEffect, type JSX } from 'react';
+import { useEffect, useState,  type JSX } from 'react';
 import type { RootState, AppDispatch } from '../store/store';
 import NotificationBell from '../components/NotificationBell';
 
@@ -31,6 +29,30 @@ export default function DashboardLayout(): JSX.Element | null {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setSidebarOpen(false);
+      }
+    };
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (isMobile) {
+        setSidebarOpen(false);
+      }
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, [location.pathname, isMobile]);
 
   useEffect(() => {
     if (!user) navigate('/login');
@@ -63,9 +85,9 @@ export default function DashboardLayout(): JSX.Element | null {
     if (role === 'interviewee') {
       return [
         { icon: Home, label: 'Dashboard', path: '/interviewee' },
-        { icon: Briefcase, label: 'Browse Jobs', path: '/interviewee/jobs' }, 
+        { icon: Briefcase, label: 'Browse Jobs', path: '/interviewee/jobs' },
         { icon: Upload, label: 'Upload CV', path: '/interviewee/upload-cv' },
-              { icon: FileText, label: 'My Applications', path: '/interviewee/applications' }, 
+        { icon: FileText, label: 'My Applications', path: '/interviewee/applications' },
         { icon: Calendar, label: 'Upcoming Interviews', path: '/interviewee/upcoming' },
         { icon: FileText, label: 'History', path: '/interviewee/history' },
         { icon: BarChart2, label: 'Analytics', path: '/interviewee/analytics' },
@@ -103,13 +125,39 @@ export default function DashboardLayout(): JSX.Element | null {
     navigate('/');
   };
 
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string): void => {
-    if (path === '#') e.preventDefault();
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+    <div className="flex h-screen bg-gray-50 relative">
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside 
+        className={`
+          fixed md:relative z-50
+          w-64 bg-white border-r border-gray-200 flex flex-col
+          transition-transform duration-300 ease-in-out
+          ${isMobile ? (
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          ) : 'translate-x-0'}
+          h-full
+        `}
+      >
+        {isMobile && (
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 transition-colors md:hidden"
+          >
+            <X className="size-5 text-gray-600" />
+          </button>
+        )}
+
         <div className="p-6 border-b border-gray-200">
           <Link to={logoLink} className="flex items-center gap-2">
             <div className="size-8 rounded-lg bg-indigo-500 flex items-center justify-center">
@@ -118,7 +166,8 @@ export default function DashboardLayout(): JSX.Element | null {
             <span className="font-bold text-lg">Face2Hire</span>
           </Link>
         </div>
-        <nav className="flex-1 p-4 space-y-1">
+
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -126,19 +175,19 @@ export default function DashboardLayout(): JSX.Element | null {
               <Link
                 key={item.label}
                 to={item.path}
-                onClick={(e) => handleNavClick(e, item.path)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   isActive
                     ? 'bg-indigo-50 text-indigo-600'
                     : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                <Icon className="size-5" />
+                <Icon className="size-5 flex-shrink-0" />
                 <span className="font-medium">{item.label}</span>
               </Link>
             );
           })}
         </nav>
+
         <div className="p-4 border-t border-gray-200 space-y-2">
           <div className="flex items-center gap-3 px-2 py-2">
             <Badge
@@ -159,14 +208,26 @@ export default function DashboardLayout(): JSX.Element | null {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
-          <div className="flex items-center gap-4 flex-1 max-w-2xl">
-            {/* <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-              <Input placeholder="Search..." className="pl-10 bg-gray-50 border-gray-200" />
-            </div> */}
+      <div className="flex-1 flex flex-col w-full overflow-hidden">
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6">
+          <div className="flex items-center gap-3">
+            {isMobile && (
+              <button
+                onClick={toggleSidebar}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Toggle sidebar"
+              >
+                <Menu className="size-5 text-gray-700" />
+              </button>
+            )}
+            
+            {isMobile && (
+              <span className="font-medium text-gray-900">
+                {navItems.find(item => item.path === location.pathname)?.label || 'Dashboard'}
+              </span>
+            )}
           </div>
+
           <div className="flex items-center gap-4">
             <NotificationBell />
             <DropdownMenu>
@@ -176,7 +237,7 @@ export default function DashboardLayout(): JSX.Element | null {
                     <AvatarImage src={user?.profileImageUrl} />
                     <AvatarFallback><User className="size-4" /></AvatarFallback>
                   </Avatar>
-                  <span className="font-medium">{user?.name}</span>
+                  <span className="font-medium hidden sm:inline">{user?.name}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -195,7 +256,8 @@ export default function DashboardLayout(): JSX.Element | null {
             </DropdownMenu>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-6">
+
+        <main className="flex-1 overflow-auto p-4 md:p-6">
           <Outlet />
         </main>
       </div>

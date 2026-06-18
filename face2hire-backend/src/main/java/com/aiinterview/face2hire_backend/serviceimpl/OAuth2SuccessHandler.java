@@ -97,6 +97,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 + "&role=" + URLEncoder.encode(user.getRole().name(), StandardCharsets.UTF_8)
                 + "&email=" + URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8)
                 + "&name=" + URLEncoder.encode(user.getUserName(), StandardCharsets.UTF_8)
+                + "&id=" + URLEncoder.encode(String.valueOf(user.getId()), StandardCharsets.UTF_8)
                 + "&redirect=" + URLEncoder.encode(dashboardPath, StandardCharsets.UTF_8);
 
         log.info("OAuth2 success for {} (role: {}), redirecting to {}",

@@ -178,11 +178,18 @@ const authSlice = createSlice({
       state.pendingResetEmail = null;
       state.otpVerified = false;
     },
-    setOAuthUser(state, action: PayloadAction<{ token: string; refreshToken?: string; role: string; email?: string; name?: string }>) {
-      const { token, refreshToken, role, email, name } = action.payload;
+    setOAuthUser(state, action: PayloadAction<{ token: string; refreshToken?: string; role: string; email?: string; name?: string; id?: number; }>) {
+      const { token, refreshToken, role, email, name, id } = action.payload;
+
+      // console.log('🔍 setOAuthUser called with:', { token, refreshToken, role, email, name });
+
+
       const displayName = name || (email ? email.split('@')[0] : 'User');
+
+        // console.log('🔍 Display name being set:', displayName);
+
       state.user = {
-        id: null,
+        id: id || null,
         name: displayName,
         email: email || null,
         role: role,
@@ -191,12 +198,22 @@ const authSlice = createSlice({
       localStorage.setItem('accessToken', token);
       if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(state.user));
+
+      // console.log('🔍 Redux state after setOAuthUser:', state.user);
+      // console.log('🔍 localStorage user:', localStorage.getItem('user'));
     },
     updateUser(state, action: PayloadAction<Partial<User>>) {
+
+      // console.log('🔍 updateUser called with:', action.payload);
+      // console.log('🔍 Current user before update:', state.user);
+
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
         localStorage.setItem('user', JSON.stringify(state.user));
       }
+
+          // console.log('🔍 Updated user:', state.user);
+
     },
   },
   extraReducers: (builder) => {

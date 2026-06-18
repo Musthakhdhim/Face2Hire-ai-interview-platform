@@ -1,23 +1,35 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import {  useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
-import { Calendar, Clock, Award, User, AlertCircle, Timer, ListChecks } from "lucide-react";
+import { Calendar, Clock, Award, User, AlertCircle, Timer, ListChecks, FileText, X } from "lucide-react";
 import { motion } from "motion/react";
 import { scheduledInterviewService } from "../../services/scheduledInterviewService";
 import type { ScheduledInterviewDto } from "../../services/scheduledInterviewService";
+import { resumeService } from "../../services/resumeService";
 import { toast } from "react-toastify";
 
 export default function UpcomingInterviewsPage() {
+  const navigate = useNavigate();
   const [interviews, setInterviews] = useState<ScheduledInterviewDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasCV, setHasCV] = useState(false);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const [pendingInterviewId, setPendingInterviewId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
       try {
         const data = await scheduledInterviewService.getMyScheduled();
         setInterviews(Array.isArray(data) ? data : []);
+        
+        try {
+          const resume = await resumeService.getActiveResume();
+          setHasCV(!!(resume && resume.status === 'COMPLETED'));
+        } catch {
+          setHasCV(false);
+        }
       } catch (error) {
         console.error("Failed to load scheduled interviews", error);
         toast.error("Failed to load scheduled interviews");
@@ -28,6 +40,32 @@ export default function UpcomingInterviewsPage() {
     };
     fetch();
   }, []);
+
+  const handleStartInterview = (interviewId: number) => {
+    if (!hasCV) {
+      setShowResumePrompt(true);
+      setPendingInterviewId(interviewId);
+      return;
+    }
+    navigate(`/interviewee/interview/setup?scheduled=${interviewId}`);
+  };
+
+  const handleUploadResume = () => {
+    setShowResumePrompt(false);
+    if (pendingInterviewId) {
+      sessionStorage.setItem('pendingInterviewId', String(pendingInterviewId));
+    }
+    navigate('/interviewee/upload-cv');
+  };
+
+  const handlePracticeInterview = () => {
+    if (!hasCV) {
+      setShowResumePrompt(true);
+      setPendingInterviewId(null);
+      return;
+    }
+    navigate('/interviewee/interview/setup');
+  };
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -62,7 +100,11 @@ export default function UpcomingInterviewsPage() {
   };
 
   if (loading) {
-    return <div className="text-center py-12">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="size-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      </div>
+    );
   }
 
   const interviewList = Array.isArray(interviews) ? interviews.filter(i => !i.completed) : [];
@@ -70,18 +112,62 @@ export default function UpcomingInterviewsPage() {
 
   return (
     <div className="space-y-6">
+      {showResumePrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative"
+          >
+            <button
+              onClick={() => setShowResumePrompt(false)}
+              className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <X className="size-5 text-gray-500" />
+            </button>
+
+            <div className="text-center">
+              <div className="size-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                <FileText className="size-8 text-amber-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Resume Required
+              </h3>
+              <p className="text-gray-600 mb-6">
+                You need to upload your resume before starting an interview. 
+                This helps us personalize your interview experience and match you with relevant questions.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Button 
+                  onClick={handleUploadResume}
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white w-full hover:from-indigo-600 hover:to-purple-700"
+                >
+                  Upload Resume Now
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setShowResumePrompt(false)}
+                  className="w-full"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Upcoming Interviews</h1>
           <p className="text-gray-600 mt-1">Interviews scheduled by recruiters</p>
         </div>
-        {hasScheduledInterviews && (
-          <Link to="/interviewee/interview/setup">
-            <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
-              Practice Interview
-            </Button>
-          </Link>
-        )}
+        <Button 
+          onClick={handlePracticeInterview}
+          className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700"
+        >
+          Practice Interview
+        </Button>
       </div>
 
       {!hasScheduledInterviews ? (
@@ -94,11 +180,12 @@ export default function UpcomingInterviewsPage() {
             <p className="text-gray-600 mb-6">
               You don't have any scheduled interviews at the moment.
             </p>
-            <Link to="/interviewee/interview/setup">
-              <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
-                Practice Interview
-              </Button>
-            </Link>
+            <Button 
+              onClick={handlePracticeInterview}
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700"
+            >
+              Practice Interview
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -140,7 +227,7 @@ export default function UpcomingInterviewsPage() {
                             <Calendar className="size-8 text-white" />
                           </div>
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-3">
+                            <div className="flex items-center gap-2 mb-3 flex-wrap">
                               <h3 className="text-xl font-bold text-gray-900 capitalize">
                                 {interview.type} Interview
                               </h3>
@@ -271,11 +358,12 @@ export default function UpcomingInterviewsPage() {
                               </Button>
                             </div>
                           ) : (
-                            <Link to={`/interviewee/interview/setup?scheduled=${interview.id}`}>
-                              <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600">
-                                Start Interview
-                              </Button>
-                            </Link>
+                            <Button 
+                              onClick={() => handleStartInterview(interview.id)}
+                              className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+                            >
+                              Start Interview
+                            </Button>
                           )}
                         </div>
                       </div>

@@ -135,6 +135,42 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
         return evaluation;
     }
 
+//    @Transactional
+//    @Override
+//    public QuestionResponseDto getNextQuestion(Long sessionId, Long currentQuestionId, Long userId) throws JsonProcessingException {
+//        log.info("Fetching next question for session {}, current={}, user={}", sessionId, currentQuestionId, userId);
+//
+//        InterviewSession session = sessionRepository.findById(sessionId)
+//                .orElseThrow(() -> new RuntimeException("Session not found"));
+//        if (!session.getUserId().equals(userId)) {
+//            throw new RuntimeException("Unauthorized");
+//        }
+//
+//        List<InterviewQuestion> questions = questionRepository.findBySessionIdOrderByQuestionIndexAsc(sessionId);
+//        int currentIndex = -1;
+//        for (int i = 0; i < questions.size(); i++) {
+//            if (questions.get(i).getId().equals(currentQuestionId)) {
+//                currentIndex = i;
+//                break;
+//            }
+//        }
+//        if (currentIndex + 1 >= questions.size()) {
+//            throw new RuntimeException("No more questions");
+//        }
+//        InterviewQuestion next = questions.get(currentIndex + 1);
+//        log.debug("Next question id={}, text={}", next.getId(), next.getQuestionText());
+//
+//        return QuestionResponseDto.builder()
+//                .questionId(next.getId())
+//                .questionIndex(next.getQuestionIndex())
+//                .questionText(next.getQuestionText())
+//                .category(next.getCategory())
+//                .expectedKeywords(objectMapper.readValue(next.getExpectedKeywords(), List.class))
+//                .build();
+//    }
+//
+//
+
     @Transactional
     @Override
     public QuestionResponseDto getNextQuestion(Long sessionId, Long currentQuestionId, Long userId) throws JsonProcessingException {
@@ -144,6 +180,33 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
                 .orElseThrow(() -> new RuntimeException("Session not found"));
         if (!session.getUserId().equals(userId)) {
             throw new RuntimeException("Unauthorized");
+        }
+
+        if (currentQuestionId != null && currentQuestionId != 0) {
+            boolean hasResponse = userResponseRepository.existsByQuestionId(currentQuestionId);
+            if (!hasResponse) {
+                UserResponse response = UserResponse.builder()
+                        .questionId(currentQuestionId)
+                        .audioUrl("")
+                        .transcribedText("")
+                        .responseDuration(0)
+                        .keywordsMatched("[]")
+                        .keywordsMissing("[]")
+                        .grammarIssues("[]")
+                        .build();
+                response = userResponseRepository.save(response);
+                log.info("Recorded skip for question {} with score 0", currentQuestionId);
+
+                QuestionFeedback feedback = QuestionFeedback.builder()
+                        .userResponseId(response.getId())
+                        .score(0.0)
+                        .feedbackText("Question was skipped. No answer provided.")
+                        .strengths("[]")
+                        .improvements("[]")
+                        .suggestedAnswer("Please provide an answer for the question.")
+                        .build();
+                questionFeedbackRepository.save(feedback);
+            }
         }
 
         List<InterviewQuestion> questions = questionRepository.findBySessionIdOrderByQuestionIndexAsc(sessionId);
@@ -169,6 +232,34 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
                 .build();
     }
 
+//    @Transactional
+//    @Override
+//    public OverallFeedbackDto endSession(Long sessionId, Long userId) throws JsonProcessingException {
+//        log.info("Ending session {} for user {}", sessionId, userId);
+//        OverallFeedbackDto overall = null;
+//
+//        try {
+//            sessionManager.endSession(sessionId, userId);
+//            List<InterviewQuestion> questions = questionRepository.findBySessionIdOrderByQuestionIndexAsc(sessionId);
+//            if (!questions.isEmpty()) {
+//                List<Long> questionIds = questions.stream().map(InterviewQuestion::getId).toList();
+//                List<UserResponse> responses = userResponseRepository.findByQuestionIdIn(questionIds);
+//                if (!responses.isEmpty()) {
+//                    List<Long> responseIds = responses.stream().map(UserResponse::getId).toList();
+//                    List<QuestionFeedback> feedbacks = questionFeedbackRepository.findAllById(responseIds);
+//                    if (!feedbacks.isEmpty()) {
+//                        overall = feedbackAggregator.aggregate(sessionId, feedbacks);
+//                    }
+//                }
+//            }
+//            if (overall == null) {
+//                overall = createDefaultFeedback("Incomplete or no answers recorded.");
+//            }
+//        } catch (Exception e) {
+//            log.error("Error while ending session", e);
+//            overall = createDefaultFeedback("An error occurred while generating feedback.");
+//        }
+
     @Transactional
     @Override
     public OverallFeedbackDto endSession(Long sessionId, Long userId) throws JsonProcessingException {
@@ -178,17 +269,48 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
         try {
             sessionManager.endSession(sessionId, userId);
             List<InterviewQuestion> questions = questionRepository.findBySessionIdOrderByQuestionIndexAsc(sessionId);
-            if (!questions.isEmpty()) {
-                List<Long> questionIds = questions.stream().map(InterviewQuestion::getId).toList();
-                List<UserResponse> responses = userResponseRepository.findByQuestionIdIn(questionIds);
-                if (!responses.isEmpty()) {
-                    List<Long> responseIds = responses.stream().map(UserResponse::getId).toList();
-                    List<QuestionFeedback> feedbacks = questionFeedbackRepository.findAllById(responseIds);
-                    if (!feedbacks.isEmpty()) {
-                        overall = feedbackAggregator.aggregate(sessionId, feedbacks);
-                    }
+
+            List<Long> questionIds = questions.stream().map(InterviewQuestion::getId).toList();
+            List<UserResponse> responses = userResponseRepository.findByQuestionIdIn(questionIds);
+
+            List<Long> respondedQuestionIds = responses.stream()
+                    .map(UserResponse::getQuestionId)
+                    .collect(Collectors.toList());
+
+            for (InterviewQuestion q : questions) {
+                if (!respondedQuestionIds.contains(q.getId())) {
+                    UserResponse skipResponse = UserResponse.builder()
+                            .questionId(q.getId())
+                            .audioUrl("")
+                            .transcribedText("")
+                            .responseDuration(0)
+                            .keywordsMatched("[]")
+                            .keywordsMissing("[]")
+                            .grammarIssues("[]")
+                            .build();
+                    skipResponse = userResponseRepository.save(skipResponse);
+
+                    QuestionFeedback skipFeedback = QuestionFeedback.builder()
+                            .userResponseId(skipResponse.getId())
+                            .score(0.0)
+                            .feedbackText("Question was skipped. No answer provided.")
+                            .strengths("[]")
+                            .improvements("[]")
+                            .suggestedAnswer("Please provide an answer for the question.")
+                            .build();
+                    questionFeedbackRepository.save(skipFeedback);
+                    responses.add(skipResponse);
                 }
             }
+
+            if (!responses.isEmpty()) {
+                List<Long> responseIds = responses.stream().map(UserResponse::getId).toList();
+                List<QuestionFeedback> feedbacks = questionFeedbackRepository.findAllById(responseIds);
+                if (!feedbacks.isEmpty()) {
+                    overall = feedbackAggregator.aggregate(sessionId, feedbacks);
+                }
+            }
+
             if (overall == null) {
                 overall = createDefaultFeedback("Incomplete or no answers recorded.");
             }
@@ -376,7 +498,6 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
         long now = Instant.now().getEpochSecond();
         long remaining = Math.max(0, durationSeconds - (now - startedEpoch));
 
-        // Safety clamp to original duration (in case of timezone issues)
         long maxAllowed = session.getOriginalDurationMinutes() * 60L;
         if (remaining > maxAllowed) {
             log.warn("Remaining {}s > {}s for session {}, clamping to max", remaining, maxAllowed, session.getId());

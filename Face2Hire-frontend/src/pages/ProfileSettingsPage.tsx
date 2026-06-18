@@ -48,6 +48,7 @@ interface CachedData {
 }
 
 interface UserProfileData {
+  // id:number;
   fullName: string;
   userName: string;
   email: string;
@@ -142,6 +143,10 @@ export default function ProfileSettingsPage(): JSX.Element {
   useEffect(() => {
     let isMounted = true;
 
+    // console.log('🔍 ProfileSettings useEffect - token:', token ? 'present' : 'missing');
+    // console.log('🔍 userId:', userId);
+    // console.log('🔍 reduxUser:', reduxUser);
+
     const getCacheKey = () => `profileSettingsCache_${userId || 'anonymous'}`;
 
     const saveToCache = (
@@ -159,7 +164,7 @@ export default function ProfileSettingsPage(): JSX.Element {
     };
 
     const loadFromCache = (): CachedData | null => {
-      if (!userId) return null;
+      // if (!userId) return null;
       const cached = sessionStorage.getItem(getCacheKey());
       if (!cached) return null;
       try {
@@ -180,10 +185,17 @@ export default function ProfileSettingsPage(): JSX.Element {
     };
 
     const loadProfileData = async (forceRefresh = false) => {
-      if (!userId) return;
+      // if (!userId) return;
+
+        // console.log('🔍 loadProfileData called - userId:', userId, 'forceRefresh:', forceRefresh);
+
       if (!forceRefresh) {
         const cached = loadFromCache();
         if (cached && isMounted) {
+
+                // console.log('🔍 Loading from cache:', cached);
+
+
           setFullName(cached.profile.fullName);
           setUserName(cached.profile.userName);
           setEmail(cached.profile.email);
@@ -201,15 +213,38 @@ export default function ProfileSettingsPage(): JSX.Element {
       }
 
       setLoading(true);
+          // console.log('🔍 Fetching profile from API...'); 
+
       try {
         const profileRes = await axiosClient.get<{ data: UserProfileData }>('/profile');
+
+            // console.log('🔍 Profile API Response:', profileRes.data); 
+
         const userData = profileRes.data.data;
+
+    //     console.log('🔍 User Data from API:', userData); 
+    // console.log('🔍 fullName:', userData.fullName); 
+    // console.log('🔍 userName:', userData.userName); 
+    // console.log('🔍 email:', userData.email); 
+
         if (isMounted) {
           setFullName(userData.fullName || '');
           setUserName(userData.userName || '');
           setEmail(userData.email || '');
           setPhoneNumber(userData.phoneNumber || '');
           setProfileImageUrl(userData.profileImageUrl || '');
+
+          dispatch(updateUser({
+          // id: userId || userData.id,  
+          id: userId,
+          name: userData.fullName || userData.userName,
+          email: userData.email,
+          phone: userData.phoneNumber,
+          profileImageUrl: userData.profileImageUrl,
+        }));
+
+          // console.log('🔍 After setting state - fullName:', userData.fullName);
+          // console.log('🔍 After setting state - userName:', userData.userName);
         }
 
         let prefsData: PreferencesData = { defaultInterviewType: 'technical', avatarStyle: 'professional', language: 'english' };
@@ -243,7 +278,8 @@ export default function ProfileSettingsPage(): JSX.Element {
     };
 
     const loadBadges = async () => {
-      if (!userId || isAdmin) return;
+      // if (!userId || isAdmin) return;
+      if (isAdmin) return;
       try {
         const userBadges = await badgeService.getUserBadges();
         if (isMounted) setBadges(userBadges);
@@ -258,11 +294,11 @@ export default function ProfileSettingsPage(): JSX.Element {
       return;
     }
 
-    if (!userId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLoading(false);
-      return;
-    }
+    // if (!userId) {
+    //   // eslint-disable-next-line react-hooks/set-state-in-effect
+    //   setLoading(false);
+    //   return;
+    // }
 
     const forceRefresh = true;
     loadProfileData(forceRefresh);
@@ -271,7 +307,7 @@ export default function ProfileSettingsPage(): JSX.Element {
     return () => {
       isMounted = false;
     };
-  }, [token, navigate, userId, isAdmin]);
+  }, [token, navigate, userId, isAdmin,dispatch]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = e.target.files?.[0];
@@ -486,6 +522,14 @@ export default function ProfileSettingsPage(): JSX.Element {
       </div>
     );
   }
+
+  // console.log('🔍 Rendering ProfileSettings - State values:');
+  // console.log('  fullName:', fullName);
+  // console.log('  userName:', userName);
+  // console.log('  email:', email);
+  // console.log('  phoneNumber:', phoneNumber);
+  // console.log('  profileImageUrl:', profileImageUrl);
+  // console.log('  reduxUser:', reduxUser);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
