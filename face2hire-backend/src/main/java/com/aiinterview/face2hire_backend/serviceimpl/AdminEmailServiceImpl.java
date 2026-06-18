@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import jakarta.mail.MessagingException;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +38,7 @@ public class AdminEmailServiceImpl implements AdminEmailService {
             try {
                 sendCustomEmail(user, request.getSubject(), request.getBody());
                 successCount++;
-            } catch (MessagingException e) {
+            } catch (MessagingException | IOException e) {
                 log.error("Failed to send email to {}: {}", user.getEmail(), e.getMessage());
                 failCount++;
             }
@@ -77,7 +79,7 @@ public class AdminEmailServiceImpl implements AdminEmailService {
         return filtered;
     }
 
-    private void sendCustomEmail(User user, String subject, String body) throws MessagingException {
+    private void sendCustomEmail(User user, String subject, String body) throws MessagingException, IOException {
         String htmlMessage = String.format("""
             <html>
             <body style="font-family: Arial, sans-serif;">
