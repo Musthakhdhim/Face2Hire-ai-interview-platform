@@ -12,8 +12,8 @@ import ThreeAvatar from '../../components/interview/ThreeAvatar';
 import FaceDetector from '../../components/interview/FaceDetector';
 import screenfull from 'screenfull';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import Swal from 'sweetalert2';
 
-// ✅ Add global type declaration for SpeechRecognition
 declare global {
   interface Window {
     SpeechRecognition: new () => SpeechRecognition;
@@ -112,22 +112,69 @@ export default function ActiveInterviewPage() {
     checkActive();
   }, []);
 
+  // const stopCurrentAudio = useCallback(() => {
+  //   if (currentAudioRef.current) {
+  //     currentAudioRef.current.pause();
+  //     currentAudioRef.current.currentTime = 0;
+  //     currentAudioRef.current.onended = null;
+  //     const url = currentAudioRef.current.src;
+  //     if (url && url.startsWith('blob:')) {
+  //       URL.revokeObjectURL(url);
+  //     }
+  //     currentAudioRef.current = null;
+  //   }
+  //   setAudioElement(null);
+  // }, []);
+
   const stopCurrentAudio = useCallback(() => {
     if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-      currentAudioRef.current.onended = null;
-      const url = currentAudioRef.current.src;
-      if (url && url.startsWith('blob:')) {
-        URL.revokeObjectURL(url);
+      try {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.currentTime = 0;
+        currentAudioRef.current.onended = null;
+        currentAudioRef.current.onerror = null;
+        const url = currentAudioRef.current.src;
+        if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+        currentAudioRef.current = null;
+      } catch (error) {
+        console.error('Error stopping audio:', error);
+        currentAudioRef.current = null;
       }
-      currentAudioRef.current = null;
     }
     setAudioElement(null);
   }, []);
 
+  // const speakQuestion = useCallback(async (text: string) => {
+  //   stopCurrentAudio();
+  //   setAvatarState('speaking');
+  //   try {
+  //     const audioBlob = await audioService.textToSpeech(text, sessionConfig.avatarStyle);
+  //     const url = URL.createObjectURL(audioBlob);
+  //     const audio = new Audio(url);
+  //     currentAudioRef.current = audio;
+  //     setAudioElement(audio);
+  //     audio.onended = () => {
+  //       setAvatarState('listening');
+  //       URL.revokeObjectURL(url);
+  //       if (currentAudioRef.current === audio) {
+  //         currentAudioRef.current = null;
+  //       }
+  //       setAudioElement(null);
+  //     };
+  //     await audio.play();
+  //   } catch {
+  //     console.error('TTS error');
+  //     setAvatarState('listening');
+  //   }
+  // }, [sessionConfig, stopCurrentAudio]);
+
   const speakQuestion = useCallback(async (text: string) => {
     stopCurrentAudio();
+    
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     setAvatarState('speaking');
     try {
       const audioBlob = await audioService.textToSpeech(text, sessionConfig.avatarStyle);
@@ -135,6 +182,7 @@ export default function ActiveInterviewPage() {
       const audio = new Audio(url);
       currentAudioRef.current = audio;
       setAudioElement(audio);
+      
       audio.onended = () => {
         setAvatarState('listening');
         URL.revokeObjectURL(url);
@@ -143,9 +191,20 @@ export default function ActiveInterviewPage() {
         }
         setAudioElement(null);
       };
+      
+      audio.onerror = () => {
+        console.error('Audio playback error');
+        setAvatarState('listening');
+        URL.revokeObjectURL(url);
+        if (currentAudioRef.current === audio) {
+          currentAudioRef.current = null;
+        }
+        setAudioElement(null);
+      };
+      
       await audio.play();
-    } catch {
-      console.error('TTS error');
+    } catch (error) {
+      console.error('TTS error:', error);
       setAvatarState('listening');
     }
   }, [sessionConfig, stopCurrentAudio]);
@@ -174,9 +233,6 @@ export default function ActiveInterviewPage() {
     toast.info("Time's up! Ending interview.");
     await endInterview();
   }, [endInterview]);
-
-  // ✅ FIX: Remove the problematic useEffect and handle face violation directly
-  // Instead of using useEffect with setState, we'll handle it in the callback
 
   useEffect(() => {
     if (loading || answerSubmitted) return;
@@ -314,7 +370,6 @@ export default function ActiveInterviewPage() {
     setAvatarState('listening');
 
     if ('webkitSpeechRecognition' in window) {
-      // ✅ Use the globally declared types - no 'any' needed
       const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SpeechRecognitionConstructor();
       recognition.continuous = true;
@@ -377,19 +432,60 @@ export default function ActiveInterviewPage() {
       toast.info('Please record your answer first using the Start Recording button');
       return;
     }
+
+    const result = await Swal.fire({
+      title: 'Submit Without Answer?',
+      text: "You haven't recorded an answer for the last question. Are you sure you want to submit without an answer?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, submit without answer',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+    });
     
-    const confirmSubmit = window.confirm('You haven\'t recorded an answer for the last question. Are you sure you want to submit without an answer?');
-    if (confirmSubmit) {
+    if (result.isConfirmed) {
       await endInterview();
     }
+    
+    // const confirmSubmit = window.confirm('You haven\'t recorded an answer for the last question. Are you sure you want to submit without an answer?');
+    // if (confirmSubmit) {
+    //   await endInterview();
+    // }
   };
+  //=========================================================
+
+  // const goToNextQuestion = async () => {
+  //   if (isLastQuestion) {
+  //     await endInterview();
+  //     return;
+  //   }
+  //   stopCurrentAudio();
+  //   try {
+  //     const next = await interviewService.getNextQuestion(
+  //       Number(sessionId), 
+  //       currentQuestion!.questionId  
+  //     );
+  //     setCurrentQuestion(next);
+  //     setQuestionIndex(prev => prev + 1);
+  //     setTranscript('');
+  //     await speakQuestion(next.questionText);
+  //   } catch {
+  //     toast.error('Failed to load next question');
+  //   }
+  // };
 
   const goToNextQuestion = async () => {
     if (isLastQuestion) {
       await endInterview();
       return;
     }
+    
     stopCurrentAudio();
+    
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     try {
       const next = await interviewService.getNextQuestion(
         Number(sessionId), 
@@ -398,6 +494,9 @@ export default function ActiveInterviewPage() {
       setCurrentQuestion(next);
       setQuestionIndex(prev => prev + 1);
       setTranscript('');
+      
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       await speakQuestion(next.questionText);
     } catch {
       toast.error('Failed to load next question');
@@ -417,7 +516,6 @@ export default function ActiveInterviewPage() {
   const handleFaceStatus = useCallback((detected: boolean, count: number) => {
     setFaceDetected(detected);
     setFaceViolationCount(count);
-    // ✅ Handle face violation directly here instead of in a separate useEffect
     if (count >= 5) {
       toast.error('Maximum face violations reached. Ending interview.');
       endInterview();

@@ -65,17 +65,38 @@ public class OpenAiParserServiceImpl implements OpenAiParserService {
               ]
             }
             
+            SKILLS EXTRACTION:
+            Parse ALL skills from these categories:
+            1. Primary Skills / Core Skills
+            2. Programming Languages (Java, Python, etc.)
+            3. Frameworks (Spring Boot, Angular, React, etc.)
+            4. Web Technologies (HTML, CSS, JavaScript, etc.)
+            5. Databases (PostgreSQL, MySQL, MongoDB, etc.)
+            6. Tools & Platforms (ServiceNow, Control-M, etc.)
+            7. Design Patterns (Builder, Facade, etc.)
+            8. Legacy Systems (Mainframe, Telnet, etc.)
+            9. Other Technical Skills
+            
+            Extract each skill individually. For compound skills like "Java Full Stack":
+            - Extract "Java" as a skill
+            - Extract "Full Stack Development" as a skill
+            - Also extract "Spring Boot", "Angular" from the context
+            
+            For the CV provided, look for:
+            - "Primary Skills: Java, PostgreSQL" → Java and PostgreSQL
+            - "Web Technologies: Java Full Stack, Angular, Spring Boot, HTML, CSS" → Java, Full Stack, Angular, Spring Boot, HTML, CSS
+            - "Database & Tools: SQL, OOPS, Prompt Engineering" → SQL, OOPS, Prompt Engineering
+            - "Legacy Systems: Mainframe, Telnet Applications" → Mainframe, Telnet
+            - "Design Patterns: Builder, Facade, Template, Memento, and Command" → Builder, Facade, Template, Memento, Command
+            - "Support Tools: ServiceNow, Control-M, Microsoft Applications" → ServiceNow, Control-M, Microsoft Applications
+            
             Rules for dates:
             - Convert "MM/YYYY" to first day of that month: "YYYY-MM-01"
             - If only year is given, use "YYYY-01-01"
             - "Current" or "Present" → null
-            - Example: "11/2022 -2025" → startDate "2022-11-01", endDate "2025-01-01"
-            - Example: "09/2025 - Current" → startDate "2025-09-01", endDate null
-            
-            ALWAYS include the "experiences" array. If no experience found, return empty array [].
             
             CV text:
-          """ + extractedText;
+        """ + extractedText;
 
         if (prompt.length() > 8000) {
             prompt = prompt.substring(0, 8000);

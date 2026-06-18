@@ -2,12 +2,11 @@ import { useState, type JSX } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Eye, EyeOff, Brain, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Brain, Mail, Lock, User, Users, Briefcase } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Separator } from '../components/ui/separator';
 import { register, setPendingSignup } from '../store/slices/authSlice';
 import { toast } from 'react-toastify';
@@ -26,6 +25,11 @@ export default function SignupPage(): JSX.Element {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [role, setRole] = useState<Role>('interviewee');
   const [agreedToTerms, setAgreedToTerms] = useState<boolean>(false);
+
+  const roles = [
+    { id: 'interviewee', label: 'Interviewee', icon: Users, color: 'indigo' },
+    { id: 'interviewer', label: 'Interviewer', icon: Briefcase, color: 'purple' },
+  ];
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -89,12 +93,42 @@ export default function SignupPage(): JSX.Element {
             <CardDescription>Get started with your interview preparation journey</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={role} onValueChange={(value) => setRole(value as Role)} className="mb-6">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="interviewee">Interviewee</TabsTrigger>
-                <TabsTrigger value="interviewer">Interviewer</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            {/* ✅ Improved Role Selection with Cards */}
+            <div className="mb-6">
+              <Label className="text-sm font-medium text-gray-700 block mb-3">
+                I want to register as
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
+                {roles.map((r) => {
+                  const Icon = r.icon;
+                  const isSelected = role === r.id;
+                  const colorClasses = {
+                    indigo: isSelected ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'hover:border-indigo-200 hover:bg-indigo-50/50',
+                    purple: isSelected ? 'border-purple-500 bg-purple-50 text-purple-700' : 'hover:border-purple-200 hover:bg-purple-50/50',
+                  };
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setRole(r.id as Role)}
+                      className={`
+                        flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200
+                        ${colorClasses[r.color as keyof typeof colorClasses]}
+                        ${isSelected ? 'shadow-md scale-[1.02]' : 'border-gray-200 hover:shadow-sm'}
+                      `}
+                    >
+                      <Icon className={`size-6 ${isSelected ? 'text-current' : 'text-gray-400'}`} />
+                      <span className={`text-sm font-medium ${isSelected ? 'text-current' : 'text-gray-600'}`}>
+                        {r.label}
+                      </span>
+                      {isSelected && (
+                        <div className="size-1.5 rounded-full bg-current" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">

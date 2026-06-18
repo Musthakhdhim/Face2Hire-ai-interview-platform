@@ -73,6 +73,7 @@
     "screenfull": "^6.0.2",
     "sockjs-client": "^1.6.1",
     "sonner": "^2.0.3",
+    "sweetalert2": "^11.26.25",
     "tailwind-merge": "^3.2.0",
     "three": "^0.184.0",
     "vaul": "^1.1.2",

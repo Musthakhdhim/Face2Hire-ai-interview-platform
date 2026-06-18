@@ -2,12 +2,11 @@ import { useState, type JSX } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Eye, EyeOff, Brain, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Brain, Mail, Lock, Users, Briefcase, Shield } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Separator } from '../components/ui/separator';
 import { login } from '../store/slices/authSlice';
 import { toast } from 'react-toastify';
@@ -50,9 +49,7 @@ export default function LoginPage(): JSX.Element {
       const result = await dispatch(login({ email, password })).unwrap();
       const backendRole = result.role;
       if (backendRole.toLowerCase() !== role.toLowerCase()) {
-        // toast.error(`Role mismatch. You are registered as ${backendRole}`);
-        toast.error(`wrong credentials, try again`);
-
+        toast.error('Wrong credentials, try again');
         return;
       }
       toast.success('Login successful!');
@@ -72,6 +69,13 @@ export default function LoginPage(): JSX.Element {
   const handleSocialLogin = (provider: string): void => {
     window.location.href = `https://api.face2hire.shop:8443/oauth2/authorization/${provider.toLowerCase()}`;
   };
+
+  // Role configuration for better display
+  const roles = [
+    { id: 'interviewee', label: 'Interviewee', icon: Users, color: 'indigo' },
+    { id: 'interviewer', label: 'Interviewer', icon: Briefcase, color: 'purple' },
+    { id: 'admin', label: 'Admin', icon: Shield, color: 'rose' },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center p-6">
@@ -96,13 +100,43 @@ export default function LoginPage(): JSX.Element {
             <CardDescription>Sign in to your account to continue</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={role} onValueChange={(value) => setRole(value as Role)} className="mb-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="interviewee">Interviewee</TabsTrigger>
-                <TabsTrigger value="interviewer">Interviewer</TabsTrigger>
-                <TabsTrigger value="admin">Admin</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            {/* ✅ Improved Role Selection with Cards */}
+            <div className="mb-6">
+              <Label className="text-sm font-medium text-gray-700 block mb-3">
+                Select Your Role
+              </Label>
+              <div className="grid grid-cols-3 gap-2">
+                {roles.map((r) => {
+                  const Icon = r.icon;
+                  const isSelected = role === r.id;
+                  const colorClasses = {
+                    indigo: isSelected ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'hover:border-indigo-200 hover:bg-indigo-50/50',
+                    purple: isSelected ? 'border-purple-500 bg-purple-50 text-purple-700' : 'hover:border-purple-200 hover:bg-purple-50/50',
+                    rose: isSelected ? 'border-rose-500 bg-rose-50 text-rose-700' : 'hover:border-rose-200 hover:bg-rose-50/50',
+                  };
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setRole(r.id as Role)}
+                      className={`
+                        flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all duration-200
+                        ${colorClasses[r.color as keyof typeof colorClasses]}
+                        ${isSelected ? 'shadow-md scale-[1.02]' : 'border-gray-200 hover:shadow-sm'}
+                      `}
+                    >
+                      <Icon className={`size-5 ${isSelected ? 'text-current' : 'text-gray-400'}`} />
+                      <span className={`text-xs font-medium ${isSelected ? 'text-current' : 'text-gray-600'}`}>
+                        {r.label}
+                      </span>
+                      {isSelected && (
+                        <div className="size-1.5 rounded-full bg-current mt-0.5" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
