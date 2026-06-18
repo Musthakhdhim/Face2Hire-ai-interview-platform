@@ -13,6 +13,14 @@ import FaceDetector from '../../components/interview/FaceDetector';
 import screenfull from 'screenfull';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 
+// ✅ Add global type declaration for SpeechRecognition
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
+
 interface SessionConfig {
   type: InterviewType;
   difficulty: Difficulty;
@@ -81,8 +89,8 @@ export default function ActiveInterviewPage() {
       if (stored) {
         try {
           console.log('Found stored config for session', sessionId);
-        } catch (e) {
-          console.log();
+        } catch {
+          // Ignore parsing error
         }
       }
     }
@@ -97,8 +105,8 @@ export default function ActiveInterviewPage() {
           setTotalQuestions(active.totalQuestions);
           setTimeRemaining(active.remainingTimeSeconds);
         }
-      } catch (error) {
-        console.error('Failed to check active session', error);
+      } catch {
+        console.error('Failed to check active session');
       }
     };
     checkActive();
@@ -155,8 +163,8 @@ export default function ActiveInterviewPage() {
       }
       
       navigate(`/interviewee/interview/feedback/${sessionId}`, { state: { feedback: overallFeedback } });
-    } catch (error) {
-      console.error('Failed to end interview:', error);
+    } catch {
+      console.error('Failed to end interview');
       toast.error('Error ending interview');
       navigate(`/interviewee/interview/feedback/${sessionId}`);
     }
@@ -167,12 +175,8 @@ export default function ActiveInterviewPage() {
     await endInterview();
   }, [endInterview]);
 
-  useEffect(() => {
-    if (faceViolationCount >= 5) {
-      toast.error('Maximum face violations reached. Ending interview.');
-      endInterview();
-    }
-  }, [faceViolationCount, endInterview]);
+  // ✅ FIX: Remove the problematic useEffect and handle face violation directly
+  // Instead of using useEffect with setState, we'll handle it in the callback
 
   useEffect(() => {
     if (loading || answerSubmitted) return;
@@ -268,7 +272,7 @@ export default function ActiveInterviewPage() {
       setCurrentQuestion(firstQuestion);
       setLoading(false);
       await speakQuestion(firstQuestion.questionText);
-    } catch (error) {
+    } catch {
       toast.error('Failed to start interview');
       navigate('/interviewee/interview/setup');
     }
@@ -310,8 +314,9 @@ export default function ActiveInterviewPage() {
     setAvatarState('listening');
 
     if ('webkitSpeechRecognition' in window) {
-      const SpeechRecognitionConstructor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      const recognition = new SpeechRecognitionConstructor() as SpeechRecognition;
+      // ✅ Use the globally declared types - no 'any' needed
+      const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognitionConstructor();
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
@@ -379,23 +384,6 @@ export default function ActiveInterviewPage() {
     }
   };
 
-  // const goToNextQuestion = async () => {
-  //   if (isLastQuestion) {
-  //     await endInterview();
-  //     return;
-  //   }
-  //   stopCurrentAudio();
-  //   try {
-  //     const next = await interviewService.getNextQuestion(Number(sessionId), currentQuestion!.questionId);
-  //     setCurrentQuestion(next);
-  //     setQuestionIndex(prev => prev + 1);
-  //     setTranscript('');
-  //     await speakQuestion(next.questionText);
-  //   } catch {
-  //     toast.error('Failed to load next question');
-  //   }
-  // };
-
   const goToNextQuestion = async () => {
     if (isLastQuestion) {
       await endInterview();
@@ -429,7 +417,12 @@ export default function ActiveInterviewPage() {
   const handleFaceStatus = useCallback((detected: boolean, count: number) => {
     setFaceDetected(detected);
     setFaceViolationCount(count);
-  }, []);
+    // ✅ Handle face violation directly here instead of in a separate useEffect
+    if (count >= 5) {
+      toast.error('Maximum face violations reached. Ending interview.');
+      endInterview();
+    }
+  }, [endInterview]);
 
   if (showFullscreenModal) {
     return (
