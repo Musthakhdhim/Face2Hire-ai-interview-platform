@@ -6,6 +6,7 @@ import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.service.EmailService;
 import com.aiinterview.face2hire_backend.service.OtpService;
+import com.sendgrid.SendGrid;
 import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -14,6 +15,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import com.sendgrid.Method;
+import com.sendgrid.Request;
+import com.sendgrid.Response;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
+
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -23,33 +32,54 @@ public class EmailServiceImpl implements EmailService {
     private final OtpService otpServiceImpl;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
+    private final SendGrid sendGrid;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+//    @Override
+//    public void sendOtpToEmail(String to, String subject, String htmlMessage) {
+//        try {
+//            log.info("📧 Sending email to: {}", to);
+//            log.debug("Subject: {}", subject);
+//            log.debug("From: {}", fromEmail);
+//
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+//            helper.setTo(to);
+//            helper.setSubject(subject);
+//            helper.setText(htmlMessage, true);
+//            helper.setFrom(fromEmail);
+//
+//            mailSender.send(message);
+//            log.info("✅ Email sent successfully to: {}", to);
+//
+//        } catch (MessagingException e) {
+//            log.error("❌ Failed to send email to {}: {}", to, e.getMessage(), e);
+////            throw new RuntimeException("Failed to send email to " + to + ": " + e.getMessage(), e);
+//        } catch (Exception e) {
+//            log.error("❌ Unexpected error sending email to {}: {}", to, e.getMessage(), e);
+////            throw new RuntimeException("Unexpected error sending email to " + to + ": " + e.getMessage(), e);
+//        }
+//    }
+
     @Override
-    public void sendOtpToEmail(String to, String subject, String htmlMessage) {
-        try {
-            log.info("📧 Sending email to: {}", to);
-            log.debug("Subject: {}", subject);
-            log.debug("From: {}", fromEmail);
+    public void sendOtpToEmail(String to, String subject, String htmlMessage) throws IOException {
+        Email from = new Email(fromEmail);
+        Email toEmail = new Email(to);
+        Content content = new Content("text/html", htmlMessage);
+        Mail mail = new Mail(from, subject, toEmail, content);
 
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlMessage, true);
-            helper.setFrom(fromEmail);
+        Request request = new Request();
+        request.setMethod(Method.POST);
+        request.setEndpoint("mail/send");
+        request.setBody(mail.build());
 
-            mailSender.send(message);
-            log.info("✅ Email sent successfully to: {}", to);
-
-        } catch (MessagingException e) {
-            log.error("❌ Failed to send email to {}: {}", to, e.getMessage(), e);
-//            throw new RuntimeException("Failed to send email to " + to + ": " + e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("❌ Unexpected error sending email to {}: {}", to, e.getMessage(), e);
-//            throw new RuntimeException("Unexpected error sending email to " + to + ": " + e.getMessage(), e);
+        Response response = sendGrid.api(request);
+        if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
+            log.info("Email sent successfully to: {}", to);
+        } else {
+            log.error("Failed to send email: {}", response.getBody());
         }
     }
 

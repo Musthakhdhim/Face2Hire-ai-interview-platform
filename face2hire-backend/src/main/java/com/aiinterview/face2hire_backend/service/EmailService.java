@@ -5,8 +5,10 @@ import com.aiinterview.face2hire_backend.entity.OtpType;
 import com.aiinterview.face2hire_backend.entity.User;
 import jakarta.mail.MessagingException;
 
+import java.io.IOException;
+
 public interface EmailService {
-    void sendOtpToEmail(String to, String subject, String htmlMessage) throws MessagingException;
+    void sendOtpToEmail(String to, String subject, String htmlMessage) throws MessagingException, IOException;
 
     void sendOtpByType(User user, OtpType type) throws MessagingException;
 
