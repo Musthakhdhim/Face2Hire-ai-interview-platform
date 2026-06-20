@@ -421,10 +421,9 @@ export default function ApplicationStatusPage() {
                 <CardContent className="p-6">
                     <h4 className="text-sm font-medium text-gray-700 mb-4">Interview Rounds</h4>
                     <div className="flex items-center justify-between relative">
-                        {/* Connecting line */}
                         <div className="absolute left-8 right-8 top-5 h-0.5 bg-gray-200" />
                         
-                        {stages.map((stage, index) => (
+                        {stages.map((stage, _index) => (
                             <div key={stage.id} className="flex flex-col items-center relative z-10">
                                 <div className={`size-10 rounded-full border-2 flex items-center justify-center ${getStageLifecycleColor(stage)}`}>
                                     {getStageLifecycleIcon(stage)}

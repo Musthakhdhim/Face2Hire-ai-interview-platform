@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "motion/react";
 import { Calendar, CheckCircle2, Search, Loader2 } from "lucide-react";
@@ -23,7 +23,7 @@ export default function ScheduleInterviewPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
-    const [formData, setFormData] = useState<ScheduleInterviewRequest>(() => {
+    const initialFormData = useMemo(() => {
         const idParam = searchParams.get("intervieweeId");
         const nameParam = searchParams.get("candidateName");
         const appIdParam = searchParams.get("applicationId");
@@ -31,19 +31,20 @@ export default function ScheduleInterviewPage() {
         return {
             intervieweeId: idParam ? Number(idParam) : 0,
             intervieweeName: nameParam ? decodeURIComponent(nameParam) : "",
-            type: "technical",
-            difficulty: "intermediate",
+            type: "technical" as InterviewType,
+            difficulty: "intermediate" as Difficulty,
             duration: 30,
             questionCount: 10,
-            avatarStyle: "professional",
+            avatarStyle: "professional" as AvatarStyle,
             dueDate: "",
             applicationId: appIdParam ? Number(appIdParam) : undefined,
             minimumScore: 70,
             stageId: stageIdParam ? Number(stageIdParam) : undefined,
             applicationStageId: stageIdParam ? Number(stageIdParam) : undefined,
         };
-    });
+    }, [searchParams]);
 
+    const [formData, setFormData] = useState<ScheduleInterviewRequest>(initialFormData);
     const [stageInfo, setStageInfo] = useState<ApplicationStage | null>(null);
     const [emailSearchOpen, setEmailSearchOpen] = useState(false);
     const [emailSearchValue, setEmailSearchValue] = useState("");
@@ -52,20 +53,7 @@ export default function ScheduleInterviewPage() {
     const [selectedEmail, setSelectedEmail] = useState("");
 
     useEffect(() => {
-        const idParam = searchParams.get("intervieweeId");
-        const nameParam = searchParams.get("candidateName");
-        const appIdParam = searchParams.get("applicationId");
         const stageIdParam = searchParams.get("stageId");
-        
-        setFormData(prev => ({
-            ...prev,
-            intervieweeId: idParam ? Number(idParam) : 0,
-            intervieweeName: nameParam ? decodeURIComponent(nameParam) : "",
-            applicationId: appIdParam ? Number(appIdParam) : undefined,
-            stageId: stageIdParam ? Number(stageIdParam) : undefined,
-            applicationStageId: stageIdParam ? Number(stageIdParam) : undefined,
-        }));
-
         if (stageIdParam) {
             const fetchStageInfo = async () => {
                 try {
