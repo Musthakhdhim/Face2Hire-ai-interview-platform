@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "motion/react";
 import { Calendar, CheckCircle2, Search, Loader2 } from "lucide-react";
@@ -17,6 +17,7 @@ import type { ScheduleInterviewRequest } from "../../services/scheduledInterview
 import type { InterviewType, Difficulty, AvatarStyle } from "../../services/interviewService";
 import { userService, type UserSearchResult } from "../../services/userService";
 import { stagesService, type ApplicationStage } from "../../services/stagesService";
+import type { AxiosError } from "axios";
 
 export default function ScheduleInterviewPage() {
     const navigate = useNavigate();
@@ -44,36 +45,11 @@ export default function ScheduleInterviewPage() {
     });
 
     const [stageInfo, setStageInfo] = useState<ApplicationStage | null>(null);
-    const [loadingStage, setLoadingStage] = useState(false);
     const [emailSearchOpen, setEmailSearchOpen] = useState(false);
     const [emailSearchValue, setEmailSearchValue] = useState("");
     const [emailSearchResults, setEmailSearchResults] = useState<UserSearchResult[]>([]);
     const [searching, setSearching] = useState(false);
     const [selectedEmail, setSelectedEmail] = useState("");
-
-    useEffect(() => {
-        const stageIdParam = searchParams.get("stageId");
-        if (stageIdParam) {
-            const fetchStageInfo = async () => {
-                setLoadingStage(true);
-                try {
-                    const stage = await stagesService.getStageById(Number(stageIdParam));
-                    setStageInfo(stage);
-                    if (stage.minimumScore !== null && stage.minimumScore !== undefined) {
-                        setFormData(prev => ({
-                            ...prev,
-                            minimumScore: stage.minimumScore ?? 70,
-                        }));
-                    }
-                } catch (error) {
-                    console.error("Failed to fetch stage info:", error);
-                } finally {
-                    setLoadingStage(false);
-                }
-            };
-            fetchStageInfo();
-        }
-    }, [searchParams]);
 
     useEffect(() => {
         const idParam = searchParams.get("intervieweeId");
@@ -89,27 +65,49 @@ export default function ScheduleInterviewPage() {
             stageId: stageIdParam ? Number(stageIdParam) : undefined,
             applicationStageId: stageIdParam ? Number(stageIdParam) : undefined,
         }));
+
+        if (stageIdParam) {
+            const fetchStageInfo = async () => {
+                try {
+                    const stage = await stagesService.getStageById(Number(stageIdParam));
+                    setStageInfo(stage);
+                    if (stage.minimumScore !== null && stage.minimumScore !== undefined) {
+                        setFormData(prev => ({
+                            ...prev,
+                            minimumScore: stage.minimumScore ?? 70,
+                        }));
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch stage info:", error);
+                }
+            };
+            fetchStageInfo();
+        }
     }, [searchParams]);
 
-    useEffect(() => {
-        const timer = setTimeout(async () => {
-            if (emailSearchValue.length >= 3) {
-                setSearching(true);
-                try {
-                    const results = await userService.searchByEmail(emailSearchValue);
-                    setEmailSearchResults(results);
-                } catch (err) {
-                    console.error(err);
-                    setEmailSearchResults([]);
-                } finally {
-                    setSearching(false);
-                }
-            } else {
+    const handleEmailSearch = useCallback(async (value: string) => {
+        if (value.length >= 3) {
+            setSearching(true);
+            try {
+                const results = await userService.searchByEmail(value);
+                setEmailSearchResults(results);
+            } catch (err) {
+                console.error(err);
                 setEmailSearchResults([]);
+            } finally {
+                setSearching(false);
             }
+        } else {
+            setEmailSearchResults([]);
+        }
+    }, []);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            handleEmailSearch(emailSearchValue);
         }, 300);
         return () => clearTimeout(timer);
-    }, [emailSearchValue]);
+    }, [emailSearchValue, handleEmailSearch]);
 
     const handleSelectUser = (user: UserSearchResult) => {
         setFormData(prev => ({
@@ -145,8 +143,9 @@ export default function ScheduleInterviewPage() {
             }
             
             navigate("/interviewer/scheduled");
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to schedule interview");
+        } catch (error) {
+            const axiosError = error as AxiosError<{ message?: string }>;
+            toast.error(axiosError.response?.data?.message || "Failed to schedule interview");
         }
     };
 
