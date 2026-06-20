@@ -1,19 +1,15 @@
 package com.aiinterview.face2hire_backend.dto;
 
-import com.aiinterview.face2hire_backend.entity.JobStatus;
-import com.aiinterview.face2hire_backend.entity.JobType;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.aiinterview.face2hire_backend.entity.JobStatus;
+import com.aiinterview.face2hire_backend.entity.JobType;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
 public class JobListResponseDto {
     private Long id;
     private String title;
@@ -27,4 +23,6 @@ public class JobListResponseDto {
     private LocalDateTime createdAt;
     private List<String> skills;
     private Integer matchPercentage;
+
+    private Boolean hasMultiRound;
 }

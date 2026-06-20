@@ -1,7 +1,7 @@
 import { useState, type JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Briefcase, Plus, X } from 'lucide-react';
+import { Briefcase, Plus, X, GripVertical } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -11,8 +11,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../../components/ui/badge';
 import { toast } from 'react-toastify';
 import { jobService, type JobRequest } from '../../services/jobService';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 type JobType = 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP';
+
+interface StageConfigDto {
+    stageType: string;
+    order: number;
+    minimumScore: number;
+    duration: number;
+    questionCount: number;
+    required: boolean;
+    description: string;
+}
 
 export default function CreateJobPage(): JSX.Element {
   const navigate = useNavigate();
@@ -30,6 +41,53 @@ export default function CreateJobPage(): JSX.Element {
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [enableMultiRound, setEnableMultiRound] = useState(false);
+  const [stages, setStages] = useState<StageConfigDto[]>([
+    { stageType: 'TECHNICAL', order: 1, minimumScore: 70, duration: 45, questionCount: 10, required: true, description: 'Technical skills assessment' },
+    { stageType: 'HR', order: 2, minimumScore: 65, duration: 30, questionCount: 8, required: true, description: 'Cultural fit and soft skills' },
+    { stageType: 'BEHAVIORAL', order: 3, minimumScore: 70, duration: 30, questionCount: 8, required: true, description: 'Behavioral assessment' },
+    { stageType: 'SALARY', order: 4, minimumScore: 60, duration: 20, questionCount: 5, required: false, description: 'Compensation discussion' },
+  ]);
+
+  const stageTypeOptions = ['TECHNICAL', 'HR', 'BEHAVIORAL', 'SALARY'];
+
+  const handleAddStage = () => {
+    const newStage: StageConfigDto = {
+        stageType: 'BEHAVIORAL',
+        order: stages.length + 1,
+        minimumScore: 70,
+        duration: 30,
+        questionCount: 8,
+        required: true,
+        description: '',
+    };
+    setStages([...stages, newStage]);
+  };
+
+  const handleRemoveStage = (index: number) => {
+    if (stages.length <= 1) {
+        toast.error('At least one stage is required');
+        return;
+    }
+    const newStages = stages.filter((_, i) => i !== index);
+    const updatedStages = newStages.map((s, idx) => ({ ...s, order: idx + 1 }));
+    setStages(updatedStages);
+  };
+
+  const handleStageChange = (index: number, field: keyof StageConfigDto, value: any) => {
+    const updated = [...stages];
+    updated[index] = { ...updated[index], [field]: value };
+    setStages(updated);
+  };
+
+  const onDragEnd = (result: any) => {
+    if (!result.destination) return;
+    const items = Array.from(stages);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    const updatedStages = items.map((s, idx) => ({ ...s, order: idx + 1 }));
+    setStages(updatedStages);
+  };
 
   const handleAddSkill = () => {
     const trimmed = skillInput.trim();
@@ -61,6 +119,8 @@ export default function CreateJobPage(): JSX.Element {
         requiredExperience: formData.requiredExperience,
         description: formData.description,
         skills,
+        hasMultiRound: enableMultiRound,
+        workflowConfig: enableMultiRound ? { stages, enabled: true } : null,
       };
       await jobService.createJob(payload);
       toast.success('Job posted successfully!');
@@ -216,12 +276,159 @@ export default function CreateJobPage(): JSX.Element {
           </CardContent>
         </Card>
 
+        <Card className="border-0 shadow-lg">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Interview Workflow Configuration</CardTitle>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="multiRound" className="text-sm font-medium">
+                  Enable Multi-Round
+                </Label>
+                <input
+                  type="checkbox"
+                  id="multiRound"
+                  checked={enableMultiRound}
+                  onChange={(e) => setEnableMultiRound(e.target.checked)}
+                  className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {enableMultiRound ? (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Configure the interview rounds for this job. Candidates will progress through each round sequentially.
+                </p>
+                
+                <DragDropContext onDragEnd={onDragEnd}>
+                  <Droppable droppableId="stages">
+                    {(provided) => (
+                      <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
+                        {stages.map((stage, index) => (
+                          <Draggable key={stage.order} draggableId={String(stage.order)} index={index}>
+                            {(provided) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className="p-4 border-2 border-gray-200 rounded-lg bg-gray-50 hover:border-indigo-300 transition-colors"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div {...provided.dragHandleProps} className="cursor-move">
+                                    <GripVertical className="size-5 text-gray-400" />
+                                  </div>
+                                  <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-3">
+                                    <div>
+                                      <Label className="text-xs">Round {stage.order}</Label>
+                                      <Select
+                                        value={stage.stageType}
+                                        onValueChange={(v) => handleStageChange(index, 'stageType', v)}
+                                      >
+                                        <SelectTrigger className="h-9">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {stageTypeOptions.map(type => (
+                                            <SelectItem key={type} value={type}>
+                                              {type.charAt(0) + type.slice(1).toLowerCase()}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div>
+                                      <Label className="text-xs">Min Score</Label>
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={stage.minimumScore}
+                                        onChange={(e) => handleStageChange(index, 'minimumScore', Number(e.target.value))}
+                                        className="h-9"
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label className="text-xs">Duration (min)</Label>
+                                      <Input
+                                        type="number"
+                                        value={stage.duration}
+                                        onChange={(e) => handleStageChange(index, 'duration', Number(e.target.value))}
+                                        className="h-9"
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label className="text-xs">Questions</Label>
+                                      <Input
+                                        type="number"
+                                        value={stage.questionCount}
+                                        onChange={(e) => handleStageChange(index, 'questionCount', Number(e.target.value))}
+                                        className="h-9"
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label className="text-xs">Required</Label>
+                                      <div className="flex items-center mt-1">
+                                        <input
+                                          type="checkbox"
+                                          checked={stage.required}
+                                          onChange={(e) => handleStageChange(index, 'required', e.target.checked)}
+                                          className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveStage(index)}
+                                    className="text-red-500 hover:text-red-700"
+                                  >
+                                    <X className="size-4" />
+                                  </Button>
+                                </div>
+                                <div className="mt-2 ml-12">
+                                  <Input
+                                    placeholder="Stage description (optional)"
+                                    value={stage.description}
+                                    onChange={(e) => handleStageChange(index, 'description', e.target.value)}
+                                    className="h-8 text-sm"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+                
+                <Button variant="outline" onClick={handleAddStage} className="w-full">
+                  <Plus className="mr-2 size-4" />
+                  Add Round
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Briefcase className="size-12 mx-auto mb-3 text-gray-300" />
+                <p>Single round interview (no workflow configuration needed)</p>
+                <p className="text-sm mt-1">Enable multi-round to configure multiple interview stages</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="border-0 shadow-lg bg-gradient-to-r from-purple-50 to-indigo-50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">Ready to post?</h3>
-                <p className="text-sm text-gray-600">Your job will be visible to eligible candidates</p>
+                <p className="text-sm text-gray-600">
+                  {enableMultiRound 
+                    ? `Your job will have ${stages.length} interview rounds` 
+                    : 'Your job will have a single interview round'}
+                </p>
               </div>
               <Button
                 type="submit"

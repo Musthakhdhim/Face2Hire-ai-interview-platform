@@ -13,6 +13,8 @@ export interface ScheduleInterviewRequest {
     dueDate: string;
     applicationId?: number;
     minimumScore?: number;
+    stageId?: number;  
+    applicationStageId?: number;
 }
 
 export interface ScheduledInterviewDto {
@@ -29,7 +31,9 @@ export interface ScheduledInterviewDto {
     createdAt: string;
     applicationId?: number;    
     minimumScore?: number;  
-    completed?: boolean;      
+    completed?: boolean;
+    stageId?: number;
+    applicationStageId?: number;      
 }
 
 export const scheduledInterviewService = {
@@ -51,6 +55,10 @@ export const scheduledInterviewService = {
     },
     getById: async (scheduledId: number): Promise<ScheduledInterviewDto> => {
         const response = await axiosClient.get(`/scheduled-interviews/${scheduledId}`);
+        return response.data;
+    },
+    getByStageId: async (stageId: number): Promise<ScheduledInterviewDto> => {
+        const response = await axiosClient.get(`/scheduled-interviews/stage/${stageId}`);
         return response.data;
     },
 };

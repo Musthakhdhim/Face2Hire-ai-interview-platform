@@ -13,12 +13,17 @@ export interface ApplicationResponse {
   company: string;
   userId: number;
   userName: string;
-  userEmail:string;
+  userEmail: string;
   coverLetter: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   score: number;
   appliedAt: string;
   updatedAt: string;
+  isMultiRound?: boolean;
+  currentStageOrder?: number;
+  currentStageName?: string;
+  totalStages?: number;
+  overallResult?: 'PENDING' | 'PASSED' | 'FAILED';
 }
 
 export interface ApplicationListResponse {
@@ -32,6 +37,8 @@ export interface ApplicationListResponse {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   appliedAt: string;
   hasScheduledInterview: boolean;
+  isMultiRound?: boolean;
+  currentStageName?: string;
 }
 
 export interface PaginatedApplications<T> {
@@ -77,8 +84,7 @@ export const applicationService = {
   },
 
   getApplicationById: async (id: number): Promise<ApplicationResponse> => {
-  const response = await axiosClient.get(`/applications/${id}`);
-  return response.data.data;
-},
-
+    const response = await axiosClient.get(`/applications/${id}`);
+    return response.data.data;
+  },
 };

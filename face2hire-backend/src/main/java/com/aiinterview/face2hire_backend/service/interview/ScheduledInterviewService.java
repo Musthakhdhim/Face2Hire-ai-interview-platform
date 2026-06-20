@@ -10,4 +10,6 @@ public interface ScheduledInterviewService {
     List<ScheduledInterviewDto> getByInterviewer(String interviewerName);
     ScheduledInterviewDto getByApplicationId(Long applicationId);
     ScheduledInterviewDto getById(Long id);
+    ScheduledInterviewDto getByStageId(Long stageId);
+
 }

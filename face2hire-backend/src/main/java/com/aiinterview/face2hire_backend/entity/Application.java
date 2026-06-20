@@ -3,6 +3,8 @@ package com.aiinterview.face2hire_backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "applications")
@@ -35,6 +37,22 @@ public class Application {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "current_stage_order")
+    private Integer currentStageOrder;
+
+    @Column(name = "is_multi_round")
+    private Boolean isMultiRound;
+
+    @Column(name = "workflow_config", columnDefinition = "TEXT")
+    private String workflowConfig;
+
+    @Column(name = "overall_result")
+    @Enumerated(EnumType.STRING)
+    private OverallResult overallResult;
+
+    @OneToMany(mappedBy = "applicationId", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ApplicationStage> stages = new ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         appliedAt = LocalDateTime.now();
@@ -47,3 +65,4 @@ public class Application {
         updatedAt = LocalDateTime.now();
     }
 }
+

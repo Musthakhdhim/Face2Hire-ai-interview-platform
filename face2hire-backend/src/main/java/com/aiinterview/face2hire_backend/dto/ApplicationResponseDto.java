@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -25,4 +26,11 @@ public class ApplicationResponseDto {
     private Double score;
     private LocalDateTime appliedAt;
     private LocalDateTime updatedAt;
+
+    private Integer currentStageOrder;
+    private Integer totalStages;
+    private String currentStageName;
+    private Boolean isMultiRound;
+    private String overallResult;
+    private List<ApplicationStageDto> stages;
 }

@@ -8,6 +8,7 @@ import com.aiinterview.face2hire_backend.entity.interview.ScheduledInterview;
 import com.aiinterview.face2hire_backend.entity.interview.SessionStatus;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
+import com.aiinterview.face2hire_backend.repository.ApplicationStageRepository;
 import com.aiinterview.face2hire_backend.repository.UserRepository;
 import com.aiinterview.face2hire_backend.repository.interview.InterviewSessionRepository;
 import com.aiinterview.face2hire_backend.repository.interview.ScheduledInterviewRepository;
@@ -34,13 +35,17 @@ public class ScheduledInterviewServiceImpl implements ScheduledInterviewService 
     private final UserRepository userRepository;
     private final BadgeService badgeService;
     private final NotificationService notificationService;
+    private final ApplicationStageRepository applicationStageRepository;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
+    @PostConstruct
+    public void init() {
+        this.log = loggerFactory.getLogger(getClass());
+    }
+
     @Override
     public ScheduledInterviewDto schedule(String interviewerName, ScheduleInterviewRequest request) {
-
-
         ScheduledInterview entity = ScheduledInterview.builder()
                 .intervieweeId(request.getIntervieweeId())
                 .intervieweeName(request.getIntervieweeName())
@@ -53,8 +58,18 @@ public class ScheduledInterviewServiceImpl implements ScheduledInterviewService 
                 .dueDate(request.getDueDate().atTime(LocalTime.MAX))
                 .applicationId(request.getApplicationId())
                 .minimumScore(request.getMinimumScore())
+                .stageId(request.getStageId())
+                .applicationStageId(request.getApplicationStageId())
                 .build();
         entity = repository.save(entity);
+
+        if (request.getApplicationStageId() != null && request.getMinimumScore() != null) {
+            applicationStageRepository.findById(request.getApplicationStageId()).ifPresent(stage -> {
+                stage.setMinimumScore(request.getMinimumScore());
+                applicationStageRepository.save(stage);
+                log.info("Updated stage {} minimum score to {}", request.getApplicationStageId(), request.getMinimumScore());
+            });
+        }
 
         notificationService.createNotification(
                 request.getIntervieweeId(),
@@ -80,6 +95,7 @@ public class ScheduledInterviewServiceImpl implements ScheduledInterviewService 
         }
         return toDto(entity);
     }
+
     private ScheduledInterviewDto toDto(ScheduledInterview entity) {
         boolean completed = sessionRepository.existsByScheduledInterviewIdAndStatus(entity.getId(), SessionStatus.COMPLETED);
         return toDto(entity, completed);
@@ -122,6 +138,13 @@ public class ScheduledInterviewServiceImpl implements ScheduledInterviewService 
         return toDto(entity, completed);
     }
 
+    @Override
+    public ScheduledInterviewDto getByStageId(Long stageId) {
+        ScheduledInterview entity = repository.findByApplicationStageId(stageId)
+                .orElseThrow(() -> new RuntimeException("Scheduled interview not found for stage"));
+        return toDto(entity);
+    }
+
     private ScheduledInterviewDto toDto(ScheduledInterview entity, boolean completed) {
         return ScheduledInterviewDto.builder()
                 .id(entity.getId())
@@ -138,11 +161,8 @@ public class ScheduledInterviewServiceImpl implements ScheduledInterviewService 
                 .applicationId(entity.getApplicationId())
                 .minimumScore(entity.getMinimumScore())
                 .completed(completed)
+                .stageId(entity.getStageId())
+                .applicationStageId(entity.getApplicationStageId())
                 .build();
-    }
-
-    @PostConstruct
-    public void init() {
-        this.log = loggerFactory.getLogger(getClass());
     }
 }

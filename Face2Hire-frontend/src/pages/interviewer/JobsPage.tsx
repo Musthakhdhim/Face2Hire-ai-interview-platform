@@ -54,7 +54,7 @@ export default function InterviewerJobsPage(): JSX.Element {
       try {
         await jobService.deleteJob(jobId);
         toast.success('Job deleted');
-        fetchJobs(); // refresh list
+        fetchJobs(); 
       } catch (error: any) {
         toast.error(error.response?.data?.message || 'Failed to delete job');
       }

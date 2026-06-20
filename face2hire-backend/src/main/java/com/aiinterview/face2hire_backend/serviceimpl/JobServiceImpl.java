@@ -3,6 +3,7 @@ package com.aiinterview.face2hire_backend.serviceimpl;
 import com.aiinterview.face2hire_backend.dto.JobListResponseDto;
 import com.aiinterview.face2hire_backend.dto.JobRequestDto;
 import com.aiinterview.face2hire_backend.dto.JobResponseDto;
+import com.aiinterview.face2hire_backend.dto.WorkflowConfigDto;
 import com.aiinterview.face2hire_backend.entity.*;
 
 import com.aiinterview.face2hire_backend.exception.ResourceNotFoundException;
@@ -12,6 +13,8 @@ import com.aiinterview.face2hire_backend.repository.JobRepository;
 import com.aiinterview.face2hire_backend.repository.JobSkillRepository;
 import com.aiinterview.face2hire_backend.service.BadgeService;
 import com.aiinterview.face2hire_backend.service.JobService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +32,7 @@ public class JobServiceImpl implements JobService {
     private final JobRepository jobRepository;
     private final JobSkillRepository jobSkillRepository;
     private final BadgeService badgeService;
+    private final ObjectMapper objectMapper;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
@@ -36,6 +40,44 @@ public class JobServiceImpl implements JobService {
     public void init() {
         this.log = loggerFactory.getLogger(getClass());
     }
+
+//    @Override
+//    @Transactional
+//    public JobResponseDto createJob(Long userId, JobRequestDto request) {
+//        log.info("Creating job for user {}: {}", userId, request.getTitle());
+//
+//        Job job = Job.builder()
+//                .title(request.getTitle())
+//                .company(request.getCompany())
+//                .location(request.getLocation())
+//                .type(request.getType())
+//                .salary(request.getSalary())
+//                .requiredExperience(request.getRequiredExperience())
+//                .description(request.getDescription())
+//                .postedByUserId(userId)
+//                .status(JobStatus.ACTIVE)
+//                .build();
+//
+//        job = jobRepository.save(job);
+//
+//        if (request.getSkills() != null && !request.getSkills().isEmpty()) {
+//            Job finalJob = job;
+//            List<JobSkill> skills = request.getSkills().stream()
+//                    .map(skill -> JobSkill.builder()
+//                            .jobId(finalJob.getId())
+//                            .skillName(skill.trim())
+//                            .build())
+//                    .collect(Collectors.toList());
+//            jobSkillRepository.saveAll(skills);
+//        }
+//
+//        badgeService.checkAndAwardBadges(userId);
+//
+//        log.info("Job created with id: {}", job.getId());
+//        return mapToResponseDto(job);
+//    }
+//
+//
 
     @Override
     @Transactional
@@ -52,7 +94,17 @@ public class JobServiceImpl implements JobService {
                 .description(request.getDescription())
                 .postedByUserId(userId)
                 .status(JobStatus.ACTIVE)
+                .hasMultiRound(request.getHasMultiRound() != null && request.getHasMultiRound())
                 .build();
+
+        if (request.getHasMultiRound() != null && request.getHasMultiRound() && request.getWorkflowConfig() != null) {
+            try {
+                String configJson = objectMapper.writeValueAsString(request.getWorkflowConfig());
+                job.setWorkflowConfig(configJson);
+            } catch (JsonProcessingException e) {
+                log.error("Failed to save workflow config", e);
+            }
+        }
 
         job = jobRepository.save(job);
 
@@ -100,6 +152,43 @@ public class JobServiceImpl implements JobService {
         return jobs.map(this::mapToListResponseDto);
     }
 
+//    @Override
+//    @Transactional
+//    public JobResponseDto updateJob(Long jobId, Long userId, JobRequestDto request) throws AccessDeniedException {
+//        Job job = jobRepository.findById(jobId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+//        if (!job.getPostedByUserId().equals(userId)) {
+//            throw new AccessDeniedException("You are not the owner of this job");
+//        }
+//
+//        job.setTitle(request.getTitle());
+//        job.setCompany(request.getCompany());
+//        job.setLocation(request.getLocation());
+//        job.setType(request.getType());
+//        job.setSalary(request.getSalary());
+//        job.setRequiredExperience(request.getRequiredExperience());
+//        job.setDescription(request.getDescription());
+//        job = jobRepository.save(job);
+//
+//        jobSkillRepository.deleteByJobId(jobId);
+//        if (request.getSkills() != null && !request.getSkills().isEmpty()) {
+//            Job finalJob = job;
+//            List<JobSkill> skills = request.getSkills().stream()
+//                    .map(skill -> JobSkill.builder()
+//                            .jobId(finalJob.getId())
+//                            .skillName(skill.trim())
+//                            .build())
+//                    .collect(Collectors.toList());
+//            jobSkillRepository.saveAll(skills);
+//        }
+//
+//        log.info("Job updated: {}", jobId);
+//        return mapToResponseDto(job);
+//    }
+//
+//
+
+
     @Override
     @Transactional
     public JobResponseDto updateJob(Long jobId, Long userId, JobRequestDto request) throws AccessDeniedException {
@@ -116,6 +205,19 @@ public class JobServiceImpl implements JobService {
         job.setSalary(request.getSalary());
         job.setRequiredExperience(request.getRequiredExperience());
         job.setDescription(request.getDescription());
+        job.setHasMultiRound(request.getHasMultiRound() != null && request.getHasMultiRound());
+
+        if (request.getHasMultiRound() != null && request.getHasMultiRound() && request.getWorkflowConfig() != null) {
+            try {
+                String configJson = objectMapper.writeValueAsString(request.getWorkflowConfig());
+                job.setWorkflowConfig(configJson);
+            } catch (JsonProcessingException e) {
+                log.error("Failed to save workflow config", e);
+            }
+        } else {
+            job.setWorkflowConfig(null);
+        }
+
         job = jobRepository.save(job);
 
         jobSkillRepository.deleteByJobId(jobId);
@@ -181,6 +283,8 @@ public class JobServiceImpl implements JobService {
                 .createdAt(job.getCreatedAt())
                 .updatedAt(job.getUpdatedAt())
                 .skills(skills)
+                .hasMultiRound(job.getHasMultiRound())
+                .workflowConfig(parseWorkflowConfig(job.getWorkflowConfig()))
                 .build();
     }
 
@@ -201,6 +305,61 @@ public class JobServiceImpl implements JobService {
                 .createdAt(job.getCreatedAt())
                 .skills(skills)
                 .matchPercentage(job.getMatchPercentage())
+                .hasMultiRound(job.getHasMultiRound())
                 .build();
     }
+
+    private WorkflowConfigDto parseWorkflowConfig(String configJson) {
+        try {
+            if (configJson != null && !configJson.isEmpty()) {
+                return objectMapper.readValue(configJson, WorkflowConfigDto.class);
+            }
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse workflow config", e);
+        }
+        return null;
+    }
+
+//    private JobResponseDto mapToResponseDto(Job job) {
+//        List<String> skills = jobSkillRepository.findByJobId(job.getId())
+//                .stream().map(JobSkill::getSkillName).collect(Collectors.toList());
+//
+//        return JobResponseDto.builder()
+//                .id(job.getId())
+//                .title(job.getTitle())
+//                .company(job.getCompany())
+//                .location(job.getLocation())
+//                .type(job.getType())
+//                .salary(job.getSalary())
+//                .matchPercentage(job.getMatchPercentage())
+//                .requiredExperience(job.getRequiredExperience())
+//                .description(job.getDescription())
+//                .postedByUserId(job.getPostedByUserId())
+//                .applicantsCount(job.getApplicantsCount())
+//                .status(job.getStatus())
+//                .createdAt(job.getCreatedAt())
+//                .updatedAt(job.getUpdatedAt())
+//                .skills(skills)
+//                .build();
+//    }
+//
+//    private JobListResponseDto mapToListResponseDto(Job job) {
+//        List<String> skills = jobSkillRepository.findByJobId(job.getId())
+//                .stream().map(JobSkill::getSkillName).collect(Collectors.toList());
+//
+//        return JobListResponseDto.builder()
+//                .id(job.getId())
+//                .title(job.getTitle())
+//                .company(job.getCompany())
+//                .location(job.getLocation())
+//                .type(job.getType())
+//                .salary(job.getSalary())
+//                .requiredExperience(job.getRequiredExperience())
+//                .applicantsCount(job.getApplicantsCount())
+//                .status(job.getStatus())
+//                .createdAt(job.getCreatedAt())
+//                .skills(skills)
+//                .matchPercentage(job.getMatchPercentage())
+//                .build();
+//    }
 }

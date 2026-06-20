@@ -8,10 +8,9 @@ import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.*;
 import com.aiinterview.face2hire_backend.repository.interview.ScheduledInterviewRepository;
-import com.aiinterview.face2hire_backend.service.ActivityLogService;
-import com.aiinterview.face2hire_backend.service.ApplicationService;
-import com.aiinterview.face2hire_backend.service.BadgeService;
-import com.aiinterview.face2hire_backend.service.NotificationService;
+import com.aiinterview.face2hire_backend.service.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,8 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ActivityLogService activityLogService;
     private final NotificationService notificationService;
     private final BadgeService badgeService;
+    private final StageWorkflowService stageWorkflowService;
+    private final ObjectMapper objectMapper;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
 
@@ -67,15 +70,38 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new ValidationException("You have already applied for this job");
         }
 
+        boolean isMultiRound = job.getHasMultiRound() != null && job.getHasMultiRound();
+
+        if (job.getHasMultiRound() == null) {
+            isMultiRound = true;
+            log.info("Job hasMultiRound is null, defaulting to true for job {}", job.getId());
+        }
+
         Application application = Application.builder()
                 .jobId(request.getJobId())
                 .userId(userId)
                 .coverLetter(request.getCoverLetter())
                 .status(ApplicationStatus.PENDING)
                 .score(0.0)
+                .isMultiRound(isMultiRound)
+                .currentStageOrder(1)
+                .overallResult(OverallResult.PENDING)
                 .build();
 
         application = applicationRepository.save(application);
+        log.info("Application created with id: {}, isMultiRound: {}", application.getId(), application.getIsMultiRound());
+
+        if (isMultiRound) {
+            WorkflowConfigDto config = parseWorkflowConfig(job.getWorkflowConfig());
+            if (config == null) {
+                log.info("No workflow config found for job {}, using default", job.getId());
+                config = stageWorkflowService.getDefaultWorkflowConfig();
+            }
+            stageWorkflowService.initializeStagesForApplication(application, config);
+            log.info("Initialized {} stages for application {}", config.getStages().size(), application.getId());
+        } else {
+            initializeDefaultStageForApplication(application);
+        }
 
         if (job.getPostedByUserId() != null) {
             notificationService.createNotification(
@@ -94,6 +120,26 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         log.info("Application created with id: {}", application.getId());
         return mapToResponseDto(application);
+    }
+
+
+    private void initializeDefaultStageForApplication(Application application) {
+        List<ApplicationStageDto> existingStagesDto = stageWorkflowService.getApplicationStages(application.getId());
+        if (existingStagesDto != null && !existingStagesDto.isEmpty()) {
+            log.info("Stages already exist for application {}", application.getId());
+            return;
+        }
+
+        ApplicationStage stage = ApplicationStage.builder()
+                .applicationId(application.getId())
+                .stageOrder(1)
+                .stageType(StageType.TECHNICAL)
+                .status(StageStatus.PENDING)
+                .minimumScore(70.0)
+                .build();
+
+        stage = stageWorkflowService.saveStage(stage);
+        log.info("Default stage created for application {}", application.getId());
     }
 
     @Override
@@ -118,7 +164,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .map(this::mapToListDto);
     }
 
-
     @Override
     @Transactional
     public ApplicationResponseDto updateApplicationStatus(Long applicationId, Long interviewerId, ApplicationStatusUpdateDto dto) throws AccessDeniedException {
@@ -131,6 +176,22 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new AccessDeniedException("You are not authorized to update this application");
         }
 
+        if (application.getIsMultiRound() != null && application.getIsMultiRound()) {
+            ApplicationStage currentStage = stageWorkflowService.getCurrentStageEntity(applicationId);
+            if (currentStage == null) {
+                throw new ValidationException("No active stage found for this application");
+            }
+
+            if (dto.getStatus() == ApplicationStatus.APPROVED) {
+                stageWorkflowService.approveStage(applicationId, currentStage.getId(),
+                        application.getScore() != null ? application.getScore() : 70.0,
+                        "Application approved by interviewer");
+            } else if (dto.getStatus() == ApplicationStatus.REJECTED) {
+                stageWorkflowService.rejectStage(applicationId, currentStage.getId(),
+                        "Application rejected by interviewer");
+            }
+        }
+
         application.setStatus(dto.getStatus());
         application = applicationRepository.save(application);
         log.info("Application {} status updated to {}", applicationId, dto.getStatus());
@@ -139,7 +200,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 application.getUserId(),
                 "Application " + dto.getStatus(),
                 "Your application for job ID " + application.getJobId() + " has been " + dto.getStatus(),
-                dto.getStatus().equals("APPROVED") ? "APPLICATION_APPROVED" : "APPLICATION_REJECTED"
+                dto.getStatus() == ApplicationStatus.APPROVED ? "APPLICATION_APPROVED" : "APPLICATION_REJECTED"
         );
 
         User applicant = userRepository.findById(application.getUserId()).orElse(null);
@@ -159,6 +220,78 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         return mapToResponseDto(application);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ApplicationResponseDto getApplicationById(Long applicationId, Long currentUserId) throws AccessDeniedException {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+
+        Job job = jobRepository.findById(application.getJobId())
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+        if (!application.getUserId().equals(currentUserId) && !job.getPostedByUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("You are not authorized to view this application");
+        }
+
+        ensureStagesInitialized(application);
+
+        return mapToResponseDto(application);
+    }
+
+    private void ensureStagesInitialized(Application application) {
+        List<ApplicationStageDto> existingStagesDto = stageWorkflowService.getApplicationStages(application.getId());
+        if (existingStagesDto == null || existingStagesDto.isEmpty()) {
+            log.info("No stages found for application {}, initializing...", application.getId());
+
+            if (application.getIsMultiRound() != null && application.getIsMultiRound()) {
+                Job job = jobRepository.findById(application.getJobId()).orElse(null);
+                if (job != null) {
+                    WorkflowConfigDto config = parseWorkflowConfig(job.getWorkflowConfig());
+                    if (config == null) {
+                        config = stageWorkflowService.getDefaultWorkflowConfig();
+                    }
+                    stageWorkflowService.initializeStagesForApplication(application, config);
+                    log.info("Stages initialized for application {}", application.getId());
+                }
+            } else {
+                Job job = jobRepository.findById(application.getJobId()).orElse(null);
+                if (job != null) {
+                    WorkflowConfigDto config = parseWorkflowConfig(job.getWorkflowConfig());
+                    if (config != null) {
+                        stageWorkflowService.initializeStagesForApplication(application, config);
+                        log.info("Stages initialized from job config for application {}", application.getId());
+                        return;
+                    }
+                }
+                initializeDefaultStageForApplication(application);
+            }
+        }
+    }
+
+
+    @Transactional(readOnly = true)
+    public ApplicationWithStagesDto getApplicationWithStages(Long applicationId, Long currentUserId) throws AccessDeniedException {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+
+        Job job = jobRepository.findById(application.getJobId())
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+        if (!application.getUserId().equals(currentUserId) && !job.getPostedByUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("You are not authorized to view this application");
+        }
+
+        ensureStagesInitialized(application);
+
+        ApplicationResponseDto appDto = mapToResponseDto(application);
+        List<ApplicationStageDto> stages = stageWorkflowService.getApplicationStages(applicationId);
+        ApplicationStageDto currentStage = stageWorkflowService.getCurrentStage(applicationId);
+
+        return ApplicationWithStagesDto.builder()
+                .application(appDto)
+                .stages(stages)
+                .currentStage(currentStage)
+                .build();
     }
 
     private void validateEligibility(User user, Job job) {
@@ -222,28 +355,36 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .collect(Collectors.toList());
     }
 
-    private double calculateAverageInterviewScore(User user) {
-        return 0.0;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ApplicationResponseDto getApplicationById(Long applicationId, Long currentUserId) throws AccessDeniedException {
-        Application application = applicationRepository.findById(applicationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
-
-        Job job = jobRepository.findById(application.getJobId())
-                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
-        if (!application.getUserId().equals(currentUserId) && !job.getPostedByUserId().equals(currentUserId)) {
-            throw new AccessDeniedException("You are not authorized to view this application");
+    private WorkflowConfigDto parseWorkflowConfig(String configJson) {
+        try {
+            if (configJson != null && !configJson.isEmpty()) {
+                return objectMapper.readValue(configJson, WorkflowConfigDto.class);
+            }
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse workflow config", e);
         }
-
-        return mapToResponseDto(application);
+        return null;
     }
 
     private ApplicationResponseDto mapToResponseDto(Application application) {
         Job job = jobRepository.findById(application.getJobId()).orElse(null);
         User user = userRepository.findById(application.getUserId()).orElse(null);
+
+        String currentStageName = null;
+        Integer totalStages = null;
+        if (application.getIsMultiRound() != null && application.getIsMultiRound()) {
+            try {
+                ApplicationStageDto currentStage = stageWorkflowService.getCurrentStage(application.getId());
+                if (currentStage != null) {
+                    currentStageName = currentStage.getStageType().name();
+                }
+                List<ApplicationStageDto> stages = stageWorkflowService.getApplicationStages(application.getId());
+                totalStages = stages.size();
+            } catch (Exception e) {
+                log.warn("Failed to fetch stage info for application {}", application.getId());
+            }
+        }
+
         return ApplicationResponseDto.builder()
                 .id(application.getId())
                 .jobId(application.getJobId())
@@ -257,6 +398,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .score(application.getScore())
                 .appliedAt(application.getAppliedAt())
                 .updatedAt(application.getUpdatedAt())
+                .isMultiRound(application.getIsMultiRound())
+                .currentStageOrder(application.getCurrentStageOrder())
+                .currentStageName(currentStageName)
+                .totalStages(totalStages)
+                .overallResult(application.getOverallResult() != null ? application.getOverallResult().name() : null)
                 .build();
     }
 
@@ -264,6 +410,18 @@ public class ApplicationServiceImpl implements ApplicationService {
         Job job = jobRepository.findById(application.getJobId()).orElse(null);
         User user = userRepository.findById(application.getUserId()).orElse(null);
         boolean hasScheduled = scheduledInterviewRepository.existsByApplicationId(application.getId());
+
+        String currentStageName = null;
+        if (application.getIsMultiRound() != null && application.getIsMultiRound()) {
+            try {
+                ApplicationStageDto currentStage = stageWorkflowService.getCurrentStage(application.getId());
+                if (currentStage != null) {
+                    currentStageName = currentStage.getStageType().name();
+                }
+            } catch (Exception e) {
+            }
+        }
+
         return ApplicationListResponseDto.builder()
                 .id(application.getId())
                 .jobId(application.getJobId())
@@ -275,8 +433,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .status(application.getStatus())
                 .appliedAt(application.getAppliedAt())
                 .hasScheduledInterview(hasScheduled)
+                .isMultiRound(application.getIsMultiRound())
+                .currentStageName(currentStageName)
                 .build();
     }
-
-
 }

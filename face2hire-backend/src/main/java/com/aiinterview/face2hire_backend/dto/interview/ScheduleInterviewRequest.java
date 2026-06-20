@@ -30,4 +30,9 @@ public class ScheduleInterviewRequest {
 
     private Long applicationId;
     private Double minimumScore;
+
+    private Long stageId;
+    private Long applicationStageId;
+
+
 }

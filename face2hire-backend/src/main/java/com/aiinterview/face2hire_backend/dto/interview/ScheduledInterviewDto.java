@@ -27,4 +27,7 @@ public class ScheduledInterviewDto {
     private Long applicationId;
     private Double minimumScore;
     private Boolean completed;
+    private Long stageId;
+    private Long applicationStageId;
+
 }

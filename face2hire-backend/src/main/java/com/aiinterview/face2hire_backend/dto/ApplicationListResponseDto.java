@@ -23,4 +23,6 @@ public class ApplicationListResponseDto {
     private ApplicationStatus status;
     private LocalDateTime appliedAt;
     private boolean hasScheduledInterview;
+    private Boolean isMultiRound;
+    private String currentStageName;
 }

@@ -45,6 +45,12 @@ public class Job {
     @Enumerated(EnumType.STRING)
     private JobStatus status;
 
+    @Column(name = "has_multi_round")
+    private Boolean hasMultiRound;
+
+    @Column(name = "workflow_config", columnDefinition = "TEXT")
+    private String workflowConfig;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -57,6 +63,7 @@ public class Job {
         updatedAt = LocalDateTime.now();
         if (status == null) status = JobStatus.ACTIVE;
         if (applicantsCount == null) applicantsCount = 0;
+        if (hasMultiRound == null) hasMultiRound = true;
     }
 
     @PreUpdate

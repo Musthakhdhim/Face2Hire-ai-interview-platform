@@ -47,6 +47,12 @@ public class ScheduledInterview {
     @Column(name = "due_date")
     private LocalDateTime dueDate;
 
+    @Column(name = "stage_id")
+    private Long stageId;
+
+    @Column(name = "application_stage_id")
+    private Long applicationStageId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

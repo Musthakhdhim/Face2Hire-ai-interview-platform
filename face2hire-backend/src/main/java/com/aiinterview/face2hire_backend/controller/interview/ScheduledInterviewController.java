@@ -50,4 +50,9 @@ public class ScheduledInterviewController {
     public ResponseEntity<ScheduledInterviewDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));
     }
+
+    @GetMapping("/stage/{stageId}")
+    public ResponseEntity<ScheduledInterviewDto> getByStageId(@PathVariable Long stageId) {
+        return ResponseEntity.ok(service.getByStageId(stageId));
+    }
 }

@@ -1,6 +1,7 @@
 import type { AdminJobDetailResponse, AdminJobFilter, AdminJobResponse } from '../types/admin';
 import axiosClient from './axiosClient';
 import API from './endpoints';
+import type { WorkflowConfigDto } from './stagesService';
 
 export interface JobRequest {
   title: string;
@@ -11,6 +12,8 @@ export interface JobRequest {
   requiredExperience?: number;
   description: string;
   skills: string[];
+  hasMultiRound?: boolean;
+  workflowConfig?: WorkflowConfigDto | null;
 }
 
 export interface JobResponse {
@@ -30,6 +33,8 @@ export interface JobResponse {
   createdAt: string;
   updatedAt: string;
   skills: string[];
+  hasMultiRound?: boolean;
+  workflowConfig?: WorkflowConfigDto | null;
 }
 
 export interface JobListResponse {
@@ -44,7 +49,8 @@ export interface JobListResponse {
   status: 'ACTIVE' | 'CLOSED';
   createdAt: string;
   skills: string[];
-  matchPercentage?: number | null; 
+  matchPercentage?: number | null;
+  hasMultiRound?: boolean;
 }
 
 export interface PaginatedJobs<T> {

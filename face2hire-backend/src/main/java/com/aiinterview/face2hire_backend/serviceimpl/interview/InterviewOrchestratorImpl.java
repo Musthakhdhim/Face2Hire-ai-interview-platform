@@ -1,13 +1,12 @@
 package com.aiinterview.face2hire_backend.serviceimpl.interview;
 
 import com.aiinterview.face2hire_backend.dto.interview.*;
-import com.aiinterview.face2hire_backend.entity.ActivityAction;
-import com.aiinterview.face2hire_backend.entity.ApplicationStatus;
-import com.aiinterview.face2hire_backend.entity.User;
+import com.aiinterview.face2hire_backend.entity.*;
 import com.aiinterview.face2hire_backend.entity.interview.*;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.ApplicationRepository;
+import com.aiinterview.face2hire_backend.repository.ApplicationStageRepository;
 import com.aiinterview.face2hire_backend.repository.UserRepository;
 import com.aiinterview.face2hire_backend.repository.interview.*;
 import com.aiinterview.face2hire_backend.service.ActivityLogService;
@@ -45,6 +44,7 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
     private final ObjectMapper objectMapper;
     private final ScheduledInterviewRepository scheduledInterviewRepository;
     private final ApplicationRepository applicationRepository;
+    private final ApplicationStageRepository applicationStageRepository;
     private final UserRepository userRepository;
     private final ActivityLogService activityLogService;
     private final NotificationService notificationService;
@@ -135,42 +135,6 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
         return evaluation;
     }
 
-//    @Transactional
-//    @Override
-//    public QuestionResponseDto getNextQuestion(Long sessionId, Long currentQuestionId, Long userId) throws JsonProcessingException {
-//        log.info("Fetching next question for session {}, current={}, user={}", sessionId, currentQuestionId, userId);
-//
-//        InterviewSession session = sessionRepository.findById(sessionId)
-//                .orElseThrow(() -> new RuntimeException("Session not found"));
-//        if (!session.getUserId().equals(userId)) {
-//            throw new RuntimeException("Unauthorized");
-//        }
-//
-//        List<InterviewQuestion> questions = questionRepository.findBySessionIdOrderByQuestionIndexAsc(sessionId);
-//        int currentIndex = -1;
-//        for (int i = 0; i < questions.size(); i++) {
-//            if (questions.get(i).getId().equals(currentQuestionId)) {
-//                currentIndex = i;
-//                break;
-//            }
-//        }
-//        if (currentIndex + 1 >= questions.size()) {
-//            throw new RuntimeException("No more questions");
-//        }
-//        InterviewQuestion next = questions.get(currentIndex + 1);
-//        log.debug("Next question id={}, text={}", next.getId(), next.getQuestionText());
-//
-//        return QuestionResponseDto.builder()
-//                .questionId(next.getId())
-//                .questionIndex(next.getQuestionIndex())
-//                .questionText(next.getQuestionText())
-//                .category(next.getCategory())
-//                .expectedKeywords(objectMapper.readValue(next.getExpectedKeywords(), List.class))
-//                .build();
-//    }
-//
-//
-
     @Transactional
     @Override
     public QuestionResponseDto getNextQuestion(Long sessionId, Long currentQuestionId, Long userId) throws JsonProcessingException {
@@ -231,34 +195,6 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
                 .expectedKeywords(objectMapper.readValue(next.getExpectedKeywords(), List.class))
                 .build();
     }
-
-//    @Transactional
-//    @Override
-//    public OverallFeedbackDto endSession(Long sessionId, Long userId) throws JsonProcessingException {
-//        log.info("Ending session {} for user {}", sessionId, userId);
-//        OverallFeedbackDto overall = null;
-//
-//        try {
-//            sessionManager.endSession(sessionId, userId);
-//            List<InterviewQuestion> questions = questionRepository.findBySessionIdOrderByQuestionIndexAsc(sessionId);
-//            if (!questions.isEmpty()) {
-//                List<Long> questionIds = questions.stream().map(InterviewQuestion::getId).toList();
-//                List<UserResponse> responses = userResponseRepository.findByQuestionIdIn(questionIds);
-//                if (!responses.isEmpty()) {
-//                    List<Long> responseIds = responses.stream().map(UserResponse::getId).toList();
-//                    List<QuestionFeedback> feedbacks = questionFeedbackRepository.findAllById(responseIds);
-//                    if (!feedbacks.isEmpty()) {
-//                        overall = feedbackAggregator.aggregate(sessionId, feedbacks);
-//                    }
-//                }
-//            }
-//            if (overall == null) {
-//                overall = createDefaultFeedback("Incomplete or no answers recorded.");
-//            }
-//        } catch (Exception e) {
-//            log.error("Error while ending session", e);
-//            overall = createDefaultFeedback("An error occurred while generating feedback.");
-//        }
 
     @Transactional
     @Override
@@ -340,10 +276,61 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
             if (session.getScheduledInterviewId() != null) {
                 final Double finalScore = overall.getOverallScore();
                 scheduledInterviewRepository.findById(session.getScheduledInterviewId()).ifPresent(scheduled -> {
-                    if (scheduled.getApplicationId() != null && scheduled.getMinimumScore() != null) {
+                    // Check if this is a stage-based interview
+                    if (scheduled.getApplicationStageId() != null) {
+                        // Update the application stage
+                        applicationStageRepository.findById(scheduled.getApplicationStageId()).ifPresent(stage -> {
+                            // Use stage's minimum score (which should have been updated when scheduled)
+                            // Fallback to scheduled interview's minimumScore if stage.minimumScore is null
+                            Double minimumScore = stage.getMinimumScore() != null ? stage.getMinimumScore() :
+                                    (scheduled.getMinimumScore() != null ? scheduled.getMinimumScore() : 70.0);
+
+                            stage.setActualScore(finalScore);
+                            stage.setCompletedAt(LocalDateTime.now());
+
+                            if (finalScore >= minimumScore) {
+                                stage.setStatus(StageStatus.APPROVED);
+                                stage.setFeedback(String.format("Auto-approved: Score %.1f%% meets minimum requirement of %.1f%%",
+                                        finalScore, minimumScore));
+                                log.info("Stage {} auto-approved with score {} (minimum: {})",
+                                        stage.getId(), finalScore, minimumScore);
+
+                                // Move to next stage
+                                applicationStageRepository.findByApplicationIdAndStageOrder(
+                                        stage.getApplicationId(), stage.getStageOrder() + 1
+                                ).ifPresent(nextStage -> {
+                                    nextStage.setStatus(StageStatus.PENDING);
+                                    applicationStageRepository.save(nextStage);
+
+                                    applicationRepository.findById(stage.getApplicationId()).ifPresent(app -> {
+                                        app.setCurrentStageOrder(nextStage.getStageOrder());
+                                        applicationRepository.save(app);
+                                        log.info("Moved application {} to next stage {}",
+                                                app.getId(), nextStage.getStageOrder());
+                                    });
+                                });
+                            } else {
+                                stage.setStatus(StageStatus.REJECTED);
+                                stage.setFeedback(String.format("Auto-rejected: Score %.1f%% below minimum requirement of %.1f%%",
+                                        finalScore, minimumScore));
+                                log.info("Stage {} auto-rejected with score {} (minimum: {})",
+                                        stage.getId(), finalScore, minimumScore);
+
+                                // Mark application as failed
+                                applicationRepository.findById(stage.getApplicationId()).ifPresent(app -> {
+                                    app.setOverallResult(OverallResult.FAILED);
+                                    app.setStatus(ApplicationStatus.REJECTED);
+                                    applicationRepository.save(app);
+                                    log.info("Application {} marked as FAILED due to stage rejection", app.getId());
+                                });
+                            }
+                            applicationStageRepository.save(stage);
+                        });
+                    } else if (scheduled.getApplicationId() != null) {
+                        // Fallback: update application score only
                         applicationRepository.findById(scheduled.getApplicationId()).ifPresent(application -> {
                             application.setScore(finalScore);
-                            if (finalScore < scheduled.getMinimumScore()) {
+                            if (scheduled.getMinimumScore() != null && finalScore < scheduled.getMinimumScore()) {
                                 application.setStatus(ApplicationStatus.REJECTED);
                                 log.info("Application {} auto-rejected with score {} (below minimum {})",
                                         application.getId(), finalScore, scheduled.getMinimumScore());
@@ -371,7 +358,7 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
 
         if (session != null && session.getScheduledInterviewId() != null && overall != null) {
             try {
-                final Double finalOverallScore = overall.getOverallScore(); // make final for lambda
+                final Double finalOverallScore = overall.getOverallScore();
                 scheduledInterviewRepository.findById(session.getScheduledInterviewId()).ifPresent(scheduled -> {
                     String interviewerEmail = scheduled.getScheduledByInterviewer();
                     if (interviewerEmail != null) {
@@ -397,7 +384,6 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
 
         return overall;
     }
-
 
     @Override
     public List<InterviewSessionDto> getUserSessions(Long userId) {
@@ -486,15 +472,10 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
         }
         InterviewSession session = active.get(0);
 
-//        long startedEpoch = session.getStartedAt().toEpochSecond(ZoneOffset.UTC);
-//        long durationSeconds = session.getDuration() * 60L;
-//        long now = Instant.now().getEpochSecond();
-//        long remaining = Math.max(0, durationSeconds - (now - startedEpoch));
-
         ZoneId systemZone = ZoneId.systemDefault();
         ZonedDateTime startedZoned = session.getStartedAt().atZone(systemZone);
         long startedEpoch = startedZoned.toInstant().getEpochSecond();
-        long durationSeconds = session.getOriginalDurationMinutes() * 60L; // Use original duration, not session.getDuration()
+        long durationSeconds = session.getOriginalDurationMinutes() * 60L;
         long now = Instant.now().getEpochSecond();
         long remaining = Math.max(0, durationSeconds - (now - startedEpoch));
 
@@ -504,11 +485,6 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
             remaining = maxAllowed;
         }
 
-//        System.out.println("====================");
-//        System.out.println("question count"+session.getOriginalQuestionCount());
-//        System.out.println("time in munites "+session.getOriginalDurationMinutes());
-//        System.out.println("remaining tim eseconds"+(int)remaining);
-//        System.out.println("=======================");
         return SessionStateDto.builder()
                 .sessionId(session.getId())
                 .totalQuestions(session.getQuestionCount())
@@ -556,7 +532,7 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
         List<InterviewSession> stale = sessionRepository.findByStatusAndStartedAtBefore(SessionStatus.ACTIVE, expiryTime);
         for (InterviewSession session : stale) {
             session.setStatus(SessionStatus.ABANDONED);
-            System.out.println("marled as abandoned");
+            System.out.println("marked as abandoned");
             sessionRepository.save(session);
             log.info("Session {} marked as ABANDONED due to inactivity", session.getId());
         }
@@ -632,5 +608,26 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
             log.warn("Failed to parse JSON list: {}", json, e);
             return List.of();
         }
+    }
+
+    @Override
+    public InterviewSessionDto toSessionDto(InterviewSession session) {
+        return InterviewSessionDto.builder()
+                .id(session.getId())
+                .type(session.getType())
+                .difficulty(session.getDifficulty())
+                .duration(session.getDuration())
+                .questionCount(session.getQuestionCount())
+                .avatarStyle(session.getAvatarStyle())
+                .status(session.getStatus())
+                .overallScore(session.getOverallScore())
+                .communicationScore(session.getCommunicationScore())
+                .technicalScore(session.getTechnicalScore())
+                .confidenceScore(session.getConfidenceScore())
+                .startedAt(session.getStartedAt())
+                .completedAt(session.getCompletedAt())
+                .createdAt(session.getCreatedAt())
+                .scheduledInterviewId(session.getScheduledInterviewId())
+                .build();
     }
 }
