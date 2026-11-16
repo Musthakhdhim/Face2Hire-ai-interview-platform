@@ -147,6 +147,21 @@ export default function ApplicationDetailPage() {
     return { total, completed, percentage: total > 0 ? Math.round((completed / total) * 100) : 0 };
   };
 
+  const hasRejectedStage = stages.some(s => s.status === 'REJECTED');
+
+  const getRejectedStageOrder = () => {
+    const rejected = stages.find(s => s.status === 'REJECTED');
+    return rejected ? rejected.stageOrder : -1;
+  };
+
+  const isStageDisabled = (stage: ApplicationStage) => {
+    const rejectedOrder = getRejectedStageOrder();
+    if (rejectedOrder !== -1 && stage.stageOrder > rejectedOrder) {
+      return true;
+    }
+    return stage.isLocked || false;
+  };
+
   const renderFeedbackContent = (feedback: OverallFeedbackDto) => {
     return (
       <div className="space-y-4">
@@ -278,6 +293,11 @@ export default function ApplicationDetailPage() {
                     Interview Progress
                   </h3>
                   <p className="text-gray-600">{application.jobTitle} at {application.company}</p>
+                  {hasRejectedStage && (
+                    <Badge className="mt-2 bg-red-100 text-red-700 text-sm">
+                      <XCircle className="size-4 mr-1" /> Stage Failed - Application Rejected
+                    </Badge>
+                  )}
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-gray-600">Progress</div>
@@ -296,8 +316,8 @@ export default function ApplicationDetailPage() {
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                   <span>{progress.percentage}% Complete</span>
                   <span>
-                    {application.overallResult === 'PASSED' ? '✅ All rounds passed' : 
-                     application.overallResult === 'FAILED' ? '❌ Application declined' : 
+                    {hasRejectedStage ? '❌ Application Rejected' :
+                     application.overallResult === 'PASSED' ? '✅ All rounds passed' : 
                      '⏳ In progress'}
                   </span>
                 </div>
@@ -339,6 +359,8 @@ export default function ApplicationDetailPage() {
               const isExpanded = expandedStageId === stage.id;
               const feedback = stageFeedback[stage.id];
               const isLoadingFeedback = loadingFeedback[stage.id];
+              const isDisabled = isStageDisabled(stage);
+              const isRejected = stage.status === 'REJECTED';
 
               return (
                 <motion.div
@@ -356,7 +378,7 @@ export default function ApplicationDetailPage() {
                     <div className={`absolute left-5 top-11 h-full w-0.5 ${stage.status === 'APPROVED' || stage.status === 'SKIPPED' ? 'bg-green-500' : 'bg-gray-300'}`} />
                   )}
 
-                  <Card className={`border-0 shadow-lg hover:shadow-xl transition-all ${stage.isLocked ? 'opacity-60' : ''}`}>
+                  <Card className={`border-0 shadow-lg hover:shadow-xl transition-all ${isDisabled && !isRejected ? 'opacity-50' : ''}`}>
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -365,6 +387,11 @@ export default function ApplicationDetailPage() {
                               Round {stage.stageOrder}: {stage.stageType}
                             </h3>
                             {getStageStatusBadge(stage.status)}
+                            {isDisabled && !isRejected && stage.status === 'PENDING' && (
+                              <Badge className="bg-gray-200 text-gray-600">
+                                <XCircle className="size-3 mr-1" /> Blocked
+                              </Badge>
+                            )}
                           </div>
                           <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
                             <div>
@@ -410,7 +437,13 @@ export default function ApplicationDetailPage() {
                               Details
                             </Button>
                           )}
-                          {stage.status === 'PENDING' && stage.isLocked && (
+                          {stage.status === 'PENDING' && isDisabled && !isRejected && (
+                            <Badge className="bg-red-100 text-red-700">
+                              <XCircle className="size-3 mr-1" />
+                              Blocked
+                            </Badge>
+                          )}
+                          {stage.status === 'PENDING' && stage.isLocked && !isDisabled && (
                             <Badge className="bg-gray-200 text-gray-600">
                               <Clock className="mr-1 size-3" />
                               Waiting
@@ -463,6 +496,27 @@ export default function ApplicationDetailPage() {
               );
             })}
           </div>
+
+          {hasRejectedStage && (
+            <Card className="border-0 shadow-lg bg-gradient-to-r from-red-50 to-rose-50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">Application Rejected</h3>
+                    <p className="text-sm text-gray-600">
+                      You failed a round and cannot proceed further.
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline"
+                    onClick={() => navigate('/interviewee/applications')}
+                  >
+                    Back to Applications
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>

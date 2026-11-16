@@ -26,7 +26,7 @@ public class OpenAiParserServiceImpl implements OpenAiParserService {
     @Value("${openai.api.key}")
     private String apiKey;
 
-    @Value("${openai.model:gpt-3.5-turbo}")
+    @Value("${openai.gpt.model:gpt-4o-mini}")
     private String model;
 
     private WebClient webClient;

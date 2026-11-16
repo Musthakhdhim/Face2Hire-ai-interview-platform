@@ -24,9 +24,10 @@ const clearAuthAndRedirect = () => {
   window.location.href = '/login';
 };
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+
 const axiosClient = axios.create({
-  baseURL: 'https://api.face2hire.shop:8443/api/v1',
-  // baseURL: 'http://localhost:8080/api/v1',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     'ngrok-skip-browser-warning': 'true',
@@ -34,8 +35,7 @@ const axiosClient = axios.create({
 });
 
 const refreshAxios = axios.create({
-  baseURL: 'https://api.face2hire.shop:8443/api/v1',
-  // baseURL: 'http://localhost:8080/api/v1',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     'ngrok-skip-browser-warning': 'true',
