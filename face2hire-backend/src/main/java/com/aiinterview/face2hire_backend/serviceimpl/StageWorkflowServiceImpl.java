@@ -2,17 +2,32 @@ package com.aiinterview.face2hire_backend.serviceimpl;
 
 import com.aiinterview.face2hire_backend.dto.ApplicationStageDto;
 import com.aiinterview.face2hire_backend.dto.StageConfigDto;
+import com.aiinterview.face2hire_backend.dto.StageDecisionRequest;
 import com.aiinterview.face2hire_backend.dto.WorkflowConfigDto;
-import com.aiinterview.face2hire_backend.entity.*;
+import com.aiinterview.face2hire_backend.entity.Application;
+import com.aiinterview.face2hire_backend.entity.ApplicationStage;
+import com.aiinterview.face2hire_backend.entity.ApplicationStatus;
+import com.aiinterview.face2hire_backend.entity.Job;
+import com.aiinterview.face2hire_backend.entity.OverallResult;
+import com.aiinterview.face2hire_backend.entity.StageStatus;
+import com.aiinterview.face2hire_backend.entity.StageType;
+import com.aiinterview.face2hire_backend.entity.interview.InterviewFeedback;
+import com.aiinterview.face2hire_backend.entity.interview.InterviewMode;
+import com.aiinterview.face2hire_backend.entity.interview.InterviewSession;
+import com.aiinterview.face2hire_backend.entity.interview.ScheduledInterview;
+import com.aiinterview.face2hire_backend.entity.interview.SessionStatus;
 import com.aiinterview.face2hire_backend.exception.ResourceNotFoundException;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.ApplicationRepository;
 import com.aiinterview.face2hire_backend.repository.ApplicationStageRepository;
 import com.aiinterview.face2hire_backend.repository.JobRepository;
+import com.aiinterview.face2hire_backend.repository.interview.InterviewFeedbackRepository;
+import com.aiinterview.face2hire_backend.repository.interview.InterviewSessionRepository;
 import com.aiinterview.face2hire_backend.repository.interview.ScheduledInterviewRepository;
 import com.aiinterview.face2hire_backend.service.ActivityLogService;
 import com.aiinterview.face2hire_backend.service.NotificationService;
+import com.aiinterview.face2hire_backend.service.RealtimeEventService;
 import com.aiinterview.face2hire_backend.service.StageWorkflowService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +49,10 @@ public class StageWorkflowServiceImpl implements StageWorkflowService {
     private final ApplicationRepository applicationRepository;
     private final JobRepository jobRepository;
     private final ScheduledInterviewRepository scheduledInterviewRepository;
+    private final InterviewSessionRepository interviewSessionRepository;
+    private final InterviewFeedbackRepository interviewFeedbackRepository;
     private final NotificationService notificationService;
+    private final RealtimeEventService realtimeEventService;
     private final ActivityLogService activityLogService;
     private final ObjectMapper objectMapper;
     private final AppLoggerFactory loggerFactory;
@@ -50,6 +68,7 @@ public class StageWorkflowServiceImpl implements StageWorkflowService {
         List<StageConfigDto> stages = new ArrayList<>();
         stages.add(StageConfigDto.builder()
                 .stageType(StageType.TECHNICAL)
+                .interviewMode(InterviewMode.AI)
                 .order(1)
                 .minimumScore(70.0)
                 .duration(45)
@@ -59,6 +78,7 @@ public class StageWorkflowServiceImpl implements StageWorkflowService {
                 .build());
         stages.add(StageConfigDto.builder()
                 .stageType(StageType.HR)
+                .interviewMode(InterviewMode.AI)
                 .order(2)
                 .minimumScore(65.0)
                 .duration(30)
@@ -68,6 +88,7 @@ public class StageWorkflowServiceImpl implements StageWorkflowService {
                 .build());
         stages.add(StageConfigDto.builder()
                 .stageType(StageType.BEHAVIORAL)
+                .interviewMode(InterviewMode.AI)
                 .order(3)
                 .minimumScore(70.0)
                 .duration(30)
@@ -77,6 +98,7 @@ public class StageWorkflowServiceImpl implements StageWorkflowService {
                 .build());
         stages.add(StageConfigDto.builder()
                 .stageType(StageType.SALARY)
+                .interviewMode(InterviewMode.AI)
                 .order(4)
                 .minimumScore(60.0)
                 .duration(20)
@@ -150,13 +172,28 @@ public class StageWorkflowServiceImpl implements StageWorkflowService {
         applicationRepository.save(application);
 
         log.info("Stage {} started for application {}", stage.getStageType(), applicationId);
-
-        return toDto(stage);
+        ApplicationStageDto dto = toDto(stage);
+        realtimeEventService.publishApplicationEvent(
+                "STAGE_STARTED", applicationId, application.getUserId(), null, dto);
+        return dto;
     }
 
     @Override
     @Transactional
     public ApplicationStageDto approveStage(Long applicationId, Long stageId, Double score, String feedback) {
+        StageDecisionRequest decision = StageDecisionRequest.builder()
+                .stageId(stageId)
+                .approved(true)
+                .score(score)
+                .feedback(feedback)
+                .build();
+        return approveStage(applicationId, stageId, score, decision);
+    }
+
+    @Override
+    @Transactional
+    public ApplicationStageDto approveStage(
+            Long applicationId, Long stageId, Double score, StageDecisionRequest decision) {
         ApplicationStage stage = stageRepository.findById(stageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Stage not found"));
 
@@ -164,13 +201,28 @@ public class StageWorkflowServiceImpl implements StageWorkflowService {
             throw new RuntimeException("Stage does not belong to this application");
         }
 
+        String feedback = decision != null ? decision.getFeedback() : null;
+        Double finalScore = score != null ? score : (decision != null ? decision.getScore() : 70.0);
+
         stage.setStatus(StageStatus.APPROVED);
-        stage.setActualScore(score);
+        stage.setActualScore(finalScore);
         stage.setFeedback(feedback);
         stage.setCompletedAt(LocalDateTime.now());
         stageRepository.save(stage);
 
+        if (stage.getScheduledInterviewId() != null) {
+            scheduledInterviewRepository.findById(stage.getScheduledInterviewId()).ifPresent(scheduled -> {
+                scheduled.setCallEnded(true);
+                scheduled.setLiveCompleted(true);
+                scheduledInterviewRepository.save(scheduled);
+                saveLiveEvaluationSessionAndFeedback(scheduled, finalScore, decision);
+            });
+        }
+
         Application application = applicationRepository.findById(applicationId).orElseThrow();
+        if (finalScore != null) {
+            application.setScore(finalScore);
+        }
 
         String jobTitle = getJobTitle(application.getJobId());
 
@@ -230,12 +282,35 @@ public class StageWorkflowServiceImpl implements StageWorkflowService {
         }
 
         log.info("Stage {} approved for application {}", stage.getStageType(), applicationId);
-        return toDto(stage);
+        ApplicationStageDto dto = toDto(stage);
+        realtimeEventService.publishApplicationEvent(
+                "STAGE_APPROVED", applicationId, application.getUserId(), null, dto);
+        if (stage.getScheduledInterviewId() != null) {
+            realtimeEventService.publishInterviewEvent(
+                    "INTERVIEW_EVALUATED",
+                    stage.getScheduledInterviewId(),
+                    application.getUserId(),
+                    applicationId,
+                    dto
+            );
+        }
+        return dto;
     }
 
     @Override
     @Transactional
     public ApplicationStageDto rejectStage(Long applicationId, Long stageId, String feedback) {
+        StageDecisionRequest decision = StageDecisionRequest.builder()
+                .stageId(stageId)
+                .approved(false)
+                .feedback(feedback)
+                .build();
+        return rejectStage(applicationId, stageId, decision);
+    }
+
+    @Override
+    @Transactional
+    public ApplicationStageDto rejectStage(Long applicationId, Long stageId, StageDecisionRequest decision) {
         ApplicationStage stage = stageRepository.findById(stageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Stage not found"));
 
@@ -243,13 +318,32 @@ public class StageWorkflowServiceImpl implements StageWorkflowService {
             throw new RuntimeException("Stage does not belong to this application");
         }
 
+        String feedback = decision != null && decision.getFeedback() != null
+                ? decision.getFeedback()
+                : "Failed to meet requirements";
+        Double finalScore = decision != null && decision.getScore() != null ? decision.getScore() : 40.0;
+
         stage.setStatus(StageStatus.REJECTED);
+        stage.setActualScore(finalScore);
         stage.setFeedback(feedback);
         stage.setCompletedAt(LocalDateTime.now());
         stageRepository.save(stage);
 
+        if (stage.getScheduledInterviewId() != null) {
+            scheduledInterviewRepository.findById(stage.getScheduledInterviewId()).ifPresent(scheduled -> {
+                scheduled.setCallEnded(true);
+                scheduled.setLiveCompleted(true);
+                scheduledInterviewRepository.save(scheduled);
+                saveLiveEvaluationSessionAndFeedback(scheduled, finalScore, decision);
+            });
+        }
+
         Application application = applicationRepository.findById(applicationId).orElseThrow();
+        if (finalScore != null) {
+            application.setScore(finalScore);
+        }
         application.setOverallResult(OverallResult.FAILED);
+        application.setStatus(ApplicationStatus.REJECTED);
         applicationRepository.save(application);
 
         String jobTitle = getJobTitle(application.getJobId());
@@ -262,7 +356,80 @@ public class StageWorkflowServiceImpl implements StageWorkflowService {
         );
 
         log.info("Stage {} rejected for application {}", stage.getStageType(), applicationId);
-        return toDto(stage);
+        ApplicationStageDto dto = toDto(stage);
+        realtimeEventService.publishApplicationEvent(
+                "STAGE_REJECTED", applicationId, application.getUserId(), null, dto);
+        if (stage.getScheduledInterviewId() != null) {
+            realtimeEventService.publishInterviewEvent(
+                    "INTERVIEW_EVALUATED",
+                    stage.getScheduledInterviewId(),
+                    application.getUserId(),
+                    applicationId,
+                    dto
+            );
+        }
+        return dto;
+    }
+
+    private void saveLiveEvaluationSessionAndFeedback(
+            ScheduledInterview scheduled, Double overallScore, StageDecisionRequest decision) {
+        double safeOverall = overallScore != null ? overallScore : 70.0;
+        double commScore = decision != null && decision.getCommunicationScore() != null
+                ? decision.getCommunicationScore()
+                : safeOverall;
+        double techScore = decision != null && decision.getTechnicalScore() != null
+                ? decision.getTechnicalScore()
+                : safeOverall;
+        double confScore = decision != null && decision.getConfidenceScore() != null
+                ? decision.getConfidenceScore()
+                : safeOverall;
+
+        InterviewSession session = interviewSessionRepository.findByScheduledInterviewId(scheduled.getId())
+                .orElseGet(() -> InterviewSession.builder()
+                        .userId(scheduled.getIntervieweeId())
+                        .type(scheduled.getType())
+                        .difficulty(scheduled.getDifficulty())
+                        .duration(scheduled.getDuration())
+                        .questionCount(0)
+                        .avatarStyle(scheduled.getAvatarStyle())
+                        .isScheduled(true)
+                        .scheduledInterviewId(scheduled.getId())
+                        .startedAt(scheduled.getScheduledAt() != null
+                                ? scheduled.getScheduledAt()
+                                : LocalDateTime.now())
+                        .originalQuestionCount(0)
+                        .originalDurationMinutes(scheduled.getDuration() != null ? scheduled.getDuration() : 30)
+                        .build());
+
+        session.setStatus(SessionStatus.COMPLETED);
+        session.setOverallScore(safeOverall);
+        session.setCommunicationScore(commScore);
+        session.setTechnicalScore(techScore);
+        session.setConfidenceScore(confScore);
+        session.setCompletedAt(LocalDateTime.now());
+        session = interviewSessionRepository.save(session);
+
+        final Long sessionId = session.getId();
+        InterviewFeedback fb = interviewFeedbackRepository.findBySessionId(sessionId)
+                .orElseGet(() -> InterviewFeedback.builder()
+                        .sessionId(sessionId)
+                        .suggestedResources("[]")
+                        .build());
+
+        fb.setOverallScore(safeOverall);
+        fb.setStrengths(decision != null && decision.getStrengths() != null
+                ? decision.getStrengths()
+                : "Demonstrated solid engagement during the live interview.");
+        fb.setImprovements(decision != null && decision.getImprovements() != null
+                ? decision.getImprovements()
+                : "Continue refining domain depth and structured examples.");
+        fb.setDetailedFeedback(decision != null && decision.getFeedback() != null
+                ? decision.getFeedback()
+                : "Evaluated by interviewer following the live video session.");
+        if (fb.getSuggestedResources() == null) {
+            fb.setSuggestedResources("[]");
+        }
+        interviewFeedbackRepository.save(fb);
     }
 
     @Override
@@ -359,15 +526,20 @@ public class StageWorkflowServiceImpl implements StageWorkflowService {
 
         List<ApplicationStage> stages = new ArrayList<>();
         for (StageConfigDto stageConfig : config.getStages()) {
+            InterviewMode mode = stageConfig.getInterviewMode() != null
+                    ? stageConfig.getInterviewMode()
+                    : InterviewMode.AI;
             ApplicationStage stage = ApplicationStage.builder()
                     .applicationId(application.getId())
                     .stageOrder(stageConfig.getOrder())
                     .stageType(stageConfig.getStageType())
+                    .interviewMode(mode)
                     .status(StageStatus.PENDING)
                     .minimumScore(stageConfig.getMinimumScore())
                     .build();
             stages.add(stage);
-            log.info("Created stage: {} with order: {}", stageConfig.getStageType(), stageConfig.getOrder());
+            log.info("Created stage: {} with order: {} and mode: {}",
+                    stageConfig.getStageType(), stageConfig.getOrder(), mode);
         }
 
         stageRepository.saveAll(stages);
@@ -426,6 +598,7 @@ public class StageWorkflowServiceImpl implements StageWorkflowService {
                 .applicationId(stage.getApplicationId())
                 .stageOrder(stage.getStageOrder())
                 .stageType(stage.getStageType())
+                .interviewMode(stage.getInterviewMode() != null ? stage.getInterviewMode() : InterviewMode.AI)
                 .status(stage.getStatus())
                 .minimumScore(stage.getMinimumScore())
                 .actualScore(stage.getActualScore())

@@ -71,8 +71,14 @@ public class InterviewSession {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        startedAt = LocalDateTime.now();
-        status = SessionStatus.ACTIVE;
-        if (isScheduled == null) isScheduled = false;
+        if (startedAt == null) {
+            startedAt = LocalDateTime.now();
+        }
+        if (status == null) {
+            status = SessionStatus.ACTIVE;
+        }
+        if (isScheduled == null) {
+            isScheduled = false;
+        }
     }
 }

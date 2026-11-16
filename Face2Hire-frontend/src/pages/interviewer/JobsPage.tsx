@@ -8,6 +8,7 @@ import { Briefcase, Plus, Search, MapPin, DollarSign, Loader2, Eye, Trash2, XCir
 import { Badge } from '../../components/ui/badge';
 import { toast } from 'react-toastify';
 import { jobService, type JobListResponse } from '../../services/jobService';
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
 
 type JobTypeFilter = 'all' | 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP';
 
@@ -39,6 +40,10 @@ export default function InterviewerJobsPage(): JSX.Element {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchJobs();
   }, [fetchJobs, currentPage]);
+
+  useRealtimeSubscription(['/topic/jobs', '/topic/interviewer/applications'], () => {
+    fetchJobs();
+  });
 
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch = searchQuery === '' ||

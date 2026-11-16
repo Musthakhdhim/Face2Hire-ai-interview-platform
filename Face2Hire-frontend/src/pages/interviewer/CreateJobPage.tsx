@@ -17,6 +17,7 @@ type JobType = 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP';
 
 interface StageConfigDto {
     stageType: string;
+    interviewMode: 'AI' | 'ZOOM';
     order: number;
     minimumScore: number;
     duration: number;
@@ -43,10 +44,10 @@ export default function CreateJobPage(): JSX.Element {
   const [submitting, setSubmitting] = useState(false);
   const [enableMultiRound, setEnableMultiRound] = useState(false);
   const [stages, setStages] = useState<StageConfigDto[]>([
-    { stageType: 'TECHNICAL', order: 1, minimumScore: 70, duration: 45, questionCount: 10, required: true, description: 'Technical skills assessment' },
-    { stageType: 'HR', order: 2, minimumScore: 65, duration: 30, questionCount: 8, required: true, description: 'Cultural fit and soft skills' },
-    { stageType: 'BEHAVIORAL', order: 3, minimumScore: 70, duration: 30, questionCount: 8, required: true, description: 'Behavioral assessment' },
-    { stageType: 'SALARY', order: 4, minimumScore: 60, duration: 20, questionCount: 5, required: false, description: 'Compensation discussion' },
+    { stageType: 'TECHNICAL', interviewMode: 'AI', order: 1, minimumScore: 70, duration: 45, questionCount: 10, required: true, description: 'Technical skills assessment' },
+    { stageType: 'HR', interviewMode: 'AI', order: 2, minimumScore: 65, duration: 30, questionCount: 8, required: true, description: 'Cultural fit and soft skills' },
+    { stageType: 'BEHAVIORAL', interviewMode: 'AI', order: 3, minimumScore: 70, duration: 30, questionCount: 8, required: true, description: 'Behavioral assessment' },
+    { stageType: 'SALARY', interviewMode: 'ZOOM', order: 4, minimumScore: 60, duration: 20, questionCount: 5, required: false, description: 'Compensation discussion' },
   ]);
 
   const stageTypeOptions = ['TECHNICAL', 'HR', 'BEHAVIORAL', 'SALARY'];
@@ -54,6 +55,7 @@ export default function CreateJobPage(): JSX.Element {
   const handleAddStage = () => {
     const newStage: StageConfigDto = {
         stageType: 'BEHAVIORAL',
+        interviewMode: 'AI',
         order: stages.length + 1,
         minimumScore: 70,
         duration: 30,
@@ -317,7 +319,7 @@ export default function CreateJobPage(): JSX.Element {
                                   <div {...provided.dragHandleProps} className="cursor-move">
                                     <GripVertical className="size-5 text-gray-400" />
                                   </div>
-                                  <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-3">
+                                  <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-3">
                                     <div>
                                       <Label className="text-xs">Round {stage.order}</Label>
                                       <Select
@@ -333,6 +335,21 @@ export default function CreateJobPage(): JSX.Element {
                                               {type.charAt(0) + type.slice(1).toLowerCase()}
                                             </SelectItem>
                                           ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div>
+                                      <Label className="text-xs">Interview Mode</Label>
+                                      <Select
+                                        value={stage.interviewMode || 'AI'}
+                                        onValueChange={(v) => handleStageChange(index, 'interviewMode', v)}
+                                      >
+                                        <SelectTrigger className="h-9">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="AI">🤖 AI Interview</SelectItem>
+                                          <SelectItem value="ZOOM">🎥 Zoom Live</SelectItem>
                                         </SelectContent>
                                       </Select>
                                     </div>
@@ -357,13 +374,23 @@ export default function CreateJobPage(): JSX.Element {
                                       />
                                     </div>
                                     <div>
-                                      <Label className="text-xs">Questions</Label>
-                                      <Input
-                                        type="number"
-                                        value={stage.questionCount}
-                                        onChange={(e) => handleStageChange(index, 'questionCount', Number(e.target.value))}
-                                        className="h-9"
-                                      />
+                                      <Label className="text-xs">
+                                        {stage.interviewMode === 'ZOOM' ? 'Format' : 'Questions'}
+                                      </Label>
+                                      {stage.interviewMode === 'ZOOM' ? (
+                                        <div className="h-9 flex items-center">
+                                          <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                                            🎥 Live Call
+                                          </Badge>
+                                        </div>
+                                      ) : (
+                                        <Input
+                                          type="number"
+                                          value={stage.questionCount}
+                                          onChange={(e) => handleStageChange(index, 'questionCount', Number(e.target.value))}
+                                          className="h-9"
+                                        />
+                                      )}
                                     </div>
                                     <div>
                                       <Label className="text-xs">Required</Label>

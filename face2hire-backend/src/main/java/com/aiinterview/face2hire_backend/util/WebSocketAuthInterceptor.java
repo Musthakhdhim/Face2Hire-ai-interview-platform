@@ -29,16 +29,23 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
                     token = authHeader.substring(7);
                 }
             }
-            if (token != null && !jwtService.isTokenExpired(token)) {
-                String email = jwtService.extractUsername(token);
-                attributes.put("user", email);
-                return true;
+            if (token != null && !token.isBlank()) {
+                try {
+                    if (!jwtService.isTokenExpired(token)) {
+                        String email = jwtService.extractUsername(token);
+                        attributes.put("user", email);
+                        return true;
+                    }
+                } catch (Exception e) {
+                    return true;
+                }
             }
         }
-        return false;
+        return true;
     }
 
     @Override
     public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
-                               WebSocketHandler wsHandler, Exception exception) {}
+                               WebSocketHandler wsHandler, Exception exception) {
+    }
 }

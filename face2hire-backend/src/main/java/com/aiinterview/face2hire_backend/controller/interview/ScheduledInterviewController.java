@@ -1,5 +1,6 @@
 package com.aiinterview.face2hire_backend.controller.interview;
 
+import com.aiinterview.face2hire_backend.dto.StageDecisionRequest;
 import com.aiinterview.face2hire_backend.dto.interview.ScheduleInterviewRequest;
 import com.aiinterview.face2hire_backend.dto.interview.ScheduledInterviewDto;
 import com.aiinterview.face2hire_backend.security.CustomUserDetails;
@@ -8,7 +9,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
@@ -54,5 +60,17 @@ public class ScheduledInterviewController {
     @GetMapping("/stage/{stageId}")
     public ResponseEntity<ScheduledInterviewDto> getByStageId(@PathVariable Long stageId) {
         return ResponseEntity.ok(service.getByStageId(stageId));
+    }
+
+    @PostMapping("/{id}/end-call")
+    public ResponseEntity<ScheduledInterviewDto> endLiveCall(@PathVariable Long id) {
+        return ResponseEntity.ok(service.endLiveCall(id));
+    }
+
+    @PostMapping("/{id}/evaluate")
+    public ResponseEntity<ScheduledInterviewDto> evaluateLiveInterview(
+            @PathVariable Long id,
+            @RequestBody StageDecisionRequest decision) {
+        return ResponseEntity.ok(service.evaluateLiveInterview(id, decision));
     }
 }

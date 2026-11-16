@@ -1,7 +1,19 @@
 package com.aiinterview.face2hire_backend.entity.interview;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,6 +35,10 @@ public class ScheduledInterview {
 
     @Enumerated(EnumType.STRING)
     private InterviewType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "interview_mode")
+    private InterviewMode interviewMode;
 
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
@@ -47,6 +63,27 @@ public class ScheduledInterview {
     @Column(name = "due_date")
     private LocalDateTime dueDate;
 
+    @Column(name = "scheduled_at")
+    private LocalDateTime scheduledAt;
+
+    @Column(name = "meeting_id")
+    private String meetingId;
+
+    @Column(name = "meeting_join_url", columnDefinition = "TEXT")
+    private String meetingJoinUrl;
+
+    @Column(name = "meeting_start_url", columnDefinition = "TEXT")
+    private String meetingStartUrl;
+
+    @Column(name = "meeting_passcode")
+    private String meetingPasscode;
+
+    @Column(name = "call_ended")
+    private Boolean callEnded;
+
+    @Column(name = "live_completed")
+    private Boolean liveCompleted;
+
     @Column(name = "stage_id")
     private Long stageId;
 
@@ -63,6 +100,9 @@ public class ScheduledInterview {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (interviewMode == null) {
+            interviewMode = InterviewMode.AI;
+        }
     }
 
     @PreUpdate

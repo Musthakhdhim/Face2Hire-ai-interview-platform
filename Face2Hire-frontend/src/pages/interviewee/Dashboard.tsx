@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
@@ -7,8 +7,9 @@ import { Badge } from '../../components/ui/badge';
 import { Briefcase, Calendar, TrendingUp, Target, Clock, ArrowRight, Loader2 } from 'lucide-react';
 import type { RootState } from '../../store/store';
 import type { JSX } from 'react';
-import { applicationService, type ApplicationListResponse } from '../../services/applicationService';
+import { applicationService, sortApplicationsByPriority, type ApplicationListResponse } from '../../services/applicationService';
 import { interviewService, type InterviewSessionDto } from '../../services/interviewService';
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
 
 interface StatItem {
   title: string;
@@ -30,49 +31,58 @@ export default function IntervieweeDashboard(): JSX.Element {
   const [totalPracticeHours, setTotalPracticeHours] = useState(0);
   const [_avgDuration, setAvgDuration] = useState(0);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setLoading(true);
-      try {
-        const appsData = await applicationService.getMyApplications(0, 100);
-        setApplications(appsData.content);
-        setJobsAppliedCount(appsData.totalElements);
+  const fetchDashboardData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const appsData = await applicationService.getMyApplications(0, 100);
+      setApplications(appsData.content);
+      setJobsAppliedCount(appsData.totalElements);
 
-        const allSessions = await interviewService.getUserSessions();
-        const completed = allSessions.filter(
-          s => s.status === 'COMPLETED' && s.overallScore != null
-        );
-        setCompletedSessions(completed);
-        setTotalInterviews(completed.length);
+      const allSessions = await interviewService.getUserSessions();
+      const completed = allSessions.filter(
+        s => s.status === 'COMPLETED' && s.overallScore != null
+      );
+      setCompletedSessions(completed);
+      setTotalInterviews(completed.length);
 
-        if (completed.length > 0) {
-          const sum = completed.reduce((acc, s) => acc + (s.overallScore || 0), 0);
-          setAvgScore(Math.round(sum / completed.length));
-        } else {
-          setAvgScore(0);
-        }
-
-        const totalMinutes = completed.reduce((acc, s) => acc + (s.duration || 0), 0);
-        const hours = Math.round((totalMinutes / 60) * 10) / 10;
-        setTotalPracticeHours(hours);
-
-        if (completed.length > 0) {
-          setAvgDuration(Math.round(totalMinutes / completed.length));
-        } else {
-          setAvgDuration(0);
-        }
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
-      } finally {
-        setLoading(false);
+      if (completed.length > 0) {
+        const sum = completed.reduce((acc, s) => acc + (s.overallScore || 0), 0);
+        setAvgScore(Math.round(sum / completed.length));
+      } else {
+        setAvgScore(0);
       }
-    };
-    fetchDashboardData();
+
+      const totalMinutes = completed.reduce((acc, s) => acc + (s.duration || 0), 0);
+      const hours = Math.round((totalMinutes / 60) * 10) / 10;
+      setTotalPracticeHours(hours);
+
+      if (completed.length > 0) {
+        setAvgDuration(Math.round(totalMinutes / completed.length));
+      } else {
+        setAvgDuration(0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, []);
 
-  const last3Applications = [...applications]
-    .sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime())
-    .slice(0, 3);
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  useRealtimeSubscription(
+    [
+      user?.id ? `/topic/user/${user.id}/applications` : null,
+      user?.id ? `/topic/user/${user.id}/interviews` : null,
+    ],
+    () => {
+      fetchDashboardData(true);
+    }
+  );
+
+  const last3Applications = sortApplicationsByPriority(applications).slice(0, 3);
 
   const last3Interviews = [...completedSessions]
     .sort((a, b) => new Date(b.completedAt || b.createdAt).getTime() - new Date(a.completedAt || a.createdAt).getTime())

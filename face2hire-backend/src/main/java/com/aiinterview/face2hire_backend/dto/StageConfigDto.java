@@ -1,6 +1,7 @@
 package com.aiinterview.face2hire_backend.dto;
 
 import com.aiinterview.face2hire_backend.entity.StageType;
+import com.aiinterview.face2hire_backend.entity.interview.InterviewMode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,4 +19,5 @@ public class StageConfigDto {
     private Integer questionCount;
     private Boolean required;
     private String description;
+    private InterviewMode interviewMode;
 }

@@ -36,6 +36,7 @@ import ScheduleInterviewPage from './pages/interviewer/ScheduleInterviewPage';
 import ApplicationStatusPage from './pages/interviewer/ApplicationStatusPage';
 import ScheduledInterviewsPage from './pages/interviewer/ScheduledInterviewsPage';
 import ScheduledInterviewDetailPage from './pages/interviewer/ScheduledInterviewDetailPage';
+import LiveInterviewRoomPage from './pages/LiveInterviewRoomPage';
 import InterviewLayout from './layouts/InterviewLayout';
 import AdminInterviewsPage from './pages/admin/InterviewsPage';
 import AdminJobsPage from './pages/admin/JobsPage';
@@ -89,6 +90,10 @@ function App(): JSX.Element {
 
           <Route path="/interviewee/interview/active/:sessionId" element={<InterviewLayout />}>
             <Route index element={<ActiveInterviewPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={['interviewer', 'interviewee']} />}>
+            <Route path="/live-interview/:scheduledId" element={<LiveInterviewRoomPage />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['interviewer']} />}>

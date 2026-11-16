@@ -2,17 +2,22 @@ package com.aiinterview.face2hire_backend.serviceimpl;
 
 import com.aiinterview.face2hire_backend.dto.*;
 import com.aiinterview.face2hire_backend.entity.*;
+import com.aiinterview.face2hire_backend.entity.interview.InterviewMode;
+import com.aiinterview.face2hire_backend.entity.interview.ScheduledInterview;
+import com.aiinterview.face2hire_backend.entity.interview.SessionStatus;
 import com.aiinterview.face2hire_backend.exception.ResourceNotFoundException;
 import com.aiinterview.face2hire_backend.exception.ValidationException;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
 import com.aiinterview.face2hire_backend.repository.*;
+import com.aiinterview.face2hire_backend.repository.interview.InterviewSessionRepository;
 import com.aiinterview.face2hire_backend.repository.interview.ScheduledInterviewRepository;
 import com.aiinterview.face2hire_backend.service.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,10 +42,12 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ExperienceRepository experienceRepository;
     private final SkillRepository skillRepository;
     private final ScheduledInterviewRepository scheduledInterviewRepository;
+    private final InterviewSessionRepository interviewSessionRepository;
     private final ActivityLogService activityLogService;
     private final NotificationService notificationService;
     private final BadgeService badgeService;
     private final StageWorkflowService stageWorkflowService;
+    private final RealtimeEventService realtimeEventService;
     private final ObjectMapper objectMapper;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
@@ -119,7 +126,11 @@ public class ApplicationServiceImpl implements ApplicationService {
         jobRepository.save(job);
 
         log.info("Application created with id: {}", application.getId());
-        return mapToResponseDto(application);
+        ApplicationResponseDto responseDto = mapToResponseDto(application);
+        realtimeEventService.publishApplicationEvent(
+                "APPLICATION_CREATED", application.getId(), userId, job.getPostedByUserId(), responseDto);
+        realtimeEventService.publishJobEvent("JOB_APPLICANTS_UPDATED", job.getId(), null);
+        return responseDto;
     }
 
 
@@ -145,23 +156,79 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     @Transactional(readOnly = true)
     public Page<ApplicationListResponseDto> getMyApplications(Long userId, Pageable pageable) {
-        return applicationRepository.findByUserId(userId, pageable)
-                .map(this::mapToListDto);
+        List<ApplicationListResponseDto> all = applicationRepository.findAllByUserId(userId)
+                .stream()
+                .map(this::mapToListDto)
+                .collect(Collectors.toList());
+        return sortAndPaginateApplications(all, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ApplicationListResponseDto> getApplicationsForJob(Long jobId, Pageable pageable) {
         jobRepository.findById(jobId).orElseThrow(() -> new ResourceNotFoundException("Job not found"));
-        return applicationRepository.findByJobId(jobId, pageable)
-                .map(this::mapToListDto);
+        List<ApplicationListResponseDto> all = applicationRepository.findByJobId(jobId)
+                .stream()
+                .map(this::mapToListDto)
+                .collect(Collectors.toList());
+        return sortAndPaginateApplications(all, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ApplicationListResponseDto> getApplicationsForInterviewer(Long interviewerId, Pageable pageable) {
-        return applicationRepository.findByInterviewerId(interviewerId, pageable)
-                .map(this::mapToListDto);
+        List<ApplicationListResponseDto> all = applicationRepository.findAllByInterviewerId(interviewerId)
+                .stream()
+                .map(this::mapToListDto)
+                .collect(Collectors.toList());
+        return sortAndPaginateApplications(all, pageable);
+    }
+
+    private Page<ApplicationListResponseDto> sortAndPaginateApplications(
+            List<ApplicationListResponseDto> list, Pageable pageable) {
+        List<ApplicationListResponseDto> sorted = new ArrayList<>(list);
+        sorted.sort((a, b) -> {
+            int groupA = getAppPriorityGroup(a);
+            int groupB = getAppPriorityGroup(b);
+            if (groupA != groupB) {
+                return Integer.compare(groupA, groupB);
+            }
+            LocalDateTime dateA = getAppEffectiveDate(a);
+            LocalDateTime dateB = getAppEffectiveDate(b);
+            if (dateA != null && dateB != null) {
+                int cmp = dateB.compareTo(dateA);
+                if (cmp != 0) {
+                    return cmp;
+                }
+            } else if (dateA != null) {
+                return -1;
+            } else if (dateB != null) {
+                return 1;
+            }
+            return Long.compare(b.getId() != null ? b.getId() : 0L, a.getId() != null ? a.getId() : 0L);
+        });
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), sorted.size());
+        List<ApplicationListResponseDto> pageContent =
+                start >= sorted.size() ? List.of() : sorted.subList(start, end);
+        return new PageImpl<>(pageContent, pageable, sorted.size());
+    }
+
+    private int getAppPriorityGroup(ApplicationListResponseDto dto) {
+        if (dto.getStatus() == ApplicationStatus.PENDING) {
+            return Boolean.TRUE.equals(dto.getUpcomingInterview()) ? 0 : 1;
+        }
+        return 2;
+    }
+
+    private LocalDateTime getAppEffectiveDate(ApplicationListResponseDto dto) {
+        if (dto.getInterviewMode() == InterviewMode.ZOOM && dto.getScheduledAt() != null) {
+            return dto.getScheduledAt();
+        }
+        if (dto.getDueDate() != null) {
+            return dto.getDueDate();
+        }
+        return dto.getAppliedAt();
     }
 
     @Override
@@ -219,7 +286,15 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
         }
 
-        return mapToResponseDto(application);
+        ApplicationResponseDto responseDto = mapToResponseDto(application);
+        realtimeEventService.publishApplicationEvent(
+                "APPLICATION_STATUS_UPDATED",
+                application.getId(),
+                application.getUserId(),
+                interviewerId,
+                responseDto
+        );
+        return responseDto;
     }
 
     @Override
@@ -409,7 +484,40 @@ public class ApplicationServiceImpl implements ApplicationService {
     private ApplicationListResponseDto mapToListDto(Application application) {
         Job job = jobRepository.findById(application.getJobId()).orElse(null);
         User user = userRepository.findById(application.getUserId()).orElse(null);
-        boolean hasScheduled = scheduledInterviewRepository.existsByApplicationId(application.getId());
+        List<ScheduledInterview> scheduledList =
+                scheduledInterviewRepository.findByApplicationIdOrderByCreatedAtDesc(application.getId());
+        boolean hasScheduled = !scheduledList.isEmpty();
+
+        InterviewMode interviewMode = null;
+        LocalDateTime scheduledAt = null;
+        LocalDateTime dueDate = null;
+        boolean upcomingInterview = false;
+
+        if (!scheduledList.isEmpty()) {
+            ScheduledInterview chosen = scheduledList.get(0);
+            for (ScheduledInterview item : scheduledList) {
+                boolean itemCompleted = item.getInterviewMode() == InterviewMode.ZOOM
+                        ? Boolean.TRUE.equals(item.getLiveCompleted())
+                        : interviewSessionRepository.existsByScheduledInterviewIdAndStatus(
+                                item.getId(), SessionStatus.COMPLETED);
+                if (!itemCompleted) {
+                    chosen = item;
+                    break;
+                }
+            }
+            interviewMode = chosen.getInterviewMode() != null ? chosen.getInterviewMode() : InterviewMode.AI;
+            scheduledAt = chosen.getScheduledAt();
+            dueDate = chosen.getDueDate();
+            boolean chosenCompleted = interviewMode == InterviewMode.ZOOM
+                    ? Boolean.TRUE.equals(chosen.getLiveCompleted())
+                    : interviewSessionRepository.existsByScheduledInterviewIdAndStatus(
+                            chosen.getId(), SessionStatus.COMPLETED);
+            LocalDateTime targetDate = interviewMode == InterviewMode.ZOOM && scheduledAt != null
+                    ? scheduledAt
+                    : dueDate;
+            upcomingInterview = !chosenCompleted
+                    && (targetDate == null || !targetDate.isBefore(LocalDateTime.now()));
+        }
 
         String currentStageName = null;
         if (application.getIsMultiRound() != null && application.getIsMultiRound()) {
@@ -433,6 +541,10 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .status(application.getStatus())
                 .appliedAt(application.getAppliedAt())
                 .hasScheduledInterview(hasScheduled)
+                .upcomingInterview(upcomingInterview)
+                .interviewMode(interviewMode)
+                .scheduledAt(scheduledAt)
+                .dueDate(dueDate)
                 .isMultiRound(application.getIsMultiRound())
                 .currentStageName(currentStageName)
                 .build();

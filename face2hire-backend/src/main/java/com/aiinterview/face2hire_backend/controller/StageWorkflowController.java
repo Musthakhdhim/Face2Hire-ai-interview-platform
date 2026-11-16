@@ -86,8 +86,7 @@ public class StageWorkflowController {
             @RequestParam Long applicationId,
             @RequestParam Double score,
             @RequestBody(required = false) StageDecisionRequest request) {
-        String feedback = request != null ? request.getFeedback() : null;
-        ApplicationStageDto stage = stageWorkflowService.approveStage(applicationId, stageId, score, feedback);
+        ApplicationStageDto stage = stageWorkflowService.approveStage(applicationId, stageId, score, request);
         return ResponseEntity.ok(ApiResponse.<ApplicationStageDto>builder()
                 .success(true)
                 .message("Stage approved")
@@ -102,8 +101,7 @@ public class StageWorkflowController {
             @PathVariable Long stageId,
             @RequestParam Long applicationId,
             @RequestBody(required = false) StageDecisionRequest request) {
-        String feedback = request != null ? request.getFeedback() : "Failed to meet requirements";
-        ApplicationStageDto stage = stageWorkflowService.rejectStage(applicationId, stageId, feedback);
+        ApplicationStageDto stage = stageWorkflowService.rejectStage(applicationId, stageId, request);
         return ResponseEntity.ok(ApiResponse.<ApplicationStageDto>builder()
                 .success(true)
                 .message("Stage rejected")

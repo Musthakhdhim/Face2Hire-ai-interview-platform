@@ -1,5 +1,6 @@
 package com.aiinterview.face2hire_backend.service.interview;
 
+import com.aiinterview.face2hire_backend.dto.StageDecisionRequest;
 import com.aiinterview.face2hire_backend.dto.interview.ScheduleInterviewRequest;
 import com.aiinterview.face2hire_backend.dto.interview.ScheduledInterviewDto;
 import java.util.List;
@@ -11,5 +12,6 @@ public interface ScheduledInterviewService {
     ScheduledInterviewDto getByApplicationId(Long applicationId);
     ScheduledInterviewDto getById(Long id);
     ScheduledInterviewDto getByStageId(Long stageId);
-
+    ScheduledInterviewDto endLiveCall(Long id);
+    ScheduledInterviewDto evaluateLiveInterview(Long id, StageDecisionRequest decision);
 }

@@ -12,6 +12,7 @@ import com.aiinterview.face2hire_backend.repository.interview.*;
 import com.aiinterview.face2hire_backend.service.ActivityLogService;
 import com.aiinterview.face2hire_backend.service.BadgeService;
 import com.aiinterview.face2hire_backend.service.NotificationService;
+import com.aiinterview.face2hire_backend.service.RealtimeEventService;
 import com.aiinterview.face2hire_backend.service.interview.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -48,6 +49,7 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
     private final UserRepository userRepository;
     private final ActivityLogService activityLogService;
     private final NotificationService notificationService;
+    private final RealtimeEventService realtimeEventService;
     private final AppLoggerFactory loggerFactory;
     private final BadgeService badgeService;
     private AppLogger log;
@@ -359,6 +361,7 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
         if (session != null && session.getScheduledInterviewId() != null && overall != null) {
             try {
                 final Double finalOverallScore = overall.getOverallScore();
+                final OverallFeedbackDto finalOverall = overall;
                 scheduledInterviewRepository.findById(session.getScheduledInterviewId()).ifPresent(scheduled -> {
                     String interviewerEmail = scheduled.getScheduledByInterviewer();
                     if (interviewerEmail != null) {
@@ -370,11 +373,20 @@ public class InterviewOrchestratorImpl implements InterviewOrchestrator {
                             notificationService.createNotification(
                                     interviewer.getId(),
                                     "Interview Completed",
-                                    String.format("Candidate %s completed the scheduled interview. Score: %.1f%%", candidateName, finalOverallScore),
+                                    String.format(
+                                            "Candidate %s completed the scheduled interview. Score: %.1f%%",
+                                            candidateName, finalOverallScore),
                                     "INTERVIEW_COMPLETED"
                             );
                         }
                     }
+                    realtimeEventService.publishInterviewEvent(
+                            "AI_INTERVIEW_COMPLETED",
+                            scheduled.getId(),
+                            userId,
+                            scheduled.getApplicationId(),
+                            finalOverall
+                    );
                 });
             } catch (Exception e) {
                 log.warn("Failed to send notification for interview completion: {}", e.getMessage());

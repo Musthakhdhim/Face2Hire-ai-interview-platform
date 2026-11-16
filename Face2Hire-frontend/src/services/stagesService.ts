@@ -2,9 +2,11 @@ import axiosClient from './axiosClient';
 
 export type StageType = 'TECHNICAL' | 'HR' | 'BEHAVIORAL' | 'SALARY';
 export type StageStatus = 'PENDING' | 'IN_PROGRESS' | 'APPROVED' | 'REJECTED' | 'SKIPPED';
+export type InterviewMode = 'AI' | 'ZOOM';
 
 export interface StageConfigDto {
     stageType: string;
+    interviewMode?: InterviewMode;
     order: number;
     minimumScore: number;
     duration: number;
@@ -23,6 +25,7 @@ export interface ApplicationStage {
     applicationId: number;
     stageOrder: number;
     stageType: StageType;
+    interviewMode?: InterviewMode;
     status: StageStatus;
     minimumScore: number | null;
     actualScore: number | null;
@@ -32,6 +35,18 @@ export interface ApplicationStage {
     feedback: string | null;
     isCompleted: boolean;
     isLocked: boolean;
+}
+
+export interface StageDecisionPayload {
+    stageId?: number;
+    approved?: boolean;
+    score?: number;
+    communicationScore?: number;
+    technicalScore?: number;
+    confidenceScore?: number;
+    strengths?: string;
+    improvements?: string;
+    feedback?: string;
 }
 
 export const stagesService = {
@@ -63,19 +78,34 @@ export const stagesService = {
     },
 
     
-    approveStage: async (stageId: number, applicationId: number, score: number, feedback?: string): Promise<ApplicationStage> => {
+    approveStage: async (
+        stageId: number,
+        applicationId: number,
+        score: number,
+        feedbackOrPayload?: string | StageDecisionPayload
+    ): Promise<ApplicationStage> => {
+        const body: StageDecisionPayload = typeof feedbackOrPayload === 'string'
+            ? { feedback: feedbackOrPayload, score, approved: true }
+            : { ...(feedbackOrPayload || {}), score, approved: true };
         const response = await axiosClient.post(
             `/applications/stages/${stageId}/approve`,
-            { feedback },
+            body,
             { params: { applicationId, score } }
         );
         return response.data.data;
     },
 
-    rejectStage: async (stageId: number, applicationId: number, feedback?: string): Promise<ApplicationStage> => {
+    rejectStage: async (
+        stageId: number,
+        applicationId: number,
+        feedbackOrPayload?: string | StageDecisionPayload
+    ): Promise<ApplicationStage> => {
+        const body: StageDecisionPayload = typeof feedbackOrPayload === 'string'
+            ? { feedback: feedbackOrPayload, approved: false }
+            : { ...(feedbackOrPayload || {}), approved: false };
         const response = await axiosClient.post(
             `/applications/stages/${stageId}/reject`,
-            { feedback },
+            body,
             { params: { applicationId } }
         );
         return response.data.data;

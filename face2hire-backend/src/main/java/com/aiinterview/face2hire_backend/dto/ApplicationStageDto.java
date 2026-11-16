@@ -2,6 +2,7 @@ package com.aiinterview.face2hire_backend.dto;
 
 import com.aiinterview.face2hire_backend.entity.StageStatus;
 import com.aiinterview.face2hire_backend.entity.StageType;
+import com.aiinterview.face2hire_backend.entity.interview.InterviewMode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class ApplicationStageDto {
     private Long applicationId;
     private Integer stageOrder;
     private StageType stageType;
+    private InterviewMode interviewMode;
     private StageStatus status;
     private Double minimumScore;
     private Double actualScore;

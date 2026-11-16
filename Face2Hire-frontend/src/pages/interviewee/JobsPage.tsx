@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import { jobService, type JobListResponse } from '../../services/jobService';
 import { resumeService } from '../../services/resumeService';
 import { applicationService, type ApplicationListResponse } from '../../services/applicationService';
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
 
 type JobTypeFilter = 'all' | 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP';
 
@@ -121,6 +122,10 @@ export default function JobsPage(): JSX.Element {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchJobs();
   }, [fetchJobs, currentPage, searchQuery]);
+
+  useRealtimeSubscription(['/topic/jobs'], () => {
+    fetchJobs();
+  });
 
   const filteredJobs = filterType === 'all'
     ? jobs

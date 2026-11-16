@@ -1,13 +1,20 @@
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useState, useCallback, useMemo, type JSX } from 'react';
 import { useNavigate } from 'react-router-dom'; 
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../store/store';
 import { motion } from 'motion/react';
-import { CheckCircle2, XCircle, Clock, Filter, Loader2, User, Mail, Download, Eye } from 'lucide-react'; 
+import { CheckCircle2, XCircle, Clock, Filter, Loader2, User, Mail, Download, Eye, Calendar } from 'lucide-react'; 
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { applicationService, type ApplicationListResponse } from '../../services/applicationService';
+import {
+  applicationService,
+  sortApplicationsByPriority,
+  type ApplicationListResponse,
+} from '../../services/applicationService';
 import { jobService, type JobListResponse } from '../../services/jobService';
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
 import { toast } from 'react-toastify';
 import { resumeService } from '../../services/resumeService';   
 
@@ -29,9 +36,11 @@ const getErrorMessage = (error: unknown): string => {
 
 export default function InterviewerApplicationsPage(): JSX.Element {
   const navigate = useNavigate();   
+  const user = useSelector((state: RootState) => state.auth.user);
   const [applications, setApplications] = useState<ApplicationListResponse[]>([]);
   const [jobs, setJobs] = useState<JobListResponse[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'completed'>('all');
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -58,26 +67,47 @@ export default function InterviewerApplicationsPage(): JSX.Element {
     fetchJobs();
   }, []);
 
-  useEffect(() => {
-    const fetchApplications = async () => {
-      setLoading(true);
-      try {
-        let data;
-        if (selectedJobId && selectedJobId !== 'all') {
-          data = await applicationService.getApplicationsForJob(Number(selectedJobId), page, pageSize);
-        } else {
-          data = await applicationService.getApplicationsForInterviewer(page, pageSize);
-        }
-        setApplications(data.content);
-        setTotalPages(data.totalPages);
-      } catch (error: unknown) {
-        toast.error(getErrorMessage(error) || 'Failed to load applications');
-      } finally {
-        setLoading(false);
+  const fetchApplications = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      let data;
+      if (selectedJobId && selectedJobId !== 'all') {
+        data = await applicationService.getApplicationsForJob(Number(selectedJobId), page, pageSize);
+      } else {
+        data = await applicationService.getApplicationsForInterviewer(page, pageSize);
       }
-    };
-    fetchApplications();
+      setApplications(sortApplicationsByPriority(data.content));
+      setTotalPages(data.totalPages);
+    } catch (error: unknown) {
+      if (!silent) {
+        toast.error(getErrorMessage(error) || 'Failed to load applications');
+      }
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, [selectedJobId, page]);
+
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]);
+
+  useRealtimeSubscription(
+    [
+      '/topic/interviewer/applications',
+      user?.id ? `/topic/user/${user.id}/applications` : null,
+    ],
+    () => {
+      fetchApplications(true);
+    }
+  );
+
+  const displayedApplications = useMemo(() => {
+    return sortApplicationsByPriority(applications).filter((app) => {
+      if (statusFilter === 'upcoming') return app.status === 'PENDING';
+      if (statusFilter === 'completed') return app.status === 'APPROVED' || app.status === 'REJECTED';
+      return true;
+    });
+  }, [applications, statusFilter]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -94,38 +124,53 @@ export default function InterviewerApplicationsPage(): JSX.Element {
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Applications Received</h1>
-        <p className="text-gray-600 mt-1">Review and manage candidate applications</p>
+        <p className="text-gray-600 mt-1">Upcoming & active applications are prioritized first, ordered by scheduled/due date</p>
       </div>
 
       <Card className="border-0 shadow-lg">
         <CardContent className="p-6">
-          <div className="flex items-center gap-3">
-            <Filter className="size-5 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Filter by job:</span>
-            <Select value={selectedJobId} onValueChange={setSelectedJobId}>
-              <SelectTrigger className="w-[250px]">
-                <SelectValue placeholder="All jobs" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All jobs</SelectItem>
-                {jobs.map(job => (
-                  <SelectItem key={job.id} value={String(job.id)}>{job.title}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Filter className="size-5 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">Filter by job:</span>
+              <Select value={selectedJobId} onValueChange={setSelectedJobId}>
+                <SelectTrigger className="w-[230px]">
+                  <SelectValue placeholder="All jobs" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All jobs</SelectItem>
+                  {jobs.map(job => (
+                    <SelectItem key={job.id} value={String(job.id)}>{job.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Status:</span>
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as 'all' | 'upcoming' | 'completed')}>
+                <SelectTrigger className="w-[210px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All (Upcoming First)</SelectItem>
+                  <SelectItem value="upcoming">Pending / Upcoming</SelectItem>
+                  <SelectItem value="completed">Completed Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="size-8 animate-spin text-indigo-600" /></div>
-      ) : applications.length === 0 ? (
+      ) : displayedApplications.length === 0 ? (
         <Card className="border-0 shadow-lg">
           <CardContent className="p-12 text-center text-gray-500">No applications found</CardContent>
         </Card>
       ) : (
         <div className="grid gap-6">
-          {applications.map((app, idx) => (
+          {displayedApplications.map((app, idx) => (
             <motion.div key={app.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
               <Card className="border-0 shadow-lg">
                 <CardContent className="p-6">
@@ -133,7 +178,17 @@ export default function InterviewerApplicationsPage(): JSX.Element {
                     <div className="flex-1">
                       <div className="flex items-start justify-between flex-wrap gap-2 mb-3">
                         <div>
-                          <h3 className="text-xl font-semibold text-gray-900">{app.jobTitle}</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-xl font-semibold text-gray-900">{app.jobTitle}</h3>
+                            {app.upcomingInterview && (
+                              <Badge className="bg-blue-100 text-blue-700">Upcoming Interview</Badge>
+                            )}
+                            {app.interviewMode && (
+                              <Badge variant="outline" className={app.interviewMode === 'ZOOM' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}>
+                                {app.interviewMode === 'ZOOM' ? '🎥 Zoom Live' : '🤖 AI Interview'}
+                              </Badge>
+                            )}
+                          </div>
                           <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
                             <span className="flex items-center gap-1"><User className="size-4" />{app.userName}</span>
                             <span className="flex items-center gap-1"><Mail className="size-4" />{app.userEmail}</span>
@@ -149,7 +204,21 @@ export default function InterviewerApplicationsPage(): JSX.Element {
                         </div>
                         {getStatusBadge(app.status)}
                       </div>
-                      <div className="text-sm text-gray-500">Applied: {new Date(app.appliedAt).toLocaleString()}</div>
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                        <span>Applied: {new Date(app.appliedAt).toLocaleString()}</span>
+                        {app.interviewMode === 'ZOOM' && app.scheduledAt && (
+                          <span className="flex items-center gap-1 text-blue-700 font-medium">
+                            <Calendar className="size-3.5" />
+                            Scheduled: {new Date(app.scheduledAt).toLocaleString()}
+                          </span>
+                        )}
+                        {app.interviewMode !== 'ZOOM' && app.dueDate && (
+                          <span className="flex items-center gap-1 text-indigo-700 font-medium">
+                            <Calendar className="size-3.5" />
+                            Due: {new Date(app.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
                       <div className="mt-2 text-sm">Score: {app.score || 'Not yet'}</div>
                       {app.isMultiRound && app.currentStageName && (
                         <div className="mt-2">

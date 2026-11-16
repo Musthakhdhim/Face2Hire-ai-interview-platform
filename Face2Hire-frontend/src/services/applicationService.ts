@@ -37,8 +37,34 @@ export interface ApplicationListResponse {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   appliedAt: string;
   hasScheduledInterview: boolean;
+  upcomingInterview?: boolean;
+  interviewMode?: 'AI' | 'ZOOM';
+  scheduledAt?: string;
+  dueDate?: string;
   isMultiRound?: boolean;
   currentStageName?: string;
+}
+
+export function sortApplicationsByPriority(apps: ApplicationListResponse[]): ApplicationListResponse[] {
+  const getGroup = (a: ApplicationListResponse) => {
+    if (a.status === 'PENDING') {
+      return a.upcomingInterview ? 0 : 1;
+    }
+    return 2;
+  };
+  const getEffectiveTime = (a: ApplicationListResponse) => {
+    const raw = (a.interviewMode === 'ZOOM' && a.scheduledAt) ? a.scheduledAt : (a.dueDate || a.appliedAt);
+    return raw ? new Date(raw).getTime() : 0;
+  };
+  return [...apps].sort((a, b) => {
+    const gA = getGroup(a);
+    const gB = getGroup(b);
+    if (gA !== gB) return gA - gB;
+    const tA = getEffectiveTime(a);
+    const tB = getEffectiveTime(b);
+    if (tA !== tB) return tB - tA;
+    return b.id - a.id;
+  });
 }
 
 export interface PaginatedApplications<T> {

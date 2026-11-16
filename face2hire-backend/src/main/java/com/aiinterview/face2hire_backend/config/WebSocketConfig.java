@@ -24,7 +24,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/api/v1/ws/interview")
+        registry.addEndpoint("/api/v1/ws/interview", "/api/v1/ws")
                 .setAllowedOriginPatterns("*")
                 .addInterceptors(webSocketAuthInterceptor)
                 .withSockJS();

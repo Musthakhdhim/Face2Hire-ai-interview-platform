@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { Card, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -11,11 +11,14 @@ import {
   PlayCircle, 
   Circle,
   Check,
-  X
+  X,
+  Video
 } from "lucide-react";
 import { applicationService, type ApplicationResponse } from "../../services/applicationService";
-import { stagesService, type ApplicationStage, type StageStatus } from "../../services/stagesService";
+import { stagesService, type ApplicationStage, type StageStatus, type StageDecisionPayload } from "../../services/stagesService";
 import { interviewService, type OverallFeedbackDto } from "../../services/interviewService";
+import { scheduledInterviewService, type ScheduledInterviewDto } from "../../services/scheduledInterviewService";
+import { useRealtimeSubscription } from "../../hooks/useRealtimeSubscription";
 import { toast } from "react-toastify";
 import {
     Dialog,
@@ -32,12 +35,11 @@ import { Label } from "../../components/ui/label";
 interface StageDecisionDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onConfirm: (score?: number, feedback?: string) => void;
+    onConfirm: (action: 'approve' | 'reject' | 'skip', payload: StageDecisionPayload) => void;
     title: string;
     description: string;
-    showScore?: boolean;
-    isApprove?: boolean;
-    isSkip?: boolean;
+    initialAction: 'approve' | 'reject' | 'skip';
+    minimumScore?: number | null;
     loading?: boolean;
 }
 
@@ -47,51 +49,167 @@ function StageDecisionDialog({
     onConfirm, 
     title, 
     description, 
-    showScore = false,
-    isApprove = true,
-    isSkip = false,
+    initialAction,
+    minimumScore = 70,
     loading = false 
 }: StageDecisionDialogProps) {
-    const [score, setScore] = useState<number>(70);
+    const [decisionAction, setDecisionAction] = useState<'approve' | 'reject' | 'skip'>(initialAction);
+    const [score, setScore] = useState<number>(minimumScore || 75);
+    const [communicationScore, setCommunicationScore] = useState<number>(75);
+    const [technicalScore, setTechnicalScore] = useState<number>(75);
+    const [confidenceScore, setConfidenceScore] = useState<number>(75);
+    const [strengths, setStrengths] = useState('');
+    const [improvements, setImprovements] = useState('');
     const [feedback, setFeedback] = useState('');
 
+    useEffect(() => {
+        setDecisionAction(initialAction);
+        if (initialAction === 'reject') {
+            setScore(45);
+        } else {
+            setScore(minimumScore || 75);
+        }
+    }, [initialAction, minimumScore, open]);
+
+    const isSkip = decisionAction === 'skip';
+    const isApprove = decisionAction === 'approve';
+
     const handleConfirm = () => {
-        if (showScore && isApprove && !score) {
-            toast.error('Please enter a score');
+        if (!isSkip && (score === undefined || score === null || Number.isNaN(score))) {
+            toast.error('Please enter an overall score');
             return;
         }
-        onConfirm(showScore ? score : undefined, feedback || undefined);
+        onConfirm(decisionAction, {
+            approved: isApprove,
+            score: isSkip ? undefined : score,
+            communicationScore: isSkip ? undefined : communicationScore,
+            technicalScore: isSkip ? undefined : technicalScore,
+            confidenceScore: isSkip ? undefined : confidenceScore,
+            strengths: strengths.trim() || undefined,
+            improvements: improvements.trim() || undefined,
+            feedback: feedback.trim() || undefined,
+        });
     };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
+            <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
-                    {showScore && isApprove && (
-                        <div>
-                            <Label htmlFor="score">Score (%)</Label>
-                            <Input
-                                id="score"
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={score}
-                                onChange={(e) => setScore(Number(e.target.value))}
-                                placeholder="Enter score"
-                            />
-                        </div>
+                <div className="space-y-4 py-3">
+                    {!isSkip && (
+                        <>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setDecisionAction('approve')}
+                                    className={`p-3 rounded-xl border text-left transition-all ${
+                                        isApprove
+                                            ? 'border-2 border-green-600 bg-green-50 text-green-900 font-semibold'
+                                            : 'border-gray-200 hover:bg-gray-50 text-gray-700'
+                                    }`}
+                                >
+                                    ✅ Approve Stage
+                                    <div className="text-xs font-normal text-gray-500 mt-0.5">
+                                        Pass candidate to next round
+                                    </div>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setDecisionAction('reject')}
+                                    className={`p-3 rounded-xl border text-left transition-all ${
+                                        !isApprove
+                                            ? 'border-2 border-red-600 bg-red-50 text-red-900 font-semibold'
+                                            : 'border-gray-200 hover:bg-gray-50 text-gray-700'
+                                    }`}
+                                >
+                                    ❌ Reject Stage
+                                    <div className="text-xs font-normal text-gray-500 mt-0.5">
+                                        Decline candidate in this round
+                                    </div>
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div>
+                                    <Label htmlFor="score" className="text-xs font-semibold">Overall Score (%) *</Label>
+                                    <Input
+                                        id="score"
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={score}
+                                        onChange={(e) => setScore(Number(e.target.value))}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="commScore" className="text-xs">Communication (%)</Label>
+                                    <Input
+                                        id="commScore"
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={communicationScore}
+                                        onChange={(e) => setCommunicationScore(Number(e.target.value))}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="techScore" className="text-xs">Technical (%)</Label>
+                                    <Input
+                                        id="techScore"
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={technicalScore}
+                                        onChange={(e) => setTechnicalScore(Number(e.target.value))}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="confScore" className="text-xs">Confidence (%)</Label>
+                                    <Input
+                                        id="confScore"
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={confidenceScore}
+                                        onChange={(e) => setConfidenceScore(Number(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-3">
+                                <div>
+                                    <Label htmlFor="strengths">Candidate Strengths</Label>
+                                    <Textarea
+                                        id="strengths"
+                                        value={strengths}
+                                        onChange={(e) => setStrengths(e.target.value)}
+                                        placeholder="e.g. Clear problem solving, strong system design..."
+                                        rows={3}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="improvements">Weaknesses / Areas to Improve</Label>
+                                    <Textarea
+                                        id="improvements"
+                                        value={improvements}
+                                        onChange={(e) => setImprovements(e.target.value)}
+                                        placeholder="e.g. Needs deeper SQL optimization practice..."
+                                        rows={3}
+                                    />
+                                </div>
+                            </div>
+                        </>
                     )}
                     <div>
-                        <Label htmlFor="feedback">Feedback</Label>
+                        <Label htmlFor="feedback">{isSkip ? 'Reason for Skipping' : 'Detailed Feedback & Notes'}</Label>
                         <Textarea
                             id="feedback"
                             value={feedback}
                             onChange={(e) => setFeedback(e.target.value)}
-                            placeholder="Enter feedback (optional)"
+                            placeholder={isSkip ? 'Enter reason for skipping...' : 'Enter overall evaluation summary for the candidate...'}
                             rows={3}
                         />
                     </div>
@@ -103,7 +221,7 @@ function StageDecisionDialog({
                         disabled={loading}
                         className={isApprove ? "bg-green-600 hover:bg-green-700" : isSkip ? "bg-gray-600 hover:bg-gray-700" : "bg-red-600 hover:bg-red-700"}
                     >
-                        {loading ? 'Processing...' : 'Confirm'}
+                        {loading ? 'Saving...' : isSkip ? 'Confirm Skip' : isApprove ? 'Save Score & Approve' : 'Save Score & Reject'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -114,6 +232,7 @@ function StageDecisionDialog({
 export default function ApplicationStatusPage() {
     const { applicationId } = useParams();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [application, setApplication] = useState<ApplicationResponse | null>(null);
     const [stages, setStages] = useState<ApplicationStage[]>([]);
     const [currentStage, setCurrentStage] = useState<ApplicationStage | null>(null);
@@ -123,44 +242,78 @@ export default function ApplicationStatusPage() {
     const [dialogLoading, setDialogLoading] = useState(false);
     const [expandedStageId, setExpandedStageId] = useState<number | null>(null);
     const [stageFeedback, setStageFeedback] = useState<Record<number, OverallFeedbackDto | null>>({});
+    const [stageScheduled, setStageScheduled] = useState<Record<number, ScheduledInterviewDto>>({});
     const [loadingFeedback, setLoadingFeedback] = useState<Record<number, boolean>>({});
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const app = await applicationService.getApplicationById(Number(applicationId));
-                setApplication(app);
+    const fetchData = useCallback(async (silent = false) => {
+        try {
+            const app = await applicationService.getApplicationById(Number(applicationId));
+            setApplication(app);
 
-                const stagesData = await stagesService.getApplicationStages(Number(applicationId));
-                setStages(stagesData);
+            const stagesData = await stagesService.getApplicationStages(Number(applicationId));
+            setStages(stagesData);
 
-                const current = await stagesService.getCurrentStage(Number(applicationId));
-                setCurrentStage(current);
+            const current = await stagesService.getCurrentStage(Number(applicationId));
+            setCurrentStage(current);
 
-                for (const stage of stagesData) {
-                    if (stage.scheduledInterviewId && (stage.status === 'APPROVED' || stage.status === 'REJECTED')) {
-                        try {
-                            setLoadingFeedback(prev => ({ ...prev, [stage.id]: true }));
-                            const feedback = await interviewService.getOverallFeedbackByScheduledId(stage.scheduledInterviewId);
-                            if (feedback) {
-                                setStageFeedback(prev => ({ ...prev, [stage.id]: feedback }));
-                            }
-                        } catch (error) {
-                            console.error(`Failed to fetch feedback for stage ${stage.id}:`, error);
-                        } finally {
-                            setLoadingFeedback(prev => ({ ...prev, [stage.id]: false }));
-                        }
+            const evaluateStageParam = searchParams.get("evaluateStage");
+            if (evaluateStageParam) {
+                const targetStage = stagesData.find(s => s.id === Number(evaluateStageParam)) || current;
+                if (targetStage && targetStage.status === 'IN_PROGRESS') {
+                    setCurrentStage(targetStage);
+                    setDialogType('approve');
+                    setDialogOpen(true);
+                }
+                searchParams.delete("evaluateStage");
+                setSearchParams(searchParams, { replace: true });
+            }
+
+            for (const stage of stagesData) {
+                if (stage.scheduledInterviewId) {
+                    try {
+                        const sched = await scheduledInterviewService.getById(stage.scheduledInterviewId);
+                        setStageScheduled(prev => ({ ...prev, [stage.id]: sched }));
+                    } catch (err) {
+                        console.error(`Failed to fetch scheduled interview for stage ${stage.id}:`, err);
                     }
                 }
-            } catch (error) {
+                if (stage.scheduledInterviewId && (stage.status === 'APPROVED' || stage.status === 'REJECTED')) {
+                    try {
+                        setLoadingFeedback(prev => ({ ...prev, [stage.id]: true }));
+                        const feedback = await interviewService.getOverallFeedbackByScheduledId(stage.scheduledInterviewId);
+                        if (feedback) {
+                            setStageFeedback(prev => ({ ...prev, [stage.id]: feedback }));
+                        }
+                    } catch (error) {
+                        console.error(`Failed to fetch feedback for stage ${stage.id}:`, error);
+                    } finally {
+                        setLoadingFeedback(prev => ({ ...prev, [stage.id]: false }));
+                    }
+                }
+            }
+        } catch (error) {
+            if (!silent) {
                 console.error(error);
                 toast.error("Failed to load data");
-            } finally {
-                setLoading(false);
             }
-        };
+        } finally {
+            if (!silent) setLoading(false);
+        }
+    }, [applicationId, searchParams, setSearchParams]);
+
+    useEffect(() => {
         fetchData();
-    }, [applicationId]);
+    }, [fetchData]);
+
+    useRealtimeSubscription(
+        [
+            applicationId ? `/topic/application/${applicationId}/stages` : null,
+            "/topic/interviewer/interviews",
+        ],
+        () => {
+            fetchData(true);
+        }
+    );
 
     const getStageIcon = (status: StageStatus) => {
         switch (status) {
@@ -202,17 +355,17 @@ export default function ApplicationStatusPage() {
         }
     };
 
-    const handleStageAction = async (stageId: number, action: 'approve' | 'reject' | 'skip', score?: number, feedback?: string) => {
+    const handleStageAction = async (stageId: number, action: 'approve' | 'reject' | 'skip', payload: StageDecisionPayload) => {
         setDialogLoading(true);
         try {
             if (action === 'approve') {
-                 await stagesService.approveStage(stageId, Number(applicationId), score || 70, feedback);
-                toast.success('Stage approved successfully!');
+                await stagesService.approveStage(stageId, Number(applicationId), payload.score || 70, payload);
+                toast.success('Candidate evaluated and stage approved!');
             } else if (action === 'reject') {
-                 await stagesService.rejectStage(stageId, Number(applicationId), feedback);
-                toast.success('Stage rejected');
+                await stagesService.rejectStage(stageId, Number(applicationId), payload);
+                toast.success('Candidate evaluated and stage rejected');
             } else {
-                await stagesService.skipStage(stageId, Number(applicationId), feedback);
+                await stagesService.skipStage(stageId, Number(applicationId), payload.feedback);
                 toast.success('Stage skipped');
             }
             
@@ -223,6 +376,20 @@ export default function ApplicationStatusPage() {
             const app = await applicationService.getApplicationById(Number(applicationId));
             setApplication(app);
 
+            for (const st of stagesData) {
+                if (st.scheduledInterviewId && (st.status === 'APPROVED' || st.status === 'REJECTED')) {
+                    try {
+                        const fb = await interviewService.getOverallFeedbackByScheduledId(st.scheduledInterviewId);
+                        if (fb) {
+                            setStageFeedback(prev => ({ ...prev, [st.id]: fb }));
+                        }
+                    } catch {
+                        // ignore
+                    }
+                }
+            }
+
+            setExpandedStageId(stageId);
             setDialogOpen(false);
         } catch (error) {
             toast.error('Failed to perform action');
@@ -495,10 +662,13 @@ export default function ApplicationStatusPage() {
                                 <CardContent className="p-6">
                                     <div className="flex items-start justify-between">
                                         <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
+                                            <div className="flex items-center gap-3 mb-2 flex-wrap">
                                                 <h3 className="text-xl font-bold text-gray-900">
                                                     Round {stage.stageOrder}: {stage.stageType}
                                                 </h3>
+                                                <Badge variant="outline" className={stage.interviewMode === 'ZOOM' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}>
+                                                    {stage.interviewMode === 'ZOOM' ? '🎥 Zoom Live' : '🤖 AI Round'}
+                                                </Badge>
                                                 {getStageStatusBadge(stage.status)}
                                                 {isCurrent && stage.status === 'PENDING' && !isDisabled && (
                                                     <Badge className="bg-blue-100 text-blue-700 animate-pulse">
@@ -524,6 +694,18 @@ export default function ApplicationStatusPage() {
                                                         </span>
                                                     </div>
                                                 )}
+                                                {stageScheduled[stage.id]?.scheduledAt && (
+                                                    <div>
+                                                        <span className="font-medium">Scheduled Time:</span>{' '}
+                                                        {new Date(stageScheduled[stage.id].scheduledAt!).toLocaleString()}
+                                                    </div>
+                                                )}
+                                                {stageScheduled[stage.id]?.meetingPasscode && (
+                                                    <div>
+                                                        <span className="font-medium">Zoom Passcode:</span>{' '}
+                                                        <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{stageScheduled[stage.id].meetingPasscode}</span>
+                                                    </div>
+                                                )}
                                                 {stage.completedAt && (
                                                     <div>
                                                         <span className="font-medium">Completed:</span>{' '}
@@ -543,13 +725,13 @@ export default function ApplicationStatusPage() {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap justify-end">
                                             {stage.status === 'PENDING' && isActionable && (
                                                 <>
                                                     <Button
                                                         size="sm"
                                                         variant="default"
-                                                        onClick={() => navigate(`/interviewer/schedule?intervieweeId=${application?.userId}&candidateName=${encodeURIComponent(application?.userName || '')}&applicationId=${applicationId}&stageId=${stage.id}`)}
+                                                        onClick={() => navigate(`/interviewer/schedule?intervieweeId=${application?.userId}&candidateName=${encodeURIComponent(application?.userName || '')}&applicationId=${applicationId}&stageId=${stage.id}&mode=${stage.interviewMode || 'AI'}`)}
                                                         className="bg-blue-600 hover:bg-blue-700"
                                                     >
                                                         <PlayCircle className="mr-1 size-4" />
@@ -558,7 +740,10 @@ export default function ApplicationStatusPage() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        onClick={() => openDialog('skip')}
+                                                        onClick={() => {
+                                                            setCurrentStage(stage);
+                                                            openDialog('skip');
+                                                        }}
                                                         className="text-gray-600"
                                                     >
                                                         <SkipForward className="mr-1 size-4" />
@@ -573,13 +758,48 @@ export default function ApplicationStatusPage() {
                                                 </Badge>
                                             )}
                                             {stage.status === 'IN_PROGRESS' && (
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => navigate(`/interviewer/scheduled/${stage.scheduledInterviewId}`)}
-                                                >
-                                                    View Interview
-                                                </Button>
+                                                <>
+                                                    {(stage.interviewMode === 'ZOOM' || stageScheduled[stage.id]?.interviewMode === 'ZOOM') &&
+                                                        stage.scheduledInterviewId && (
+                                                        <Button
+                                                            size="sm"
+                                                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                            onClick={() => navigate(`/live-interview/${stage.scheduledInterviewId}`)}
+                                                        >
+                                                            <Video className="mr-1 size-4" />
+                                                            {stageScheduled[stage.id]?.callEnded ? 'Rejoin Live Room' : 'Start Live Interview'}
+                                                        </Button>
+                                                    )}
+                                                    <Button
+                                                        size="sm"
+                                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                                        onClick={() => {
+                                                            setCurrentStage(stage);
+                                                            openDialog('approve');
+                                                        }}
+                                                    >
+                                                        <CheckCircle2 className="mr-1 size-4" />
+                                                        Evaluate & Score
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        onClick={() => {
+                                                            setCurrentStage(stage);
+                                                            openDialog('reject');
+                                                        }}
+                                                    >
+                                                        <XCircle className="mr-1 size-4" />
+                                                        Reject
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => navigate(`/interviewer/scheduled/${stage.scheduledInterviewId}`)}
+                                                    >
+                                                        View Interview
+                                                    </Button>
+                                                </>
                                             )}
                                             {(stage.status === 'APPROVED' || stage.status === 'REJECTED') && (
                                                 <Button
@@ -766,24 +986,23 @@ export default function ApplicationStatusPage() {
             <StageDecisionDialog
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
-                onConfirm={(score, feedback) => {
+                onConfirm={(action, payload) => {
                     if (currentStage) {
-                        handleStageAction(currentStage.id, dialogType, score, feedback);
+                        handleStageAction(currentStage.id, action, payload);
                     }
                 }}
                 title={
-                    dialogType === 'approve' ? 'Approve Candidate for Next Round' :
-                    dialogType === 'reject' ? 'Reject Candidate' :
-                    'Skip This Round'
+                    dialogType === 'skip'
+                        ? 'Skip This Interview Round'
+                        : `Evaluate Candidate — Round ${currentStage?.stageOrder || ''}: ${currentStage?.stageType || ''}`
                 }
                 description={
-                    dialogType === 'approve' ? 'Confirm that this candidate has passed this stage.' :
-                    dialogType === 'reject' ? 'Are you sure you want to reject this candidate?' :
-                    'Are you sure you want to skip this round? This will move the candidate to the next stage.'
+                    dialogType === 'skip'
+                        ? 'Are you sure you want to skip this round? This will move the candidate to the next stage.'
+                        : 'Record the candidate’s scores, strengths, areas for improvement, and final decision for this round.'
                 }
-                showScore={dialogType === 'approve'}
-                isApprove={dialogType === 'approve'}
-                isSkip={dialogType === 'skip'}
+                initialAction={dialogType}
+                minimumScore={currentStage?.minimumScore}
                 loading={dialogLoading}
             />
         </div>

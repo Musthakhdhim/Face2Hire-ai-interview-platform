@@ -4,8 +4,9 @@ import com.aiinterview.face2hire_backend.dto.JobListResponseDto;
 import com.aiinterview.face2hire_backend.dto.JobRequestDto;
 import com.aiinterview.face2hire_backend.dto.JobResponseDto;
 import com.aiinterview.face2hire_backend.dto.WorkflowConfigDto;
-import com.aiinterview.face2hire_backend.entity.*;
-
+import com.aiinterview.face2hire_backend.entity.Job;
+import com.aiinterview.face2hire_backend.entity.JobSkill;
+import com.aiinterview.face2hire_backend.entity.JobStatus;
 import com.aiinterview.face2hire_backend.exception.ResourceNotFoundException;
 import com.aiinterview.face2hire_backend.logging.AppLogger;
 import com.aiinterview.face2hire_backend.logging.AppLoggerFactory;
@@ -13,6 +14,7 @@ import com.aiinterview.face2hire_backend.repository.JobRepository;
 import com.aiinterview.face2hire_backend.repository.JobSkillRepository;
 import com.aiinterview.face2hire_backend.service.BadgeService;
 import com.aiinterview.face2hire_backend.service.JobService;
+import com.aiinterview.face2hire_backend.service.RealtimeEventService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class JobServiceImpl implements JobService {
     private final JobRepository jobRepository;
     private final JobSkillRepository jobSkillRepository;
     private final BadgeService badgeService;
+    private final RealtimeEventService realtimeEventService;
     private final ObjectMapper objectMapper;
     private final AppLoggerFactory loggerFactory;
     private AppLogger log;
@@ -122,7 +125,9 @@ public class JobServiceImpl implements JobService {
         badgeService.checkAndAwardBadges(userId);
 
         log.info("Job created with id: {}", job.getId());
-        return mapToResponseDto(job);
+        JobResponseDto responseDto = mapToResponseDto(job);
+        realtimeEventService.publishJobEvent("JOB_CREATED", job.getId(), responseDto);
+        return responseDto;
     }
 
     @Override
@@ -233,7 +238,9 @@ public class JobServiceImpl implements JobService {
         }
 
         log.info("Job updated: {}", jobId);
-        return mapToResponseDto(job);
+        JobResponseDto responseDto = mapToResponseDto(job);
+        realtimeEventService.publishJobEvent("JOB_UPDATED", jobId, responseDto);
+        return responseDto;
     }
 
     @Override
@@ -247,6 +254,7 @@ public class JobServiceImpl implements JobService {
         jobSkillRepository.deleteByJobId(jobId);
         jobRepository.delete(job);
         log.info("Job deleted: {}", jobId);
+        realtimeEventService.publishJobEvent("JOB_DELETED", jobId, null);
     }
 
     @Override
@@ -260,7 +268,9 @@ public class JobServiceImpl implements JobService {
         job.setStatus(JobStatus.CLOSED);
         job = jobRepository.save(job);
         log.info("Job closed: {}", jobId);
-        return mapToResponseDto(job);
+        JobResponseDto responseDto = mapToResponseDto(job);
+        realtimeEventService.publishJobEvent("JOB_CLOSED", jobId, responseDto);
+        return responseDto;
     }
 
     private JobResponseDto mapToResponseDto(Job job) {

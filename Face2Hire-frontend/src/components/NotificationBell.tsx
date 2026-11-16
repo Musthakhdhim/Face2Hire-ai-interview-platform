@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -6,38 +6,44 @@ import { notificationService } from '../services/notificationService';
 import type { Notification } from '../types/notification';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../store/store';
+import { useRealtimeSubscription } from '../hooks/useRealtimeSubscription';
 
 export default function NotificationBell() {
+    const user = useSelector((state: RootState) => state.auth.user);
     const [unreadCount, setUnreadCount] = useState(0);
     const [recentNotifications, setRecentNotifications] = useState<Notification[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    const fetchNotifications = useCallback(async () => {
+        try {
+            const [count, unread] = await Promise.all([
+                notificationService.getUnreadCount(),
+                notificationService.getUnread(),
+            ]);
+            setUnreadCount(count);
+            setRecentNotifications(unread.slice(0, 5));
+        } catch (error) {
+            console.error('Failed to fetch notifications', error);
+        }
+    }, []);
+
     useEffect(() => {
-        let isMounted = true;
-
-        const fetchData = async () => {
-            try {
-                const [count, unread] = await Promise.all([
-                    notificationService.getUnreadCount(),
-                    notificationService.getUnread(),
-                ]);
-                if (isMounted) {
-                    setUnreadCount(count);
-                    setRecentNotifications(unread.slice(0, 5));
-                }
-            } catch (error) {
-                console.error('Failed to fetch notifications', error);
-            }
-        };
-
-        fetchData();
-        const interval = setInterval(() => fetchData(), 30000);
+        fetchNotifications();
+        const interval = setInterval(() => fetchNotifications(), 30000);
         return () => {
-            isMounted = false;
             clearInterval(interval);
         };
-    }, []);
+    }, [fetchNotifications]);
+
+    useRealtimeSubscription(
+        [user?.id ? `/topic/user/${user.id}/notifications` : null],
+        () => {
+            fetchNotifications();
+        }
+    );
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

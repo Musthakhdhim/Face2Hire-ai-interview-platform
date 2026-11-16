@@ -17,6 +17,7 @@ import { Badge } from '../components/ui/badge';
 import { useEffect, useState,  type JSX } from 'react';
 import type { RootState, AppDispatch } from '../store/store';
 import NotificationBell from '../components/NotificationBell';
+import { websocketService } from '../services/websocketService';
 
 interface NavItem {
   icon: React.ElementType;
@@ -55,8 +56,12 @@ export default function DashboardLayout(): JSX.Element | null {
   }, [location.pathname, isMobile]);
 
   useEffect(() => {
-    if (!user) navigate('/login');
-  }, [user, navigate]);
+    if (!user) {
+      navigate('/login');
+    } else if (token) {
+      websocketService.ensureConnected();
+    }
+  }, [user, token, navigate]);
 
   useEffect(() => {
     const fetchProfileImage = async (): Promise<void> => {
@@ -121,6 +126,7 @@ export default function DashboardLayout(): JSX.Element | null {
   const navItems = getNavItems();
 
   const handleLogout = (): void => {
+    websocketService.disconnect();
     dispatch(logout());
     navigate('/');
   };

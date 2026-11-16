@@ -5,6 +5,7 @@ import com.aiinterview.face2hire_backend.dto.NotificationsDto;
 import com.aiinterview.face2hire_backend.entity.Notification;
 import com.aiinterview.face2hire_backend.repository.NotificationRepository;
 import com.aiinterview.face2hire_backend.service.NotificationService;
+import com.aiinterview.face2hire_backend.service.RealtimeEventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final RealtimeEventService realtimeEventService;
 
     @Override
     @Transactional
@@ -33,8 +35,9 @@ public class NotificationServiceImpl implements NotificationService {
                 .type(type)
                 .read(false)
                 .build();
-        notificationRepository.save(notification);
+        notification = notificationRepository.save(notification);
         log.info("Notification created for user {}: {}", userId, title);
+        realtimeEventService.publishNotificationEvent(userId, toDto(notification));
     }
 
     @Override

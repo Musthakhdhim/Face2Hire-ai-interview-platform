@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -8,7 +8,8 @@ import { Briefcase, Users, Calendar, TrendingUp, Plus, Eye, Loader2 } from 'luci
 import type { RootState } from '../../store/store';
 import type { JSX } from 'react';
 import { jobService, type JobListResponse } from '../../services/jobService';
-import { applicationService, type ApplicationListResponse } from '../../services/applicationService';
+import { applicationService, sortApplicationsByPriority, type ApplicationListResponse } from '../../services/applicationService';
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
 import { toast } from 'react-toastify';
 
 interface StatItem {
@@ -31,41 +32,51 @@ export default function InterviewerDashboard(): JSX.Element {
     hiredCandidates: 0,
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-  try {
-    const jobsResponse = await jobService.getMyJobs(0, 100, 'createdAt', 'desc');
-    const jobsList = jobsResponse.content;
-    setJobs(jobsList);
-    const active = jobsList.filter(job => job.status === 'ACTIVE').length;
-    const totalApps = jobsList.reduce((sum, job) => sum + (job.applicantsCount || 0), 0);
-    
-    const appsResponse = await applicationService.getApplicationsForInterviewer(0, 100);
-    const applications = appsResponse.content;
-    
-    const hired = applications.filter(app => app.status === 'APPROVED').length;
-    
-    const sorted = [...applications].sort((a, b) => 
-      new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()
-    );
-    const recent = sorted.slice(0, 5);
-    setRecentApplications(recent);
-    
-    setStats({
-      activeJobs: active,
-      totalApplications: totalApps,
-      scheduledInterviews: 0,
-      hiredCandidates: hired,
-    });
-  } catch {
-    toast.error('Failed to load dashboard data');
-  } finally {
-    setLoading(false);
-  }
-};
-    
-    fetchData();
+  const fetchData = useCallback(async (silent = false) => {
+    try {
+      const jobsResponse = await jobService.getMyJobs(0, 100, 'createdAt', 'desc');
+      const jobsList = jobsResponse.content;
+      setJobs(jobsList);
+      const active = jobsList.filter(job => job.status === 'ACTIVE').length;
+      const totalApps = jobsList.reduce((sum, job) => sum + (job.applicantsCount || 0), 0);
+      
+      const appsResponse = await applicationService.getApplicationsForInterviewer(0, 100);
+      const applications = appsResponse.content;
+      
+      const hired = applications.filter(app => app.status === 'APPROVED').length;
+      
+      const sorted = sortApplicationsByPriority(applications);
+      const recent = sorted.slice(0, 5);
+      setRecentApplications(recent);
+      
+      setStats({
+        activeJobs: active,
+        totalApplications: totalApps,
+        scheduledInterviews: 0,
+        hiredCandidates: hired,
+      });
+    } catch {
+      if (!silent) toast.error('Failed to load dashboard data');
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useRealtimeSubscription(
+    [
+      '/topic/jobs',
+      '/topic/interviewer/applications',
+      '/topic/interviewer/interviews',
+      user?.id ? `/topic/user/${user.id}/applications` : null,
+    ],
+    () => {
+      fetchData(true);
+    }
+  );
 
   const statItems: StatItem[] = [
     { title: 'Active Jobs', value: stats.activeJobs.toString(), change: `${stats.activeJobs > 0 ? `+${stats.activeJobs}` : '0'} this month`, icon: Briefcase, color: 'bg-blue-100 text-blue-600' },

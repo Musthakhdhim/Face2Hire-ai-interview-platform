@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../store/store';
 import { motion } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -8,58 +10,84 @@ import {
   CheckCircle2, XCircle, Clock, 
   User, Mail, Calendar, FileText,
   ChevronRight, ChevronDown,
-  Circle, Check, X
+  Circle, Check, X, Video, PlayCircle
 } from 'lucide-react';
 import { applicationService, type ApplicationResponse } from '../../services/applicationService';
 import { stagesService, type ApplicationStage, type StageStatus } from '../../services/stagesService';
 import { interviewService, type OverallFeedbackDto } from '../../services/interviewService';
+import { scheduledInterviewService, type ScheduledInterviewDto } from '../../services/scheduledInterviewService';
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
 import { toast } from 'react-toastify';
 
 export default function ApplicationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const user = useSelector((state: RootState) => state.auth.user);
   const [application, setApplication] = useState<ApplicationResponse | null>(null);
   const [stages, setStages] = useState<ApplicationStage[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedStageId, setExpandedStageId] = useState<number | null>(null);
   const [stageFeedback, setStageFeedback] = useState<Record<number, OverallFeedbackDto | null>>({});
+  const [stageScheduled, setStageScheduled] = useState<Record<number, ScheduledInterviewDto>>({});
   const [loadingFeedback, setLoadingFeedback] = useState<Record<number, boolean>>({});
 
-  useEffect(() => {
-    const fetchDetail = async () => {
-      try {
-        const app = await applicationService.getApplicationById(Number(id));
-        setApplication(app);
+  const fetchDetail = useCallback(async (silent = false) => {
+    try {
+      const app = await applicationService.getApplicationById(Number(id));
+      setApplication(app);
 
-        if (app.isMultiRound) {
-          const stagesData = await stagesService.getApplicationStages(Number(id));
-          setStages(stagesData);
+      if (app.isMultiRound) {
+        const stagesData = await stagesService.getApplicationStages(Number(id));
+        setStages(stagesData);
 
-          for (const stage of stagesData) {
-            if (stage.scheduledInterviewId && (stage.status === 'APPROVED' || stage.status === 'REJECTED')) {
-              try {
-                setLoadingFeedback(prev => ({ ...prev, [stage.id]: true }));
-                const feedback = await interviewService.getOverallFeedbackByScheduledId(stage.scheduledInterviewId);
-                if (feedback) {
-                  setStageFeedback(prev => ({ ...prev, [stage.id]: feedback }));
-                }
-              } catch (error) {
-                console.error(`Failed to fetch feedback for stage ${stage.id}:`, error);
-              } finally {
-                setLoadingFeedback(prev => ({ ...prev, [stage.id]: false }));
+        for (const stage of stagesData) {
+          if (stage.scheduledInterviewId) {
+            try {
+              const sched = await scheduledInterviewService.getById(stage.scheduledInterviewId);
+              setStageScheduled(prev => ({ ...prev, [stage.id]: sched }));
+            } catch (err) {
+              console.error(`Failed to fetch scheduled interview for stage ${stage.id}:`, err);
+            }
+          }
+          if (stage.scheduledInterviewId && (stage.status === 'APPROVED' || stage.status === 'REJECTED')) {
+            try {
+              setLoadingFeedback(prev => ({ ...prev, [stage.id]: true }));
+              const feedback = await interviewService.getOverallFeedbackByScheduledId(stage.scheduledInterviewId);
+              if (feedback) {
+                setStageFeedback(prev => ({ ...prev, [stage.id]: feedback }));
               }
+            } catch (error) {
+              console.error(`Failed to fetch feedback for stage ${stage.id}:`, error);
+            } finally {
+              setLoadingFeedback(prev => ({ ...prev, [stage.id]: false }));
             }
           }
         }
-      } catch (error: any) {
+      }
+    } catch (error: any) {
+      if (!silent) {
         toast.error(error.response?.data?.message || 'Failed to load application details');
         navigate('/interviewee/applications');
-      } finally {
-        setLoading(false);
       }
-    };
-    fetchDetail();
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, [id, navigate]);
+
+  useEffect(() => {
+    fetchDetail();
+  }, [fetchDetail]);
+
+  useRealtimeSubscription(
+    [
+      id ? `/topic/application/${id}/stages` : null,
+      user?.id ? `/topic/user/${user.id}/applications` : null,
+      user?.id ? `/topic/user/${user.id}/interviews` : null,
+    ],
+    () => {
+      fetchDetail(true);
+    }
+  );
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -382,10 +410,13 @@ export default function ApplicationDetailPage() {
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
                             <h3 className="text-xl font-bold text-gray-900">
                               Round {stage.stageOrder}: {stage.stageType}
                             </h3>
+                            <Badge variant="outline" className={stage.interviewMode === 'ZOOM' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}>
+                              {stage.interviewMode === 'ZOOM' ? '🎥 Zoom Live' : '🤖 AI Round'}
+                            </Badge>
                             {getStageStatusBadge(stage.status)}
                             {isDisabled && !isRejected && stage.status === 'PENDING' && (
                               <Badge className="bg-gray-200 text-gray-600">
@@ -406,6 +437,18 @@ export default function ApplicationDetailPage() {
                                 </span>
                               </div>
                             )}
+                            {stageScheduled[stage.id]?.scheduledAt && (
+                              <div>
+                                <span className="font-medium">Scheduled Time:</span>{' '}
+                                {new Date(stageScheduled[stage.id].scheduledAt!).toLocaleString()}
+                              </div>
+                            )}
+                            {stageScheduled[stage.id]?.meetingPasscode && (
+                              <div>
+                                <span className="font-medium">Passcode:</span>{' '}
+                                <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{stageScheduled[stage.id].meetingPasscode}</span>
+                              </div>
+                            )}
                             {stage.completedAt && (
                               <div>
                                 <span className="font-medium">Completed:</span>{' '}
@@ -419,6 +462,14 @@ export default function ApplicationDetailPage() {
                               </div>
                             )}
                           </div>
+                          {stage.status === 'IN_PROGRESS' && stageScheduled[stage.id]?.callEnded && (
+                            <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg flex items-center gap-2">
+                              <Clock className="size-4 text-purple-600 animate-pulse flex-shrink-0" />
+                              <p className="text-xs text-purple-800 font-medium">
+                                Interview Completed — Your score, strengths, weaknesses, and detailed feedback will be updated soon once the interviewer submits their evaluation.
+                              </p>
+                            </div>
+                          )}
                           {stage.feedback && (
                             <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                               <p className="text-sm text-gray-700">{stage.feedback}</p>
@@ -426,6 +477,37 @@ export default function ApplicationDetailPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
+                          {stage.status === 'IN_PROGRESS' && (
+                            (stage.interviewMode === 'ZOOM' || stageScheduled[stage.id]?.interviewMode === 'ZOOM') ? (
+                              stageScheduled[stage.id]?.callEnded ? (
+                                <Badge className="bg-purple-100 text-purple-700 border border-purple-200">
+                                  ⏳ Score Updating Soon
+                                </Badge>
+                              ) : (
+                                stage.scheduledInterviewId && (
+                                  <Button
+                                    size="sm"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    onClick={() => navigate(`/live-interview/${stage.scheduledInterviewId}`)}
+                                  >
+                                    <Video className="mr-1.5 size-4" />
+                                    Join Live Interview
+                                  </Button>
+                                )
+                              )
+                            ) : (
+                              stage.scheduledInterviewId && (
+                                <Button
+                                  size="sm"
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                  onClick={() => navigate(`/interviewee/interview/setup?scheduled=${stage.scheduledInterviewId}`)}
+                                >
+                                  <PlayCircle className="mr-1.5 size-4" />
+                                  Start AI Interview
+                                </Button>
+                              )
+                            )
+                          )}
                           {(stage.status === 'APPROVED' || stage.status === 'REJECTED') && (
                             <Button
                               size="sm"

@@ -9,6 +9,7 @@ public interface ScheduledInterviewRepository extends JpaRepository<ScheduledInt
     List<ScheduledInterview> findByIntervieweeId(Long intervieweeId);
     List<ScheduledInterview> findByScheduledByInterviewer(String interviewerName);
     Optional<ScheduledInterview> findByApplicationId(Long applicationId);
+    List<ScheduledInterview> findByApplicationIdOrderByCreatedAtDesc(Long applicationId);
     boolean existsByApplicationId(Long applicationId);
     Optional<ScheduledInterview> findByApplicationStageId(Long applicationStageId);
 
