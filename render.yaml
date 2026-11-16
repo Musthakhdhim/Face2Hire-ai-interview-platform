@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: face2hire-backend
+    runtime: docker
+    rootDir: face2hire-backend
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: APP_FRONTEND_URL
+        value: https://face2hire.shop
+      - key: APP_BACKEND_URL
+        value: https://api.face2hire.shop
+      - key: ZOOM_TIMEZONE
+        value: Asia/Kolkata

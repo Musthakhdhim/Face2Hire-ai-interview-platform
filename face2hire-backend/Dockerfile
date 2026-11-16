@@ -1,28 +1,31 @@
-#FROM eclipse-temurin:21-jre
-#
-#WORKDIR /app
-#
-#COPY target/face2hire-backend-0.0.1-SNAPSHOT.jar app.jar
-#
-#EXPOSE 8080
-#
-#ENTRYPOINT ["java","-jar","app.jar"]
+# ==========================================
+# Stage 1: Build Spring Boot Application
+# ==========================================
+FROM maven:3.9.9-eclipse-temurin-17 AS build
+WORKDIR /build
 
+COPY pom.xml checkstyle.xml ./
+COPY src ./src
 
-# Dockerfile
-FROM openjdk:21-jdk-slim
+RUN mvn clean package -DskipTests
 
+# ==========================================
+# Stage 2: Lightweight Production Runtime
+# ==========================================
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
-# Copy JAR
-COPY target/face2hire-backend-*.jar app.jar
+# Create non-root user and writable directories for local uploads & logs
+RUN groupadd -r spring && useradd -r -g spring spring \
+    && mkdir -p /app/uploads /app/logs \
+    && chown -R spring:spring /app
 
-# Create non-root user
-RUN groupadd -r spring && useradd -r -g spring spring
+COPY --from=build --chown=spring:spring /build/target/face2hire-backend-*.jar /app/app.jar
+
 USER spring:spring
 
-# Set production profile
 ENV SPRING_PROFILES_ACTIVE=prod
+ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
 EXPOSE 8080
 

@@ -405,9 +405,14 @@ export default function CreateJobPage(): JSX.Element {
                                     </div>
                                   </div>
                                   <Button
+                                    type="button"
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => handleRemoveStage(index)}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleRemoveStage(index);
+                                    }}
                                     className="text-red-500 hover:text-red-700"
                                   >
                                     <X className="size-4" />
@@ -418,6 +423,9 @@ export default function CreateJobPage(): JSX.Element {
                                     placeholder="Stage description (optional)"
                                     value={stage.description}
                                     onChange={(e) => handleStageChange(index, 'description', e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') e.preventDefault();
+                                    }}
                                     className="h-8 text-sm"
                                   />
                                 </div>
@@ -431,7 +439,16 @@ export default function CreateJobPage(): JSX.Element {
                   </Droppable>
                 </DragDropContext>
                 
-                <Button variant="outline" onClick={handleAddStage} className="w-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAddStage();
+                  }}
+                  className="w-full"
+                >
                   <Plus className="mr-2 size-4" />
                   Add Round
                 </Button>
